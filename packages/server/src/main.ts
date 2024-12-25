@@ -132,7 +132,7 @@ async function validateToken(token: string): Promise<ConnectionInfo> {
   const { email } = decodeToken(token, true, config.Secret)
   const info = await getWorkspaceInfo(token)
 
-  if(info === undefined) {
+  if (info === undefined) {
     throw new Error('No workspace info')
   }
 
