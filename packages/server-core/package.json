@@ -1,0 +1,33 @@
+{
+  "name": "@hcengineering/communication-server-core",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "./types/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist/index.js",
+    "types/**/*.d.ts"
+  ],
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/ws": "^8.5.13"
+  },
+  "dependencies": {
+    "@hcengineering/core": "0.6.411",
+    "@hcengineering/communication-cockroach": "workspace:*",
+    "@hcengineering/communication-sdk-types": "workspace:*",
+    "@hcengineering/communication-types": "workspace:*",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "msgpackr": "^1.11.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.6.3"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}
