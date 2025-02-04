@@ -131,9 +131,6 @@
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
         "@hcengineering/core": "0.6.411",
-        "cors": "^2.8.5",
-        "dotenv": "^16.4.7",
-        "msgpackr": "^1.11.2",
       },
       "devDependencies": {
         "@types/bun": "^1.1.14",
