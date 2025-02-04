@@ -1,8 +1,8 @@
 {
   "name": "@hcengineering/communication-server-core",
-  "version": "0.1.1",
-  "main": "src/index.ts",
-  "module": "src/index.ts",
+  "version": "0.1.2",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "./types/index.d.ts",
   "type": "module",
   "files": [
