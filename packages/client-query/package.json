@@ -2,7 +2,7 @@
   "name": "@hcengineering/communication-client-query",
   "version": "0.1.0",
   "main": "dist/index.js",
-  "module": "src/index.ts",
+  "module": "dist/index.js",
   "types": "./types/index.d.ts",
   "type": "module",
   "files": [
