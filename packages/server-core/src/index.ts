@@ -30,7 +30,7 @@ export async function createPipeline(ctx: MeasureContext, context: PipelineConte
   return await Pipeline.create(ctx.newChild('communication pipeline', {}), context, dbUrl)
 }
 
-class Pipeline {
+export class Pipeline {
   private readonly eventProcessor: EventProcessor
   private readonly manager: Manager
   private constructor(
