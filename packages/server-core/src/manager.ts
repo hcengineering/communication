@@ -1,19 +1,23 @@
 import {
   type BroadcastEvent,
+  type ConnectionInfo,
   type DbAdapter,
   EventType,
   type NotificationContextCreatedEvent,
-  type NotificationCreatedEvent
+  type NotificationCreatedEvent,
+  type Event
 } from '@hcengineering/communication-sdk-types'
 import type {
   FindMessagesParams,
   FindNotificationContextParams,
   FindNotificationsParams,
+  Message,
   MessageID
 } from '@hcengineering/communication-types'
 
 import { Triggers } from './triggers.ts'
-import type { ConnectionInfo } from './types.ts'
+import { EventProcessor, type Result } from './eventProcessor.ts'
+import type { MeasureContext } from '@hcengineering/core'
 
 type QueryId = number | string
 type QueryType = 'message' | 'notification' | 'context'
@@ -28,13 +32,37 @@ type SessionInfo = {
 export class Manager {
   private dataBySessionId: Map<string, SessionInfo> = new Map()
   private triggers: Triggers
+  private readonly eventProcessor: EventProcessor
 
   constructor(
+    private readonly ctx: MeasureContext,
     private readonly db: DbAdapter,
     private readonly workspace: string
   ) {
+    this.eventProcessor = new EventProcessor(db, this.workspace)
     this.triggers = new Triggers(db)
   }
+
+  async findMessages(info: ConnectionInfo, params: FindMessagesParams, queryId?: number): Promise<Message[]> {
+    const result = await this.db.findMessages(this.workspace, params)
+    if (queryId != null && info.sessionId != null && info.sessionId !== '') {
+      this.subscribeQuery(info, 'message', queryId, params)
+    }
+    return result
+  }
+
+  async event(info: ConnectionInfo, event: Event): Promise<Result> {
+    return await this.eventProcessor.process(info.personalWorkspace, event)
+    // const { result, broadcastEvent } = await this.eventProcessor.process(personalWorkspace, event)
+    // if (broadcastEvent !== undefined) {
+    //     void this.manager.next(broadcastEvent)
+    // }
+    // return result
+  }
+  //
+  // async broadcastEvent (ctx: MeasureContext, personalWorkspace: string, event: BroadcastEvent): Promise<void> {
+  //     void this.manager.next(event, personalWorkspace)
+  // }
 
   subscribeQuery(info: ConnectionInfo, type: QueryType, queryId: number, params: Record<string, any>): void {
     const { sessionId, personalWorkspace } = info
@@ -183,5 +211,9 @@ export class Manager {
     }
 
     return false
+  }
+
+  close(): void {
+    this.db.close()
   }
 }
