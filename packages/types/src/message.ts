@@ -1,5 +1,6 @@
-import type { Card, Ref } from '@hcengineering/core'
+import type { Card, Ref, Blob } from '@hcengineering/core'
 
+export type BlobID = Ref<Blob>
 export type CardID = Ref<Card>
 export type SocialID = string & { social: true }
 export type RichText = string
@@ -19,6 +20,14 @@ export interface Message extends Object {
   edited: Date
   reactions: Reaction[]
   attachments: Attachment[]
+}
+
+export interface MessagesGroup {
+  card: CardID
+  startAt: Date
+  endAt: Date
+  blobId: Ref<Blob>
+  count: number
 }
 
 export interface Patch extends Object {

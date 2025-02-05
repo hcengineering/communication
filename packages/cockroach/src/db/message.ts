@@ -6,7 +6,7 @@ import {
     SortOrder,
     type SocialID,
     type RichText,
-    Direction, type Reaction, type Attachment
+    Direction, type Reaction, type Attachment, type BlobID
 } from '@hcengineering/communication-types'
 
 import {BaseDb} from './base.ts'
@@ -15,7 +15,8 @@ import {
     type MessageDb,
     type AttachmentDb,
     type ReactionDb,
-    type PatchDb
+    type PatchDb,
+    type MessagesGroupDb
 } from './types.ts'
 
 export class MessagesDb extends BaseDb {
@@ -47,6 +48,19 @@ export class MessagesDb extends BaseDb {
         }
 
         await this.insert(TableName.Patch, dbData)
+    }
+
+
+    async createMessagesGroup(workspace: string,card: CardID, startAt: Date, endAt: Date, blobId: BlobID, count: number): Promise<void> {
+        const dbData: MessagesGroupDb = {
+            workspace_id: workspace,
+            card_id: card,
+            start_at: startAt,
+            end_at: endAt,
+            blob_id: blobId,
+            count
+        }
+        await this.insert(TableName.MessagesGroup, dbData)
     }
 
     //Attachment

@@ -11,7 +11,8 @@ import {
   type FindNotificationContextParams,
   type NotificationContext,
   type FindNotificationsParams,
-  type Notification
+  type Notification,
+  type BlobID
 } from '@hcengineering/communication-types'
 import type { DbAdapter } from '@hcengineering/communication-sdk-types'
 
@@ -47,6 +48,17 @@ export class CockroachAdapter implements DbAdapter {
 
   async removeMessage(message: MessageID): Promise<void> {
     return await this.message.removeMessage(message)
+  }
+
+  async createMessagesGroup(
+    workspace: string,
+    card: CardID,
+    startAt: Date,
+    endAt: Date,
+    blobId: BlobID,
+    count: number
+  ): Promise<void> {
+    return await this.message.createMessagesGroup(workspace, card, startAt, endAt, blobId, count)
   }
 
   async createReaction(message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void> {

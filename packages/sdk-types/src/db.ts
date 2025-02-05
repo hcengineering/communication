@@ -10,7 +10,8 @@ import type {
   NotificationContextUpdate,
   RichText,
   SocialID,
-  Notification
+  Notification,
+  BlobID
 } from '@hcengineering/communication-types'
 
 export interface DbAdapter {
@@ -23,6 +24,15 @@ export interface DbAdapter {
   ): Promise<MessageID>
   removeMessage(id: MessageID): Promise<void>
   createPatch(message: MessageID, content: RichText, creator: SocialID, created: Date): Promise<void>
+
+  createMessagesGroup(
+    workspace: string,
+    card: CardID,
+    startAt: Date,
+    endAt: Date,
+    blobId: BlobID,
+    count: number
+  ): Promise<void>
 
   createReaction(message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void>
   removeReaction(message: MessageID, reaction: string, creator: SocialID): Promise<void>
