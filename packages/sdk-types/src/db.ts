@@ -10,14 +10,13 @@ import type {
   NotificationContextUpdate,
   RichText,
   SocialID,
-  Notification,
-  ThreadID
+  Notification
 } from '@hcengineering/communication-types'
 
 export interface DbAdapter {
   createMessage(
     workspace: string,
-    thread: ThreadID,
+    card: CardID,
     content: RichText,
     creator: SocialID,
     created: Date
@@ -28,8 +27,8 @@ export interface DbAdapter {
   createReaction(message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void>
   removeReaction(message: MessageID, reaction: string, creator: SocialID): Promise<void>
 
-  createAttachment(message: MessageID, card: CardID, creator: SocialID, created: Date): Promise<void>
-  removeAttachment(message: MessageID, card: CardID): Promise<void>
+  createAttachment(message: MessageID, attachment: CardID, creator: SocialID, created: Date): Promise<void>
+  removeAttachment(message: MessageID, attachment: CardID): Promise<void>
 
   findMessages(workspace: string, query: FindMessagesParams): Promise<Message[]>
 

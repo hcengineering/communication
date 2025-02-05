@@ -6,7 +6,7 @@ import {
     SortOrder,
     type SocialID,
     type RichText,
-    Direction, type Reaction, type Attachment, type ThreadID
+    Direction, type Reaction, type Attachment
 } from '@hcengineering/communication-types'
 
 import {BaseDb} from './base.ts'
@@ -20,10 +20,10 @@ import {
 
 export class MessagesDb extends BaseDb {
     //Message
-    async createMessage(workspace: string, thread: ThreadID, content: RichText, creator: SocialID, created: Date): Promise<MessageID> {
+    async createMessage(workspace: string, card: CardID, content: RichText, creator: SocialID, created: Date): Promise<MessageID> {
         const dbData: MessageDb = {
             workspace_id: workspace,
-            thread_id: thread,
+            card_id: card,
             content: content,
             creator: creator,
             created: created,
@@ -119,9 +119,9 @@ export class MessagesDb extends BaseDb {
             values.push(params.id)
         }
 
-        if (params.thread != null) {
-            where.push(`m.thread_id = $${index++}`)
-            values.push(params.thread)
+        if (params.card != null) {
+            where.push(`m.card_id = $${index++}`)
+            values.push(params.card)
         }
 
         if (params.from != null) {
@@ -186,7 +186,7 @@ export class MessagesDb extends BaseDb {
 
         return {
             id: row.id,
-            thread: row.thread_id,
+            card: row.card_id,
             content: lastPatch?.content ?? row.content,
             creator: row.creator,
             created: new Date(row.created),

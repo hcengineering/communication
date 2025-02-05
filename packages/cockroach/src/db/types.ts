@@ -1,4 +1,4 @@
-import type {CardID, ContextID, MessageID, RichText, SocialID, ThreadID } from "@hcengineering/communication-types"
+import type {ContextID, MessageID, RichText, SocialID, CardID } from "@hcengineering/communication-types"
 
 export enum TableName {
     Message = 'message',
@@ -11,7 +11,7 @@ export enum TableName {
 
 export interface MessageDb {
     workspace_id: string,
-    thread_id: ThreadID,
+    card_id: CardID,
     content: RichText,
     creator: SocialID,
     created: Date,
