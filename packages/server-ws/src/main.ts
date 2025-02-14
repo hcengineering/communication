@@ -130,7 +130,7 @@ async function handleRequest(raw: RawData, session: Session, ws: WebSocket) {
 
 //TODO: decodeToken or authorize with account service or both
 async function validateToken(token: string): Promise<ConnectionInfo> {
-  const { email } = decodeToken(token, true, config.Secret)
+  const { account } = decodeToken(token, true, config.Secret)
   const info = await getWorkspaceInfo(token)
 
   if (info === undefined) {
@@ -138,5 +138,5 @@ async function validateToken(token: string): Promise<ConnectionInfo> {
   }
 
   const personalWorkspace = 'cd0aba36-1c4f-4170-95f2-27a12a5415f7'
-  return { workspace: info.workspaceId, personalWorkspace, socialId: email as SocialID }
+  return { workspace: info.workspaceId, personalWorkspace, socialId: account as any as SocialID }
 }

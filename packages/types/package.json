@@ -16,8 +16,8 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "@hcengineering/core": "0.6.429",
-    "@hcengineering/card": "0.6.429"
+    "@hcengineering/core": "0.7.2",
+    "@hcengineering/card": "0.7.2"
   },
   "repository": {
     "type": "git",

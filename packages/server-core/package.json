@@ -16,7 +16,7 @@
     "@types/ws": "^8.5.13"
   },
   "dependencies": {
-    "@hcengineering/core": "0.6.429",
+    "@hcengineering/core": "0.7.2",
     "@hcengineering/communication-cockroach": "workspace:*",
     "@hcengineering/communication-sdk-types": "workspace:*",
     "@hcengineering/communication-types": "workspace:*"

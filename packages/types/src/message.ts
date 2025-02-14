@@ -1,9 +1,9 @@
-import type { Ref, Blob } from '@hcengineering/core'
+import type { Ref, Blob, PersonId } from '@hcengineering/core'
 import type { Card } from '@hcengineering/card'
 
 export type BlobID = Ref<Blob>
 export type CardID = Ref<Card>
-export type SocialID = string
+export type SocialID = PersonId
 export type RichText = string
 
 export type ID = string

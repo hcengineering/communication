@@ -16,7 +16,7 @@
     "@types/ws": "^8.5.13"
   },
   "dependencies": {
-    "@hcengineering/server-token": "^0.6.429",
+    "@hcengineering/server-token": "^0.7.2",
     "@hcengineering/communication-cockroach": "workspace:*",
     "@hcengineering/communication-sdk-types": "workspace:*",
     "@hcengineering/communication-types": "workspace:*",
