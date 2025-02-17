@@ -1,5 +1,10 @@
 import type { MeasureContext } from '@hcengineering/core'
-import type { FindMessagesParams, Message } from '@hcengineering/communication-types'
+import type {
+  FindMessagesGroupsParams,
+  FindMessagesParams,
+  Message,
+  MessagesGroup
+} from '@hcengineering/communication-types'
 import { createDbAdapter } from '@hcengineering/communication-cockroach'
 import type {
   ConnectionInfo,
@@ -35,6 +40,10 @@ export class Api implements ServerApi {
 
   async findMessages(info: ConnectionInfo, params: FindMessagesParams, queryId?: number): Promise<Message[]> {
     return await this.manager.findMessages(info, params, queryId)
+  }
+
+  async findMessagesGroups(info: ConnectionInfo, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
+    return await this.manager.findMessagesGroups(info, params)
   }
 
   async unsubscribeQuery(info: ConnectionInfo, id: number): Promise<void> {

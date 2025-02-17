@@ -11,7 +11,9 @@ import {
   type FindNotificationContextParams,
   type NotificationContext,
   type Notification,
-  type BlobID
+  type BlobID,
+  type MessagesGroup,
+  type FindMessagesGroupsParams
 } from '@hcengineering/communication-types'
 import type { DbAdapter } from '@hcengineering/communication-sdk-types'
 
@@ -62,6 +64,11 @@ export class SqliteAdapter implements DbAdapter {
     count: number
   ): Promise<void> {
     //TODO: implement
+  }
+
+  async findMessagesGroups(workspace: string, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
+    //TODO: implement
+    return []
   }
 
   async createReaction(message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void> {

@@ -5,8 +5,7 @@ import type {
   NotificationContextUpdate,
   RichText,
   SocialID,
-  MessagesGroup,
-  BlobID
+  MessagesGroup
 } from '@hcengineering/communication-types'
 
 export enum RequestEventType {
@@ -22,8 +21,7 @@ export enum RequestEventType {
   CreateNotificationContext = 'createNotificationContext',
   RemoveNotificationContext = 'removeNotificationContext',
   UpdateNotificationContext = 'updateNotificationContext',
-  CreateMessagesGroup = 'createMessagesGroup',
-  RemoveMessagesGroup = 'removeMessagesGroup'
+  CreateMessagesGroup = 'createMessagesGroup'
 }
 
 export type RequestEvent =
@@ -40,7 +38,6 @@ export type RequestEvent =
   | RemoveNotificationContextEvent
   | UpdateNotificationContextEvent
   | CreateMessagesGroupEvent
-  | RemoveMessagesGroupEvent
 
 export interface CreateMessageEvent {
   type: RequestEventType.CreateMessage
@@ -127,12 +124,6 @@ export interface UpdateNotificationContextEvent {
 export interface CreateMessagesGroupEvent {
   type: RequestEventType.CreateMessagesGroup
   group: MessagesGroup
-}
-
-export interface RemoveMessagesGroupEvent {
-  type: RequestEventType.RemoveMessagesGroup
-  card: CardID
-  blobId: BlobID
 }
 
 export type EventResult = CreateMessageResult | CreateNotificationContextResult | {}

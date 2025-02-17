@@ -1,19 +1,21 @@
 import {
   type ConnectionInfo,
   type DbAdapter,
+  type EventResult,
   type NotificationContextCreatedEvent,
   type NotificationCreatedEvent,
-  type EventResult,
   type RequestEvent,
   type ResponseEvent,
   ResponseEventType
 } from '@hcengineering/communication-sdk-types'
 import type {
+  FindMessagesGroupsParams,
   FindMessagesParams,
   FindNotificationContextParams,
   FindNotificationsParams,
   Message,
-  MessageID
+  MessageID,
+  MessagesGroup
 } from '@hcengineering/communication-types'
 
 import { Triggers } from './triggers.ts'
@@ -53,6 +55,10 @@ export class Manager {
       this.subscribeQuery(info, 'message', queryId, params)
     }
     return result
+  }
+
+  async findMessagesGroups(info: ConnectionInfo, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
+    return await this.db.findMessagesGroups(this.workspace, params)
   }
 
   async event(info: ConnectionInfo, event: RequestEvent): Promise<EventResult> {

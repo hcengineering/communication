@@ -11,7 +11,9 @@ import type {
   RichText,
   SocialID,
   Notification,
-  BlobID
+  BlobID,
+  FindMessagesGroupsParams,
+  MessagesGroup
 } from '@hcengineering/communication-types'
 
 export interface DbAdapter {
@@ -22,7 +24,9 @@ export interface DbAdapter {
     creator: SocialID,
     created: Date
   ): Promise<MessageID>
+
   removeMessage(id: MessageID): Promise<void>
+
   createPatch(message: MessageID, content: RichText, creator: SocialID, created: Date): Promise<void>
 
   createMessagesGroup(
@@ -37,15 +41,21 @@ export interface DbAdapter {
   ): Promise<void>
 
   createReaction(message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void>
+
   removeReaction(message: MessageID, reaction: string, creator: SocialID): Promise<void>
 
   createAttachment(message: MessageID, attachment: CardID, creator: SocialID, created: Date): Promise<void>
+
   removeAttachment(message: MessageID, attachment: CardID): Promise<void>
 
   findMessages(workspace: string, query: FindMessagesParams): Promise<Message[]>
 
+  findMessagesGroups(workspace: string, query: FindMessagesGroupsParams): Promise<MessagesGroup[]>
+
   createNotification(message: MessageID, context: ContextID): Promise<void>
+
   removeNotification(message: MessageID, context: ContextID): Promise<void>
+
   createContext(
     personalWorkspace: string,
     workspace: string,
@@ -53,13 +63,17 @@ export interface DbAdapter {
     lastView?: Date,
     lastUpdate?: Date
   ): Promise<ContextID>
+
   updateContext(context: ContextID, update: NotificationContextUpdate): Promise<void>
+
   removeContext(context: ContextID): Promise<void>
+
   findContexts(
     params: FindNotificationContextParams,
     personalWorkspaces: string[],
     workspace?: string
   ): Promise<NotificationContext[]>
+
   findNotifications(
     params: FindNotificationsParams,
     personalWorkspace: string,

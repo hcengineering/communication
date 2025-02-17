@@ -28,7 +28,8 @@ import {
   type ResponseEvent,
   RequestEventType,
   type RequestEvent,
-  ResponseEventType
+  ResponseEventType,
+  type CreateMessagesGroupEvent
 } from '@hcengineering/communication-sdk-types'
 
 export type Result = {
@@ -69,17 +70,7 @@ export class EventProcessor {
       case RequestEventType.UpdateNotificationContext:
         return await this.updateNotificationContext(personalWorkspace, event)
       case RequestEventType.CreateMessagesGroup:
-        // return await this.createMessagesGroup(personalWorkspace, event)
-        return {
-          responseEvent: undefined,
-          result: {}
-        }
-      case RequestEventType.RemoveMessagesGroup:
-        // return await this.removeMessagesGroup(personalWorkspace, event)
-        return {
-          responseEvent: undefined,
-          result: {}
-        }
+        return await this.createMessagesGroup(personalWorkspace, event)
     }
   }
 
@@ -292,6 +283,25 @@ export class EventProcessor {
     }
     return {
       responseEvent,
+      result: {}
+    }
+  }
+
+  async createMessagesGroup(personalWorkspace: string, event: CreateMessagesGroupEvent): Promise<Result> {
+    const { fromId, toId, fromDate, toDate, count } = event.group
+    await this.db.createMessagesGroup(
+      this.workspace,
+      event.group.card,
+      event.group.blobId,
+      fromId,
+      toId,
+      fromDate,
+      toDate,
+      count
+    )
+
+    return {
+      responseEvent: undefined,
       result: {}
     }
   }
