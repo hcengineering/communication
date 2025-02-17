@@ -1,12 +1,12 @@
 import {
-  type BroadcastEvent,
   type ConnectionInfo,
   type DbAdapter,
-  EventType,
   type NotificationContextCreatedEvent,
   type NotificationCreatedEvent,
-  type Event,
-  type EventResult
+  type EventResult,
+  type RequestEvent,
+  type ResponseEvent,
+  ResponseEventType
 } from '@hcengineering/communication-sdk-types'
 import type {
   FindMessagesParams,
@@ -55,10 +55,10 @@ export class Manager {
     return result
   }
 
-  async event(info: ConnectionInfo, event: Event): Promise<EventResult> {
-    const { result, broadcastEvent } = await this.eventProcessor.process(info.personalWorkspace, event)
-    if (broadcastEvent !== undefined) {
-      void this.next(broadcastEvent)
+  async event(info: ConnectionInfo, event: RequestEvent): Promise<EventResult> {
+    const { result, responseEvent } = await this.eventProcessor.process(info.personalWorkspace, event)
+    if (responseEvent !== undefined) {
+      void this.next(responseEvent)
     }
     return result
   }
@@ -97,13 +97,13 @@ export class Manager {
     this.dataBySessionId.delete(sessionId)
   }
 
-  async next(event: BroadcastEvent): Promise<void> {
-    await this.broadcastEvent(event)
+  async next(event: ResponseEvent): Promise<void> {
+    await this.responseEvent(event)
     const derived = await this.triggers.process(event)
     await Promise.all(derived.map((it) => this.next(it)))
   }
 
-  private async broadcastEvent(event: BroadcastEvent): Promise<void> {
+  private async responseEvent(event: ResponseEvent): Promise<void> {
     const sessionIds: string[] = []
     for (const [sessionId, session] of this.dataBySessionId.entries()) {
       if (this.match(event, session)) {
@@ -116,58 +116,58 @@ export class Manager {
     }
   }
 
-  private match(event: BroadcastEvent, info: SessionInfo): boolean {
+  private match(event: ResponseEvent, info: SessionInfo): boolean {
     switch (event.type) {
-      case EventType.MessageCreated:
+      case ResponseEventType.MessageCreated:
         return this.matchMessagesQuery(
           { id: event.message.id, card: event.message.card },
           Array.from(info.messageQueries.values())
         )
-      case EventType.PatchCreated:
+      case ResponseEventType.PatchCreated:
         return this.matchMessagesQuery(
           { card: event.card, id: event.patch.message },
           Array.from(info.messageQueries.values())
         )
-      case EventType.MessageRemoved:
+      case ResponseEventType.MessageRemoved:
         return this.matchMessagesQuery(
           { card: event.card, id: event.message },
           Array.from(info.messageQueries.values())
         )
-      case EventType.ReactionCreated:
+      case ResponseEventType.ReactionCreated:
         return this.matchMessagesQuery(
           { card: event.card, id: event.reaction.message },
           Array.from(info.messageQueries.values())
         )
-      case EventType.ReactionRemoved:
+      case ResponseEventType.ReactionRemoved:
         return this.matchMessagesQuery(
           { card: event.card, id: event.message },
           Array.from(info.messageQueries.values())
         )
-      case EventType.AttachmentCreated:
+      case ResponseEventType.AttachmentCreated:
         return this.matchMessagesQuery(
           { card: event.card, id: event.attachment.message },
           Array.from(info.messageQueries.values())
         )
-      case EventType.AttachmentRemoved:
+      case ResponseEventType.AttachmentRemoved:
         return this.matchMessagesQuery(
           { card: event.card, id: event.message },
           Array.from(info.messageQueries.values())
         )
-      case EventType.NotificationCreated:
+      case ResponseEventType.NotificationCreated:
         return (
           info.personalWorkspace === event.personalWorkspace &&
           this.matchNotificationQuery(event, Array.from(info.notificationQueries.values()))
         )
-      case EventType.NotificationRemoved:
+      case ResponseEventType.NotificationRemoved:
         return info.personalWorkspace === event.personalWorkspace && info.notificationQueries.size > 0
-      case EventType.NotificationContextCreated:
+      case ResponseEventType.NotificationContextCreated:
         return (
           info.personalWorkspace === event.context.personalWorkspace &&
           this.matchContextQuery(event, Array.from(info.contextQueries.values()))
         )
-      case EventType.NotificationContextRemoved:
+      case ResponseEventType.NotificationContextRemoved:
         return info.personalWorkspace === event.personalWorkspace && info.contextQueries.size > 0
-      case EventType.NotificationContextUpdated:
+      case ResponseEventType.NotificationContextUpdated:
         return info.personalWorkspace === event.personalWorkspace && info.contextQueries.size > 0
     }
   }

@@ -1,7 +1,13 @@
 import type { MeasureContext } from '@hcengineering/core'
 import type { FindMessagesParams, Message } from '@hcengineering/communication-types'
 import { createDbAdapter } from '@hcengineering/communication-cockroach'
-import type { ConnectionInfo, DbAdapter, Event, EventResult, ServerApi } from '@hcengineering/communication-sdk-types'
+import type {
+  ConnectionInfo,
+  DbAdapter,
+  EventResult,
+  RequestEvent,
+  ServerApi
+} from '@hcengineering/communication-sdk-types'
 
 import { Manager, type BroadcastSessionsFunc } from './manager.ts'
 
@@ -35,7 +41,7 @@ export class Api implements ServerApi {
     this.manager.unsubscribeQuery(info, id)
   }
 
-  async event(info: ConnectionInfo, event: Event): Promise<EventResult> {
+  async event(info: ConnectionInfo, event: RequestEvent): Promise<EventResult> {
     return await this.manager.event(info, event)
   }
 

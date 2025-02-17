@@ -10,8 +10,8 @@ import {
     type MessageCreatedEvent,
     type PatchCreatedEvent,
     type ReactionCreatedEvent,
-    EventType,
-    type BroadcastEvent,
+    type ResponseEvent,
+     ResponseEventType,
     type AttachmentRemovedEvent,
     type MessageRemovedEvent,
     type ReactionRemovedEvent
@@ -32,21 +32,21 @@ export class MessagesQuery extends BaseQuery<Message, FindMessagesParams> {
         return object.created
     }
 
-    override async onEvent(event: BroadcastEvent): Promise<void> {
+    override async onEvent(event: ResponseEvent): Promise<void> {
         switch (event.type) {
-            case EventType.MessageCreated:
+            case ResponseEventType.MessageCreated:
                 return await this.onCreateMessageEvent(event)
-            case EventType.MessageRemoved:
+            case ResponseEventType.MessageRemoved:
                 return await this.onRemoveMessageEvent(event)
-            case EventType.PatchCreated:
+            case ResponseEventType.PatchCreated:
                 return await this.onCreatePatchEvent(event)
-            case EventType.ReactionCreated:
+            case ResponseEventType.ReactionCreated:
                 return await this.onCreateReactionEvent(event)
-            case EventType.ReactionRemoved:
+            case ResponseEventType.ReactionRemoved:
                 return await this.onRemoveReactionEvent(event)
-            case EventType.AttachmentCreated:
+            case ResponseEventType.AttachmentCreated:
                 return await this.onCreateAttachmentEvent(event)
-            case EventType.AttachmentRemoved:
+            case ResponseEventType.AttachmentRemoved:
                 return await this.onRemoveAttachmentEvent(event)
         }
     }

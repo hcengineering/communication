@@ -1,6 +1,5 @@
 import { type Message, type Patch, type Reaction, type Attachment } from '@hcengineering/communication-types'
 import {
-  EventType,
   type CreateAttachmentEvent,
   type AttachmentCreatedEvent,
   type CreateMessageEvent,
@@ -9,8 +8,6 @@ import {
   type PatchCreatedEvent,
   type CreateReactionEvent,
   type ReactionCreatedEvent,
-  type Event,
-  type BroadcastEvent,
   type RemoveAttachmentEvent,
   type AttachmentRemovedEvent,
   type RemoveMessageEvent,
@@ -27,11 +24,15 @@ import {
   type NotificationRemovedEvent,
   type NotificationContextCreatedEvent,
   type NotificationContextRemovedEvent,
-  type NotificationContextUpdatedEvent
+  type NotificationContextUpdatedEvent,
+  type ResponseEvent,
+  RequestEventType,
+  type RequestEvent,
+  ResponseEventType
 } from '@hcengineering/communication-sdk-types'
 
 export type Result = {
-  broadcastEvent?: BroadcastEvent
+  responseEvent?: ResponseEvent
   result: EventResult
 }
 
@@ -41,32 +42,44 @@ export class EventProcessor {
     private readonly workspace: string
   ) {}
 
-  async process(personalWorkspace: string, event: Event): Promise<Result> {
+  async process(personalWorkspace: string, event: RequestEvent): Promise<Result> {
     switch (event.type) {
-      case EventType.CreateMessage:
+      case RequestEventType.CreateMessage:
         return await this.createMessage(personalWorkspace, event)
-      case EventType.RemoveMessage:
+      case RequestEventType.RemoveMessage:
         return await this.removeMessage(personalWorkspace, event)
-      case EventType.CreatePatch:
+      case RequestEventType.CreatePatch:
         return await this.createPatch(personalWorkspace, event)
-      case EventType.CreateReaction:
+      case RequestEventType.CreateReaction:
         return await this.createReaction(personalWorkspace, event)
-      case EventType.RemoveReaction:
+      case RequestEventType.RemoveReaction:
         return await this.removeReaction(personalWorkspace, event)
-      case EventType.CreateAttachment:
+      case RequestEventType.CreateAttachment:
         return await this.createAttachment(personalWorkspace, event)
-      case EventType.RemoveAttachment:
+      case RequestEventType.RemoveAttachment:
         return await this.removeAttachment(personalWorkspace, event)
-      case EventType.CreateNotification:
+      case RequestEventType.CreateNotification:
         return await this.createNotification(personalWorkspace, event)
-      case EventType.RemoveNotification:
+      case RequestEventType.RemoveNotification:
         return await this.removeNotification(personalWorkspace, event)
-      case EventType.CreateNotificationContext:
+      case RequestEventType.CreateNotificationContext:
         return await this.createNotificationContext(personalWorkspace, event)
-      case EventType.RemoveNotificationContext:
+      case RequestEventType.RemoveNotificationContext:
         return await this.removeNotificationContext(personalWorkspace, event)
-      case EventType.UpdateNotificationContext:
+      case RequestEventType.UpdateNotificationContext:
         return await this.updateNotificationContext(personalWorkspace, event)
+      case RequestEventType.CreateMessagesGroup:
+        // return await this.createMessagesGroup(personalWorkspace, event)
+        return {
+          responseEvent: undefined,
+          result: {}
+        }
+      case RequestEventType.RemoveMessagesGroup:
+        // return await this.removeMessagesGroup(personalWorkspace, event)
+        return {
+          responseEvent: undefined,
+          result: {}
+        }
     }
   }
 
@@ -83,12 +96,12 @@ export class EventProcessor {
       reactions: [],
       attachments: []
     }
-    const broadcastEvent: MessageCreatedEvent = {
-      type: EventType.MessageCreated,
+    const responseEvent: MessageCreatedEvent = {
+      type: ResponseEventType.MessageCreated,
       message
     }
     return {
-      broadcastEvent,
+      responseEvent,
       result: { id }
     }
   }
@@ -103,13 +116,13 @@ export class EventProcessor {
       creator: event.creator,
       created: created
     }
-    const broadcastEvent: PatchCreatedEvent = {
-      type: EventType.PatchCreated,
+    const responseEvent: PatchCreatedEvent = {
+      type: ResponseEventType.PatchCreated,
       card: event.card,
       patch
     }
     return {
-      broadcastEvent,
+      responseEvent,
       result: {}
     }
   }
@@ -117,14 +130,14 @@ export class EventProcessor {
   private async removeMessage(_personalWorkspace: string, event: RemoveMessageEvent): Promise<Result> {
     await this.db.removeMessage(event.message)
 
-    const broadcastEvent: MessageRemovedEvent = {
-      type: EventType.MessageRemoved,
+    const responseEvent: MessageRemovedEvent = {
+      type: ResponseEventType.MessageRemoved,
       card: event.card,
       message: event.message
     }
 
     return {
-      broadcastEvent,
+      responseEvent,
       result: {}
     }
   }
@@ -139,28 +152,28 @@ export class EventProcessor {
       creator: event.creator,
       created: created
     }
-    const broadcastEvent: ReactionCreatedEvent = {
-      type: EventType.ReactionCreated,
+    const responseEvent: ReactionCreatedEvent = {
+      type: ResponseEventType.ReactionCreated,
       card: event.card,
       reaction
     }
     return {
-      broadcastEvent,
+      responseEvent,
       result: {}
     }
   }
 
   private async removeReaction(_personalWorkspace: string, event: RemoveReactionEvent): Promise<Result> {
     await this.db.removeReaction(event.message, event.reaction, event.creator)
-    const broadcastEvent: ReactionRemovedEvent = {
-      type: EventType.ReactionRemoved,
+    const responseEvent: ReactionRemovedEvent = {
+      type: ResponseEventType.ReactionRemoved,
       card: event.card,
       message: event.message,
       reaction: event.reaction,
       creator: event.creator
     }
     return {
-      broadcastEvent,
+      responseEvent,
       result: {}
     }
   }
@@ -175,28 +188,28 @@ export class EventProcessor {
       creator: event.creator,
       created: created
     }
-    const broadcastEvent: AttachmentCreatedEvent = {
-      type: EventType.AttachmentCreated,
+    const responseEvent: AttachmentCreatedEvent = {
+      type: ResponseEventType.AttachmentCreated,
       card: event.card,
       attachment
     }
 
     return {
-      broadcastEvent,
+      responseEvent,
       result: {}
     }
   }
 
   private async removeAttachment(_personalWorkspace: string, event: RemoveAttachmentEvent): Promise<Result> {
     await this.db.removeAttachment(event.message, event.card)
-    const broadcastEvent: AttachmentRemovedEvent = {
-      type: EventType.AttachmentRemoved,
+    const responseEvent: AttachmentRemovedEvent = {
+      type: ResponseEventType.AttachmentRemoved,
       card: event.card,
       message: event.message,
       attachment: event.attachment
     }
     return {
-      broadcastEvent,
+      responseEvent,
       result: {}
     }
   }
@@ -212,14 +225,14 @@ export class EventProcessor {
   private async removeNotification(personalWorkspace: string, event: RemoveNotificationEvent): Promise<Result> {
     await this.db.removeNotification(event.message, event.context)
 
-    const broadcastEvent: NotificationRemovedEvent = {
-      type: EventType.NotificationRemoved,
+    const responseEvent: NotificationRemovedEvent = {
+      type: ResponseEventType.NotificationRemoved,
       personalWorkspace: personalWorkspace,
       message: event.message,
       context: event.context
     }
     return {
-      broadcastEvent,
+      responseEvent,
       result: {}
     }
   }
@@ -235,8 +248,8 @@ export class EventProcessor {
       event.lastView,
       event.lastUpdate
     )
-    const broadcastEvent: NotificationContextCreatedEvent = {
-      type: EventType.NotificationContextCreated,
+    const responseEvent: NotificationContextCreatedEvent = {
+      type: ResponseEventType.NotificationContextCreated,
       context: {
         id,
         workspace: this.workspace,
@@ -247,7 +260,7 @@ export class EventProcessor {
       }
     }
     return {
-      broadcastEvent,
+      responseEvent,
       result: { id }
     }
   }
@@ -257,13 +270,13 @@ export class EventProcessor {
     event: RemoveNotificationContextEvent
   ): Promise<Result> {
     await this.db.removeContext(event.context)
-    const broadcastEvent: NotificationContextRemovedEvent = {
-      type: EventType.NotificationContextRemoved,
+    const responseEvent: NotificationContextRemovedEvent = {
+      type: ResponseEventType.NotificationContextRemoved,
       personalWorkspace: personalWorkspace,
       context: event.context
     }
     return {
-      broadcastEvent,
+      responseEvent,
       result: {}
     }
   }
@@ -271,14 +284,14 @@ export class EventProcessor {
   async updateNotificationContext(personalWorkspace: string, event: UpdateNotificationContextEvent): Promise<Result> {
     await this.db.updateContext(event.context, event.update)
 
-    const broadcastEvent: NotificationContextUpdatedEvent = {
-      type: EventType.NotificationContextUpdated,
+    const responseEvent: NotificationContextUpdatedEvent = {
+      type: ResponseEventType.NotificationContextUpdated,
       personalWorkspace: personalWorkspace,
       context: event.context,
       update: event.update
     }
     return {
-      broadcastEvent,
+      responseEvent,
       result: {}
     }
   }

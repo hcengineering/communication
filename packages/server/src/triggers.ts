@@ -1,10 +1,10 @@
 import {
-  type BroadcastEvent,
+  ResponseEventType,
   type DbAdapter,
-  EventType,
   type MessageCreatedEvent,
   type NotificationContextCreatedEvent,
-  type NotificationCreatedEvent
+  type NotificationCreatedEvent,
+  type ResponseEvent
 } from '@hcengineering/communication-sdk-types'
 import type { NotificationContext, ContextID, CardID } from '@hcengineering/communication-types'
 
@@ -14,23 +14,23 @@ export class Triggers {
     private readonly workspace: string
   ) {}
 
-  async process(event: BroadcastEvent): Promise<BroadcastEvent[]> {
+  async process(event: ResponseEvent): Promise<ResponseEvent[]> {
     switch (event.type) {
-      case EventType.MessageCreated:
+      case ResponseEventType.MessageCreated:
         return this.createNotifications(event)
     }
 
     return []
   }
 
-  private async createNotifications(event: MessageCreatedEvent): Promise<BroadcastEvent[]> {
+  private async createNotifications(event: MessageCreatedEvent): Promise<ResponseEvent[]> {
     const card = event.message.card as any as CardID
     const subscribedPersonalWorkspaces = [
       'cd0aba36-1c4f-4170-95f2-27a12a5415f7',
       'cd0aba36-1c4f-4170-95f2-27a12a5415f8'
     ]
 
-    const res: BroadcastEvent[] = []
+    const res: ResponseEvent[] = []
     const contexts = await this.db.findContexts({ card }, [], this.workspace)
 
     res.push(...(await this.updateNotificationContexts(event.message.created, contexts)))
@@ -51,7 +51,7 @@ export class Triggers {
       await this.db.createNotification(event.message.id, contextId)
 
       const resultEvent: NotificationCreatedEvent = {
-        type: EventType.NotificationCreated,
+        type: ResponseEventType.NotificationCreated,
         personalWorkspace,
         notification: {
           context: contextId,
@@ -70,7 +70,7 @@ export class Triggers {
     workspace: string,
     card: CardID,
     personalWorkspace: string,
-    res: BroadcastEvent[],
+    res: ResponseEvent[],
     lastUpdate: Date,
     context?: NotificationContext
   ): Promise<ContextID> {
@@ -85,7 +85,7 @@ export class Triggers {
         personalWorkspace
       }
       const resultEvent: NotificationContextCreatedEvent = {
-        type: EventType.NotificationContextCreated,
+        type: ResponseEventType.NotificationContextCreated,
         context: newContext
       }
 
@@ -98,13 +98,13 @@ export class Triggers {
   private async updateNotificationContexts(
     lastUpdate: Date,
     contexts: NotificationContext[]
-  ): Promise<BroadcastEvent[]> {
-    const res: BroadcastEvent[] = []
+  ): Promise<ResponseEvent[]> {
+    const res: ResponseEvent[] = []
     for (const context of contexts) {
       if (context.lastUpdate === undefined || context.lastUpdate < lastUpdate) {
         await this.db.updateContext(context.id, { lastUpdate })
         res.push({
-          type: EventType.NotificationContextUpdated,
+          type: ResponseEventType.NotificationContextUpdated,
           personalWorkspace: context.personalWorkspace,
           context: context.id,
           update: {

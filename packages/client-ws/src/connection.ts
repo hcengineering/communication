@@ -1,4 +1,4 @@
-import type { BroadcastEvent } from '@hcengineering/communication-sdk-types'
+import type { ResponseEvent } from '@hcengineering/communication-sdk-types'
 import { encode, decode } from '@msgpack/msgpack'
 
 const PING_TIMEOUT = 10000
@@ -30,7 +30,7 @@ export class WebSocketConnection {
   private pingInterval: any
   private reconnectTimeout: any
 
-  onEvent: (event: BroadcastEvent) => void = () => {}
+  onEvent: (event: ResponseEvent) => void = () => {}
 
   constructor(
     private url: string,
@@ -58,7 +58,7 @@ export class WebSocketConnection {
         if (response.error !== undefined) {
           console.error('Websocket error', response.error)
         } else {
-          const event = response.result as BroadcastEvent
+          const event = response.result as ResponseEvent
           this.onEvent(event)
         }
       }
