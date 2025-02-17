@@ -1,6 +1,6 @@
 import {
     type FindMessagesParams,
-    type ID,
+    type MessageID,
     type Message,
     type Patch,
     SortOrder
@@ -24,7 +24,7 @@ export class MessagesQuery extends BaseQuery<Message, FindMessagesParams> {
         return this.client.findMessages(params, this.id)
     }
 
-    override getObjectId(object: Message): ID {
+    override getObjectId(object: Message): MessageID {
         return object.id
     }
 
@@ -58,7 +58,7 @@ export class MessagesQuery extends BaseQuery<Message, FindMessagesParams> {
 
         const message = {
             ...event.message,
-            edited: new Date(event.message.edited),
+            edited: event.message.edited,
             created: new Date(event.message.created)
         }
         const exists = this.result.get(message.id)

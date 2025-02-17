@@ -1,6 +1,6 @@
-import type { Message, CardID, ID } from './message'
+import type { Message, CardID } from './message'
 
-export type ContextID = ID & { context: true }
+export type ContextID = string & { context: true }
 
 export interface Notification {
   message: Message

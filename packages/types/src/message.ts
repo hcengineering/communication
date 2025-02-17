@@ -6,8 +6,8 @@ export type CardID = Ref<Card>
 export type SocialID = PersonId
 export type RichText = string
 
-export type ID = string
-export type MessageID = ID & { message: true }
+export type ID = string | number
+export type MessageID = number & { message: true }
 
 interface Object {
   creator: SocialID
@@ -18,16 +18,18 @@ export interface Message extends Object {
   id: MessageID
   card: CardID
   content: RichText
-  edited: Date
+  edited?: Date
   reactions: Reaction[]
   attachments: Attachment[]
 }
 
 export interface MessagesGroup {
   card: CardID
-  startAt: Date
-  endAt: Date
   blobId: BlobID
+  fromId: MessageID
+  toId: MessageID
+  fromDate: Date
+  toDate: Date
   count: number
 }
 

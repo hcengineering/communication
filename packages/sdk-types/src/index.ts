@@ -1,6 +1,5 @@
 export * from './db'
 export * from './event'
-export * from './ws'
 export * from './client'
 export * from './query'
 export * from './serverApi'

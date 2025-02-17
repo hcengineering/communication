@@ -9,7 +9,7 @@ import {
 } from '@hcengineering/communication-types'
 
 import {BaseDb} from './base.ts'
-import {TableName, type ContextDb, type NotificationDb} from './types.ts'
+import {TableName, type ContextDb, type NotificationDb} from './schema.ts'
 
 export class NotificationsDb extends BaseDb {
     async createNotification(message: MessageID, context: ContextID): Promise<void> {

@@ -2,7 +2,7 @@ import {
     type FindNotificationsParams,
     SortOrder,
     type Notification,
-    type ID,
+    type MessageID,
 } from '@hcengineering/communication-types'
 import {
     type NotificationCreatedEvent,
@@ -20,7 +20,7 @@ export class NotificationQuery extends BaseQuery<Notification, FindNotifications
         return this.client.findNotifications(params, this.id)
     }
 
-    override getObjectId(object: Notification): ID {
+    override getObjectId(object: Notification): MessageID {
         return object.message.id
     }
 

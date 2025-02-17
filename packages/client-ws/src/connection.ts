@@ -1,8 +1,26 @@
-import type { Response, HelloRequest, RequestId, BroadcastEvent, Request } from '@hcengineering/communication-sdk-types'
+import type { BroadcastEvent } from '@hcengineering/communication-sdk-types'
 import { encode, decode } from '@msgpack/msgpack'
 
 const PING_TIMEOUT = 10000
 const RECONNECT_TIMEOUT = 1000
+
+export type RequestId = string
+
+export interface Response {
+  id?: RequestId
+  result?: any
+  error?: string
+}
+
+export interface Request {
+  id?: RequestId
+  method: string
+  params: any[]
+}
+
+export interface HelloRequest extends Request {
+  binary?: boolean
+}
 
 export class WebSocketConnection {
   private ws!: WebSocket | Promise<WebSocket>

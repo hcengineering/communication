@@ -12,7 +12,9 @@ import {
   type NotificationContext,
   type FindNotificationsParams,
   type Notification,
-  type BlobID
+  type BlobID,
+  type MessagesGroup,
+  type FindMessagesGroupsParams
 } from '@hcengineering/communication-types'
 import type { DbAdapter } from '@hcengineering/communication-sdk-types'
 
@@ -53,12 +55,14 @@ export class CockroachAdapter implements DbAdapter {
   async createMessagesGroup(
     workspace: string,
     card: CardID,
-    startAt: Date,
-    endAt: Date,
     blobId: BlobID,
+    from_id: MessageID,
+    to_id: MessageID,
+    from_date: Date,
+    to_date: Date,
     count: number
   ): Promise<void> {
-    return await this.message.createMessagesGroup(workspace, card, startAt, endAt, blobId, count)
+    return await this.message.createMessagesGroup(workspace, card, blobId, from_id, to_id, from_date, to_date, count)
   }
 
   async createReaction(message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void> {
@@ -79,6 +83,10 @@ export class CockroachAdapter implements DbAdapter {
 
   async findMessages(workspace: string, params: FindMessagesParams): Promise<Message[]> {
     return await this.message.find(workspace, params)
+  }
+
+  async findMessagesGroups(workspace: string, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
+    return await this.message.findGroups(workspace, params)
   }
 
   async createNotification(message: MessageID, context: ContextID): Promise<void> {

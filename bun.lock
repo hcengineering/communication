@@ -65,11 +65,25 @@
       "name": "@hcengineering/communication-cockroach",
       "version": "0.1.7",
       "dependencies": {
+        "@hcengineering/communication-core": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
         "pg": "8.12.0",
         "postgres": "^3.4.4",
         "uuid": "^11.0.3",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.1.14",
+      },
+      "peerDependencies": {
+        "typescript": "^5.6.3",
+      },
+    },
+    "packages/core": {
+      "name": "@hcengineering/communication-core",
+      "version": "0.1.7",
+      "dependencies": {
+        "@hcengineering/communication-types": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "^1.1.14",
@@ -216,6 +230,8 @@
     "@hcengineering/communication-client-ws": ["@hcengineering/communication-client-ws@workspace:packages/client-ws"],
 
     "@hcengineering/communication-cockroach": ["@hcengineering/communication-cockroach@workspace:packages/cockroach"],
+
+    "@hcengineering/communication-core": ["@hcengineering/communication-core@workspace:packages/core"],
 
     "@hcengineering/communication-examples": ["@hcengineering/communication-examples@workspace:packages/examples"],
 

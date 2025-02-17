@@ -28,9 +28,11 @@ export interface DbAdapter {
   createMessagesGroup(
     workspace: string,
     card: CardID,
-    startAt: Date,
-    endAt: Date,
     blobId: BlobID,
+    from_id: MessageID,
+    to_id: MessageID,
+    from_date: Date,
+    to_date: Date,
     count: number
   ): Promise<void>
 
