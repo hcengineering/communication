@@ -59,7 +59,7 @@ export class MessagesQuery extends BaseQuery<Message, FindMessagesParams> {
         const message = {
             ...event.message,
             edited: event.message.edited,
-            created: new Date(event.message.created)
+            created: event.message.created
         }
         const exists = this.result.get(message.id)
 
@@ -93,7 +93,7 @@ export class MessagesQuery extends BaseQuery<Message, FindMessagesParams> {
 
         const patch = {
             ...event.patch,
-            created: new Date(event.patch.created)
+            created: event.patch.created
         }
 
         const message = this.result.get(patch.message)
@@ -125,7 +125,7 @@ export class MessagesQuery extends BaseQuery<Message, FindMessagesParams> {
 
         const reaction = {
             ...event.reaction,
-            created: new Date(event.reaction.created)
+            created: event.reaction.created
         }
         const message = this.result.get(reaction.message)
         if (message === undefined) return
@@ -161,7 +161,7 @@ export class MessagesQuery extends BaseQuery<Message, FindMessagesParams> {
 
         const attachment = {
             ...event.attachment,
-            created: new Date(event.attachment.created)
+            created: event.attachment.created
         }
         const message = this.result.get(attachment.message)
         if (message === undefined) return
