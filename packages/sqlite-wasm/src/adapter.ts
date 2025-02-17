@@ -22,7 +22,9 @@ import { applyMigrations } from './migrations.ts'
 import { MessagesDb } from './db/message.ts'
 import { NotificationsDb } from './db/notification.ts'
 
-export class SqliteAdapter implements DbAdapter {
+//TODO: FIXME
+//export class SqliteAdapter implements DbAdapter
+export class SqliteAdapter {
   private readonly message: MessagesDb
   private readonly notification: NotificationsDb
 
@@ -44,12 +46,26 @@ export class SqliteAdapter implements DbAdapter {
     return await this.message.createMessage(workspace, card, content, creator, created)
   }
 
-  async createPatch(message: MessageID, content: RichText, creator: SocialID, created: Date): Promise<void> {
+  async createPatch(
+    workspace: string,
+    card: CardID,
+    message: MessageID,
+    content: RichText,
+    creator: SocialID,
+    created: Date
+  ): Promise<void> {
+    //TODO: FIXME
     return await this.message.createPatch(message, content, creator, created)
   }
 
-  async removeMessage(message: MessageID): Promise<void> {
-    return await this.message.removeMessage(message)
+  async removeMessage(workspace: string, card: CardID, id: MessageID): Promise<MessageID> {
+    await this.message.removeMessage(id)
+    return id
+  }
+
+  async removeMessages(workspace: string, card: CardID, ids: MessageID[]): Promise<MessageID[]> {
+    //TODO: implement
+    return ids
   }
 
   /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -71,11 +87,26 @@ export class SqliteAdapter implements DbAdapter {
     return []
   }
 
-  async createReaction(message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void> {
+  async createReaction(
+    workspace: string,
+    card: CardID,
+    message: MessageID,
+    reaction: string,
+    creator: SocialID,
+    created: Date
+  ): Promise<void> {
+    //TODO: FIXME
     return await this.message.createReaction(message, reaction, creator, created)
   }
 
-  async removeReaction(message: MessageID, reaction: string, creator: SocialID): Promise<void> {
+  async removeReaction(
+    workspace: string,
+    card: CardID,
+    message: MessageID,
+    reaction: string,
+    creator: SocialID
+  ): Promise<void> {
+    //TODO: FIXME
     return await this.message.removeReaction(message, reaction, creator)
   }
 
@@ -141,5 +172,6 @@ export async function createDbAdapter(connectionString: string): Promise<DbAdapt
   const { worker, dbId } = await initializeSQLite(connectionString)
 
   await applyMigrations(worker, dbId)
-  return new SqliteAdapter(worker, dbId)
+  //TODO: FIXME
+  return new SqliteAdapter(worker, dbId) as unknown as DbAdapter
 }

@@ -3,7 +3,8 @@ import type {
   FindMessagesGroupsParams,
   FindMessagesParams,
   Message,
-  MessagesGroup
+  MessagesGroup,
+  WorkspaceID
 } from '@hcengineering/communication-types'
 import { createDbAdapter } from '@hcengineering/communication-cockroach'
 import type {
@@ -21,20 +22,20 @@ export class Api implements ServerApi {
 
   private constructor(
     private readonly ctx: MeasureContext,
-    private readonly workspace: string,
-    db: DbAdapter,
-    broadcast: BroadcastSessionsFunc
+    private readonly workspace: WorkspaceID,
+    private readonly db: DbAdapter,
+    private readonly broadcast: BroadcastSessionsFunc
   ) {
     this.manager = new Manager(this.ctx, db, this.workspace, broadcast)
   }
 
   static async create(
     ctx: MeasureContext,
-    workspace: string,
+    workspace: WorkspaceID,
     dbUrl: string,
     broadcast: BroadcastSessionsFunc
   ): Promise<Api> {
-    const db = await createDbAdapter(dbUrl)
+    const db = await createDbAdapter(dbUrl, workspace)
     return new Api(ctx, workspace, db, broadcast)
   }
 

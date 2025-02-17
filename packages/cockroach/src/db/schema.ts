@@ -1,4 +1,4 @@
-import type {ContextID, MessageID, RichText, SocialID, CardID, BlobID, Message, Reaction, Attachment, MessagesGroup } from "@hcengineering/communication-types"
+import type {ContextID, MessageID, RichText, SocialID, CardID, BlobID, Message, Reaction, Attachment, MessagesGroup, WorkspaceID } from "@hcengineering/communication-types"
 
 export enum TableName {
     Message = 'communication.message',
@@ -12,7 +12,7 @@ export enum TableName {
 
 export interface MessageDb {
     id: MessageID,
-    workspace_id: string,
+    workspace_id: WorkspaceID,
     card_id: CardID,
     content: RichText,
     creator: SocialID,
@@ -20,7 +20,7 @@ export interface MessageDb {
 }
 
 export interface MessagesGroupDb {
-    workspace_id: string,
+    workspace_id: WorkspaceID,
     card_id: CardID,
     blob_id: BlobID,
     from_id: MessageID,
@@ -31,12 +31,17 @@ export interface MessagesGroupDb {
 }
 
 export interface PatchDb {
+    workspace_id: WorkspaceID,
+    card_id: CardID,
     message_id: MessageID,
     content: RichText,
     creator: SocialID,
     created: Date,
 }
+
 export interface ReactionDb {
+    workspace_id: WorkspaceID,
+    card_id: CardID,
     message_id: MessageID,
     reaction: string,
     creator: SocialID
@@ -56,9 +61,9 @@ export interface NotificationDb {
 }
 
 export interface ContextDb {
-    workspace_id: string
+    workspace_id: WorkspaceID
     card_id: CardID
-    personal_workspace: string
+    personal_workspace: WorkspaceID
 
     archived_from?: Date
     last_view?: Date

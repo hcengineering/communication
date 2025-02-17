@@ -13,7 +13,7 @@ import type {
 } from '@hcengineering/communication-types'
 import type { FindMessagesParams } from '@hcengineering/communication-types'
 
-import type { ResponseEvent } from './response_event.ts'
+import type { ResponseEvent } from './responseEvent.ts'
 
 export interface Client {
   createMessage(card: CardID, content: RichText, creator: SocialID): Promise<MessageID>

@@ -1,4 +1,11 @@
-import { type Message, type Patch, type Reaction, type Attachment } from '@hcengineering/communication-types'
+import {
+  type Message,
+  type Patch,
+  type Reaction,
+  type Attachment,
+  type SocialID,
+  type WorkspaceID
+} from '@hcengineering/communication-types'
 import {
   type CreateAttachmentEvent,
   type AttachmentCreatedEvent,
@@ -29,7 +36,9 @@ import {
   RequestEventType,
   type RequestEvent,
   ResponseEventType,
-  type CreateMessagesGroupEvent
+  type CreateMessagesGroupEvent,
+  type RemoveMessagesEvent,
+  type MessagesRemovedEvent
 } from '@hcengineering/communication-sdk-types'
 
 export type Result = {
@@ -37,46 +46,57 @@ export type Result = {
   result: EventResult
 }
 
+export type UserInfo = {
+  personalWorkspace: WorkspaceID
+  socialIds: SocialID[]
+}
+
 export class EventProcessor {
   constructor(
     private readonly db: DbAdapter,
-    private readonly workspace: string
+    private readonly workspace: WorkspaceID
   ) {}
 
-  async process(personalWorkspace: string, event: RequestEvent): Promise<Result> {
+  async process(user: UserInfo, event: RequestEvent): Promise<Result> {
     switch (event.type) {
       case RequestEventType.CreateMessage:
-        return await this.createMessage(personalWorkspace, event)
+        return await this.createMessage(event, user)
       case RequestEventType.RemoveMessage:
-        return await this.removeMessage(personalWorkspace, event)
+        return await this.removeMessage(event, user)
+      case RequestEventType.RemoveMessages:
+        return await this.removeMessages(event, user)
       case RequestEventType.CreatePatch:
-        return await this.createPatch(personalWorkspace, event)
+        return await this.createPatch(event, user)
       case RequestEventType.CreateReaction:
-        return await this.createReaction(personalWorkspace, event)
+        return await this.createReaction(event, user)
       case RequestEventType.RemoveReaction:
-        return await this.removeReaction(personalWorkspace, event)
+        return await this.removeReaction(event, user)
       case RequestEventType.CreateAttachment:
-        return await this.createAttachment(personalWorkspace, event)
+        return await this.createAttachment(event, user)
       case RequestEventType.RemoveAttachment:
-        return await this.removeAttachment(personalWorkspace, event)
+        return await this.removeAttachment(event, user)
       case RequestEventType.CreateNotification:
-        return await this.createNotification(personalWorkspace, event)
+        return await this.createNotification(event, user)
       case RequestEventType.RemoveNotification:
-        return await this.removeNotification(personalWorkspace, event)
+        return await this.removeNotification(event, user)
       case RequestEventType.CreateNotificationContext:
-        return await this.createNotificationContext(personalWorkspace, event)
+        return await this.createNotificationContext(event, user)
       case RequestEventType.RemoveNotificationContext:
-        return await this.removeNotificationContext(personalWorkspace, event)
+        return await this.removeNotificationContext(event, user)
       case RequestEventType.UpdateNotificationContext:
-        return await this.updateNotificationContext(personalWorkspace, event)
+        return await this.updateNotificationContext(event, user)
       case RequestEventType.CreateMessagesGroup:
-        return await this.createMessagesGroup(personalWorkspace, event)
+        return await this.createMessagesGroup(event, user)
     }
   }
 
-  private async createMessage(_personalWorkspace: string, event: CreateMessageEvent): Promise<Result> {
+  private async createMessage(event: CreateMessageEvent, user: UserInfo): Promise<Result> {
+    if (!user.socialIds.includes(event.creator)) {
+      throw new Error('Forbidden')
+    }
+
     const created = new Date()
-    const id = await this.db.createMessage(this.workspace, event.card, event.content, event.creator, created)
+    const id = await this.db.createMessage(event.card, event.content, event.creator, created)
     const message: Message = {
       id,
       card: event.card,
@@ -97,9 +117,12 @@ export class EventProcessor {
     }
   }
 
-  private async createPatch(_personalWorkspace: string, event: CreatePatchEvent): Promise<Result> {
+  private async createPatch(event: CreatePatchEvent, user: UserInfo): Promise<Result> {
+    if (!user.socialIds.includes(event.creator)) {
+      throw new Error('Forbidden')
+    }
     const created = new Date()
-    await this.db.createPatch(event.message, event.content, event.creator, created)
+    await this.db.createPatch(event.card, event.message, event.content, event.creator, created)
 
     const patch: Patch = {
       message: event.message,
@@ -118,8 +141,16 @@ export class EventProcessor {
     }
   }
 
-  private async removeMessage(_personalWorkspace: string, event: RemoveMessageEvent): Promise<Result> {
-    await this.db.removeMessage(event.message)
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async removeMessage(event: RemoveMessageEvent, _: UserInfo): Promise<Result> {
+    const res = await this.db.removeMessage(event.card, event.message)
+
+    if (res === undefined) {
+      return {
+        responseEvent: undefined,
+        result: { id: res }
+      }
+    }
 
     const responseEvent: MessageRemovedEvent = {
       type: ResponseEventType.MessageRemoved,
@@ -129,13 +160,39 @@ export class EventProcessor {
 
     return {
       responseEvent,
-      result: {}
+      result: { id: res }
     }
   }
 
-  private async createReaction(_personalWorkspace: string, event: CreateReactionEvent): Promise<Result> {
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async removeMessages(event: RemoveMessagesEvent, _: UserInfo): Promise<Result> {
+    const ids = await this.db.removeMessages(event.card, event.messages)
+
+    if (event.silent === true) {
+      return {
+        responseEvent: undefined,
+        result: { ids }
+      }
+    }
+
+    const responseEvent: MessagesRemovedEvent = {
+      type: ResponseEventType.MessagesRemoved,
+      card: event.card,
+      messages: ids
+    }
+
+    return {
+      responseEvent,
+      result: { ids }
+    }
+  }
+
+  private async createReaction(event: CreateReactionEvent, user: UserInfo): Promise<Result> {
+    if (!user.socialIds.includes(event.creator)) {
+      throw new Error('Forbidden')
+    }
     const created = new Date()
-    await this.db.createReaction(event.message, event.reaction, event.creator, created)
+    await this.db.createReaction(event.card, event.message, event.reaction, event.creator, created)
 
     const reaction: Reaction = {
       message: event.message,
@@ -154,8 +211,11 @@ export class EventProcessor {
     }
   }
 
-  private async removeReaction(_personalWorkspace: string, event: RemoveReactionEvent): Promise<Result> {
-    await this.db.removeReaction(event.message, event.reaction, event.creator)
+  private async removeReaction(event: RemoveReactionEvent, user: UserInfo): Promise<Result> {
+    if (!user.socialIds.includes(event.creator)) {
+      throw new Error('Forbidden')
+    }
+    await this.db.removeReaction(event.card, event.message, event.reaction, event.creator)
     const responseEvent: ReactionRemovedEvent = {
       type: ResponseEventType.ReactionRemoved,
       card: event.card,
@@ -169,7 +229,8 @@ export class EventProcessor {
     }
   }
 
-  private async createAttachment(_personalWorkspace: string, event: CreateAttachmentEvent): Promise<Result> {
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async createAttachment(event: CreateAttachmentEvent, _: UserInfo): Promise<Result> {
     const created = new Date()
     await this.db.createAttachment(event.message, event.card, event.creator, created)
 
@@ -191,7 +252,8 @@ export class EventProcessor {
     }
   }
 
-  private async removeAttachment(_personalWorkspace: string, event: RemoveAttachmentEvent): Promise<Result> {
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async removeAttachment(event: RemoveAttachmentEvent, _: UserInfo): Promise<Result> {
     await this.db.removeAttachment(event.message, event.card)
     const responseEvent: AttachmentRemovedEvent = {
       type: ResponseEventType.AttachmentRemoved,
@@ -205,7 +267,8 @@ export class EventProcessor {
     }
   }
 
-  private async createNotification(_personalWorkspace: string, event: CreateNotificationEvent): Promise<Result> {
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async createNotification(event: CreateNotificationEvent, _: UserInfo): Promise<Result> {
     await this.db.createNotification(event.message, event.context)
 
     return {
@@ -213,12 +276,12 @@ export class EventProcessor {
     }
   }
 
-  private async removeNotification(personalWorkspace: string, event: RemoveNotificationEvent): Promise<Result> {
+  private async removeNotification(event: RemoveNotificationEvent, user: UserInfo): Promise<Result> {
     await this.db.removeNotification(event.message, event.context)
 
     const responseEvent: NotificationRemovedEvent = {
       type: ResponseEventType.NotificationRemoved,
-      personalWorkspace: personalWorkspace,
+      personalWorkspace: user.personalWorkspace,
       message: event.message,
       context: event.context
     }
@@ -228,23 +291,14 @@ export class EventProcessor {
     }
   }
 
-  private async createNotificationContext(
-    personalWorkspace: string,
-    event: CreateNotificationContextEvent
-  ): Promise<Result> {
-    const id = await this.db.createContext(
-      personalWorkspace,
-      this.workspace,
-      event.card,
-      event.lastView,
-      event.lastUpdate
-    )
+  private async createNotificationContext(event: CreateNotificationContextEvent, user: UserInfo): Promise<Result> {
+    const id = await this.db.createContext(user.personalWorkspace, event.card, event.lastView, event.lastUpdate)
     const responseEvent: NotificationContextCreatedEvent = {
       type: ResponseEventType.NotificationContextCreated,
       context: {
         id,
         workspace: this.workspace,
-        personalWorkspace: personalWorkspace,
+        personalWorkspace: user.personalWorkspace,
         card: event.card,
         lastView: event.lastView,
         lastUpdate: event.lastUpdate
@@ -256,14 +310,11 @@ export class EventProcessor {
     }
   }
 
-  private async removeNotificationContext(
-    personalWorkspace: string,
-    event: RemoveNotificationContextEvent
-  ): Promise<Result> {
+  private async removeNotificationContext(event: RemoveNotificationContextEvent, user: UserInfo): Promise<Result> {
     await this.db.removeContext(event.context)
     const responseEvent: NotificationContextRemovedEvent = {
       type: ResponseEventType.NotificationContextRemoved,
-      personalWorkspace: personalWorkspace,
+      personalWorkspace: user.personalWorkspace,
       context: event.context
     }
     return {
@@ -272,12 +323,12 @@ export class EventProcessor {
     }
   }
 
-  async updateNotificationContext(personalWorkspace: string, event: UpdateNotificationContextEvent): Promise<Result> {
+  async updateNotificationContext(event: UpdateNotificationContextEvent, user: UserInfo): Promise<Result> {
     await this.db.updateContext(event.context, event.update)
 
     const responseEvent: NotificationContextUpdatedEvent = {
       type: ResponseEventType.NotificationContextUpdated,
-      personalWorkspace: personalWorkspace,
+      personalWorkspace: user.personalWorkspace,
       context: event.context,
       update: event.update
     }
@@ -287,18 +338,10 @@ export class EventProcessor {
     }
   }
 
-  async createMessagesGroup(personalWorkspace: string, event: CreateMessagesGroupEvent): Promise<Result> {
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async createMessagesGroup(event: CreateMessagesGroupEvent, _: UserInfo): Promise<Result> {
     const { fromId, toId, fromDate, toDate, count } = event.group
-    await this.db.createMessagesGroup(
-      this.workspace,
-      event.group.card,
-      event.group.blobId,
-      fromId,
-      toId,
-      fromDate,
-      toDate,
-      count
-    )
+    await this.db.createMessagesGroup(event.group.card, event.group.blobId, fromId, toId, fromDate, toDate, count)
 
     return {
       responseEvent: undefined,

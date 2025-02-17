@@ -29,10 +29,10 @@ import {getCondition} from './utils.ts';
 
 export class MessagesDb extends BaseDb {
     //Message
-    async createMessage(workspace: string, card: CardID, content: RichText, creator: SocialID, created: Date): Promise<MessageID> {
+    async createMessage(card: CardID, content: RichText, creator: SocialID, created: Date): Promise<MessageID> {
         const dbData: MessageDb = {
             id: generateMessageId(),
-            workspace_id: workspace,
+            workspace_id: this.workspace,
             card_id: card,
             content: content,
             creator: creator,
@@ -44,12 +44,24 @@ export class MessagesDb extends BaseDb {
         return dbData.id as MessageID
     }
 
-    async removeMessage(message: MessageID): Promise<void> {
-        await this.remove(TableName.Message, {id: message})
+    async removeMessage(card: CardID, message: MessageID): Promise<MessageID | undefined> {
+        const result = await this.removeWithReturn(TableName.Message, {id: message, workspace_id: this.workspace, card_id: card}, "id")
+        return result[0] as MessageID | undefined
     }
 
-    async createPatch(message: MessageID, content: RichText, creator: SocialID, created: Date): Promise<void> {
+    async removeMessages(card: CardID, ids: MessageID[]): Promise<MessageID[]> {
+        const result = await this.removeWithReturn(TableName.Message, {
+            workspace_id: this.workspace,
+            card_id: card,
+            id: ids
+        }, "id")
+        return result.map((it: any) => it.id)
+    }
+
+    async createPatch(card: CardID, message: MessageID, content: RichText, creator: SocialID, created: Date): Promise<void> {
         const dbData: PatchDb = {
+            workspace_id: this.workspace,
+            card_id: card,
             message_id: message,
             content: content,
             creator: creator,
@@ -60,9 +72,9 @@ export class MessagesDb extends BaseDb {
     }
 
     //MessagesGroup
-    async createMessagesGroup(workspace: string, card: CardID, blobId: BlobID, from_id: MessageID, to_id: MessageID, from_date: Date, to_date: Date, count: number): Promise<void> {
+    async createMessagesGroup(card: CardID, blobId: BlobID, from_id: MessageID, to_id: MessageID, from_date: Date, to_date: Date, count: number): Promise<void> {
         const dbData: MessagesGroupDb = {
-            workspace_id: workspace,
+            workspace_id: this.workspace,
             card_id: card,
             blob_id: blobId,
             from_id,
@@ -93,8 +105,10 @@ export class MessagesDb extends BaseDb {
     }
 
     //Reaction
-    async createReaction(message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void> {
+    async createReaction(card: CardID, message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void> {
         const dbData: ReactionDb = {
+            workspace_id: this.workspace,
+            card_id: card,
             message_id: message,
             reaction: reaction,
             creator: creator,
@@ -103,8 +117,10 @@ export class MessagesDb extends BaseDb {
         await this.insert(TableName.Reaction, dbData)
     }
 
-    async removeReaction(message: MessageID, reaction: string, creator: SocialID): Promise<void> {
+    async removeReaction( card: CardID, message: MessageID, reaction: string, creator: SocialID): Promise<void> {
         await this.remove(TableName.Reaction, {
+            workspace_id: this.workspace,
+            card_id: card,
             message_id: message,
             reaction: reaction,
             creator: creator
@@ -112,7 +128,7 @@ export class MessagesDb extends BaseDb {
     }
 
     //Find messages
-    async find(workspace: string, params: FindMessagesParams): Promise<Message[]> {
+    async find(params: FindMessagesParams): Promise<Message[]> {
         //TODO: experiment with select to improve performance
         const select = `SELECT m.id,
                                m.card_id,
@@ -124,7 +140,7 @@ export class MessagesDb extends BaseDb {
                                ${this.subSelectReactions()}
                         FROM ${TableName.Message} m`
 
-        const {where, values} = this.buildMessageWhere(workspace, params)
+        const {where, values} = this.buildMessageWhere( params)
         const orderBy = params.sort ? `ORDER BY m.created ${params.sort === SortOrder.Asc ? 'ASC' : 'DESC'}` : ''
         const limit = params.limit ? ` LIMIT ${params.limit}` : ''
         const sql = [select, where, orderBy, limit].join(' ')
@@ -134,9 +150,9 @@ export class MessagesDb extends BaseDb {
         return result.map((it: any) => toMessage(it))
     }
 
-    buildMessageWhere(workspace: string, params: FindMessagesParams): { where: string, values: any[] } {
+    buildMessageWhere(params: FindMessagesParams): { where: string, values: any[] } {
         const where: string[] = ['m.workspace_id = $1']
-        const values: any[] = [workspace]
+        const values: any[] = [this.workspace]
 
         let index = 2
 
@@ -177,7 +193,7 @@ export class MessagesDb extends BaseDb {
                                   'created', p.created
                           )
                    FROM ${TableName.Patch} p
-                   WHERE p.message_id = m.id
+                   WHERE p.message_id = m.id AND p.workspace_id = m.workspace_id AND p.card_id = m.card_id
                    ) AS patches`
     }
 
@@ -203,13 +219,13 @@ export class MessagesDb extends BaseDb {
                                   'created', r.created
                           )
                    FROM ${TableName.Reaction} r
-                   WHERE r.message_id = m.id
+                   WHERE r.message_id = m.id AND r.workspace_id = m.workspace_id AND r.card_id = m.card_id
                ) AS reactions`
     }
 
 
     //Find messages groups
-    async findGroups(workspace: string, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
+    async findGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
         const select = `SELECT mg.card_id,
                                mg.blob_id,
                                mg.from_id,
@@ -217,7 +233,7 @@ export class MessagesDb extends BaseDb {
                                mg.count
                         FROM ${TableName.MessagesGroup} mg`
 
-        const {where, values, index} = this.buildMessagesGroupWhere(workspace, params)
+        const {where, values, index} = this.buildMessagesGroupWhere(this.workspace, params)
         const orderBy =  params.sortBy ? `ORDER BY ${index} ${params.sort === SortOrder.Asc ? 'ASC' : 'DESC'}` : ''
         if(params.sortBy) {
             values.push(params.sortBy)

@@ -6,12 +6,12 @@ import {
   type NotificationCreatedEvent,
   type ResponseEvent
 } from '@hcengineering/communication-sdk-types'
-import type { NotificationContext, ContextID, CardID } from '@hcengineering/communication-types'
+import type { NotificationContext, ContextID, CardID, WorkspaceID } from '@hcengineering/communication-types'
 
 export class Triggers {
   constructor(
     private readonly db: DbAdapter,
-    private readonly workspace: string
+    private readonly workspace: WorkspaceID
   ) {}
 
   async process(event: ResponseEvent): Promise<ResponseEvent[]> {
@@ -28,7 +28,7 @@ export class Triggers {
     const subscribedPersonalWorkspaces = [
       'cd0aba36-1c4f-4170-95f2-27a12a5415f7',
       'cd0aba36-1c4f-4170-95f2-27a12a5415f8'
-    ]
+    ] as WorkspaceID[]
 
     const res: ResponseEvent[] = []
     const contexts = await this.db.findContexts({ card }, [], this.workspace)
@@ -40,9 +40,8 @@ export class Triggers {
         (it) => it.card === card && it.personalWorkspace === personalWorkspace && this.workspace === it.workspace
       )
       const contextId = await this.getOrCreateContextId(
-        this.workspace,
-        card,
         personalWorkspace,
+        card,
         res,
         event.message.created,
         existsContext
@@ -67,9 +66,8 @@ export class Triggers {
   }
 
   private async getOrCreateContextId(
-    workspace: string,
+    personalWorkspace: WorkspaceID,
     card: CardID,
-    personalWorkspace: string,
     res: ResponseEvent[],
     lastUpdate: Date,
     context?: NotificationContext
@@ -77,11 +75,11 @@ export class Triggers {
     if (context !== undefined) {
       return context.id
     } else {
-      const contextId = await this.db.createContext(personalWorkspace, workspace, card, undefined, lastUpdate)
+      const contextId = await this.db.createContext(personalWorkspace, card, undefined, lastUpdate)
       const newContext = {
         id: contextId,
         card,
-        workspace,
+        workspace: this.workspace,
         personalWorkspace
       }
       const resultEvent: NotificationContextCreatedEvent = {

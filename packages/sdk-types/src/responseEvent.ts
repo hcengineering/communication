@@ -15,6 +15,7 @@ import type {
 export enum ResponseEventType {
   MessageCreated = 'messageCreated',
   MessageRemoved = 'messageRemoved',
+  MessagesRemoved = 'messagesRemoved',
   PatchCreated = 'patchCreated',
   ReactionCreated = 'reactionCreated',
   ReactionRemoved = 'reactionRemoved',
@@ -30,6 +31,7 @@ export enum ResponseEventType {
 export type ResponseEvent =
   | MessageCreatedEvent
   | MessageRemovedEvent
+  | MessagesRemovedEvent
   | PatchCreatedEvent
   | ReactionCreatedEvent
   | ReactionRemovedEvent
@@ -50,6 +52,12 @@ export interface MessageRemovedEvent {
   type: ResponseEventType.MessageRemoved
   card: CardID
   message: MessageID
+}
+
+export interface MessagesRemovedEvent {
+  type: ResponseEventType.MessagesRemoved
+  card: CardID
+  messages: MessageID[]
 }
 
 export interface PatchCreatedEvent {

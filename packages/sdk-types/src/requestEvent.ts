@@ -11,6 +11,7 @@ import type {
 export enum RequestEventType {
   CreateMessage = 'createMessage',
   RemoveMessage = 'removeMessage',
+  RemoveMessages = 'removeMessages',
   CreatePatch = 'createPatch',
   CreateReaction = 'createReaction',
   RemoveReaction = 'removeReaction',
@@ -27,6 +28,7 @@ export enum RequestEventType {
 export type RequestEvent =
   | CreateMessageEvent
   | RemoveMessageEvent
+  | RemoveMessagesEvent
   | CreatePatchEvent
   | CreateReactionEvent
   | RemoveReactionEvent
@@ -50,6 +52,13 @@ export interface RemoveMessageEvent {
   type: RequestEventType.RemoveMessage
   card: CardID
   message: MessageID
+}
+
+export interface RemoveMessagesEvent {
+  type: RequestEventType.RemoveMessages
+  card: CardID
+  messages: MessageID[]
+  silent?: boolean
 }
 
 export interface CreatePatchEvent {

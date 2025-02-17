@@ -1,4 +1,4 @@
-import type { Message, CardID } from './message'
+import type { Message, CardID, WorkspaceID } from './message'
 
 export type ContextID = string & { context: true }
 
@@ -12,8 +12,8 @@ export interface Notification {
 export interface NotificationContext {
   id: ContextID
   card: CardID
-  workspace: string
-  personalWorkspace: string
+  workspace: WorkspaceID
+  personalWorkspace: WorkspaceID
   archivedFrom?: Date
   lastView?: Date
   lastUpdate?: Date

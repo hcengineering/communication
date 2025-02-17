@@ -15,7 +15,8 @@ import type {
   FindNotificationsParams,
   Message,
   MessageID,
-  MessagesGroup
+  MessagesGroup,
+  WorkspaceID
 } from '@hcengineering/communication-types'
 
 import { Triggers } from './triggers.ts'
@@ -42,7 +43,7 @@ export class Manager {
   constructor(
     private readonly ctx: MeasureContext,
     private readonly db: DbAdapter,
-    private readonly workspace: string,
+    private readonly workspace: WorkspaceID,
     private readonly broadcast: BroadcastSessionsFunc
   ) {
     this.eventProcessor = new EventProcessor(db, this.workspace)
@@ -50,7 +51,7 @@ export class Manager {
   }
 
   async findMessages(info: ConnectionInfo, params: FindMessagesParams, queryId?: number): Promise<Message[]> {
-    const result = await this.db.findMessages(this.workspace, params)
+    const result = await this.db.findMessages(params)
     if (queryId != null && info.sessionId != null && info.sessionId !== '') {
       this.subscribeQuery(info, 'message', queryId, params)
     }
@@ -58,11 +59,14 @@ export class Manager {
   }
 
   async findMessagesGroups(info: ConnectionInfo, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
-    return await this.db.findMessagesGroups(this.workspace, params)
+    return await this.db.findMessagesGroups(params)
   }
 
   async event(info: ConnectionInfo, event: RequestEvent): Promise<EventResult> {
-    const { result, responseEvent } = await this.eventProcessor.process(info.personalWorkspace, event)
+    const { result, responseEvent } = await this.eventProcessor.process(
+      { personalWorkspace: info.personalWorkspace, socialIds: info.socialIds },
+      event
+    )
     if (responseEvent !== undefined) {
       void this.next(responseEvent)
     }
@@ -139,6 +143,8 @@ export class Manager {
           { card: event.card, id: event.message },
           Array.from(info.messageQueries.values())
         )
+      case ResponseEventType.MessagesRemoved:
+        return this.matchMessagesQuery({ card: event.card }, Array.from(info.messageQueries.values()))
       case ResponseEventType.ReactionCreated:
         return this.matchMessagesQuery(
           { card: event.card, id: event.reaction.message },

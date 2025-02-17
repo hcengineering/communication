@@ -3,15 +3,16 @@ import type {
   FindMessagesParams,
   Message,
   MessagesGroup,
-  SocialID
+  SocialID,
+  WorkspaceID
 } from '@hcengineering/communication-types'
 
-import type { EventResult, RequestEvent } from './request_event.ts'
+import type { EventResult, RequestEvent } from './requestEvent.ts'
 
 export interface ConnectionInfo {
   sessionId: string
-  personalWorkspace: string
-  socialId: SocialID
+  personalWorkspace: WorkspaceID
+  socialIds: SocialID[]
 }
 
 export interface ServerApi {
