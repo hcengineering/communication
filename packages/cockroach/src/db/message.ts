@@ -7,7 +7,7 @@ import {
     type RichText,
     SortingOrder
 } from '@hcengineering/communication-types';
-import {generateMessageId} from "@hcengineering/communication-core";
+import { generateMessageId } from '@hcengineering/communication-shared';
 
 import {BaseDb} from './base.ts'
 import {

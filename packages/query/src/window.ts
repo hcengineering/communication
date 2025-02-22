@@ -16,12 +16,12 @@ export class WindowImpl<T> implements Window<T> {
 
   async loadNextPage(): Promise<void> {
     if (!this.hasNextPage()) return
-    await this.query.loadForward()
+    await this.query.requestLoadNextPage()
   }
 
   async loadPrevPage(): Promise<void> {
     if (!this.hasPrevPage()) return
-    await this.query.loadBackward()
+    await this.query.requestLoadPrevPage()
   }
 
   hasNextPage(): boolean {

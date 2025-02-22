@@ -2,17 +2,20 @@ import {
   type Attachment,
   type CardID,
   type ContextID,
+  type FindMessagesGroupsParams,
   type FindMessagesParams,
   type FindNotificationContextParams,
   type FindNotificationsParams,
   type Message,
   type MessageID,
+  type MessagesGroup,
   type Notification,
   type NotificationContext,
   type NotificationContextUpdate,
   type Reaction,
   type RichText,
-  type SocialID
+  type SocialID,
+  type WorkspaceID
 } from '@hcengineering/communication-types'
 import {
   RequestEventType,
@@ -35,6 +38,7 @@ import {
   type ResponseEvent,
   type UpdateNotificationContextEvent
 } from '@hcengineering/communication-sdk-types'
+import { initLiveQueries } from '@hcengineering/communication-client-query'
 
 import { WebSocketConnection } from './connection'
 
@@ -132,6 +136,10 @@ class WsClient implements Client {
   async findMessages(params: FindMessagesParams, queryId?: number): Promise<Message[]> {
     const rawMessages = await this.ws.send('findMessages', [params, queryId])
     return rawMessages.map((it: any) => this.toMessage(it))
+  }
+
+  async findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
+    return await this.ws.send('findMessagesGroups', [params])
   }
 
   toMessage(raw: any): Message {
@@ -235,6 +243,13 @@ class WsClient implements Client {
   }
 }
 
-export async function getWebsocketClient(url: string, token: string): Promise<Client> {
-  return new WsClient(url, token)
+export async function getWebsocketClient(
+  url: string,
+  token: string,
+  workspace: WorkspaceID,
+  filesUrl: string
+): Promise<Client> {
+  const client = new WsClient(url, token)
+  initLiveQueries(client, workspace, filesUrl)
+  return client
 }

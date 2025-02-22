@@ -97,7 +97,7 @@ export class BaseQuery<T, P extends FindParams> implements PagedQuery<T, P> {
     this.callback(window)
   }
 
-  async loadForward() {
+  async requestLoadNextPage() {
     if (this.result instanceof Promise) {
       this.result = await this.result
     }
@@ -136,7 +136,7 @@ export class BaseQuery<T, P extends FindParams> implements PagedQuery<T, P> {
     })
   }
 
-  async loadBackward() {
+  async requestLoadPrevPage() {
     if (this.result instanceof Promise) {
       this.result = await this.result
     }

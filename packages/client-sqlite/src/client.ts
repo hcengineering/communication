@@ -13,7 +13,9 @@ import {
   type Notification,
   type Attachment,
   type Reaction,
-  type WorkspaceID
+  type WorkspaceID,
+  type FindMessagesGroupsParams,
+  type MessagesGroup
 } from '@hcengineering/communication-types'
 import {
   type Client,
@@ -96,6 +98,10 @@ class DbClient implements Client {
   async findMessages(params: FindMessagesParams): Promise<Message[]> {
     const rawMessages = await this.db.findMessages(params)
     return rawMessages.map((it) => this.toMessage(it))
+  }
+
+  async findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
+    return await this.db.findMessagesGroups(params)
   }
 
   async findMessage(params: FindMessagesParams): Promise<Message | undefined> {

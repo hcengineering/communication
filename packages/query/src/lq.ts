@@ -1,4 +1,8 @@
-import { type FindMessagesParams, type FindNotificationsParams } from '@hcengineering/communication-types'
+import {
+  type FindMessagesParams,
+  type FindNotificationsParams,
+  type WorkspaceID
+} from '@hcengineering/communication-types'
 import { deepEqual } from 'fast-equals'
 import type {
   MessagesQueryCallback,
@@ -18,14 +22,15 @@ interface CreateQueryResult {
 const maxQueriesCache = 10
 
 export class LiveQueries {
-  private readonly client: QueryClient
   private readonly queries = new Map<QueryId, PagedQuery>()
   private readonly unsubscribed = new Set<QueryId>()
   private counter: number = 0
 
-  constructor(client: QueryClient) {
-    this.client = client
-  }
+  constructor(
+    private readonly client: QueryClient,
+    private readonly workspace: WorkspaceID,
+    private readonly filesUrl: string
+  ) {}
 
   async onEvent(event: ResponseEvent): Promise<void> {
     for (const q of this.queries.values()) {
@@ -57,20 +62,21 @@ export class LiveQueries {
 
   private createMessagesQuery(params: FindMessagesParams, callback: MessagesQueryCallback): MessagesQuery {
     const id = ++this.counter
-    const exists = this.findMessagesQuery(params)
 
-    if (exists !== undefined) {
-      if (this.unsubscribed.has(id)) {
-        this.unsubscribed.delete(id)
-        exists.setCallback(callback)
-        return exists
-      } else {
-        const result = exists.copyResult()
-        return new MessagesQuery(this.client, id, params, callback, result)
-      }
-    }
+    //TODO: fix create query from cache und use same queru for same params
+    //const exists = this.findMessagesQuery(params)
+    // if (exists !== undefined) {
+    //   if (this.unsubscribed.has(id)) {
+    //     this.unsubscribed.delete(id)
+    //     exists.setCallback(callback)
+    //     return exists
+    //   } else {
+    //     const result = exists.copyResult()
+    //     return new MessagesQuery(this.client, this.workspace, id, params, callback)
+    //   }
+    // }
 
-    return new MessagesQuery(this.client, id, params, callback)
+    return new MessagesQuery(this.client, this.workspace, this.filesUrl, id, params, callback)
   }
 
   private createNotificationQuery(

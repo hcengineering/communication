@@ -14,8 +14,9 @@
     "@types/crypto-js": "^4.2.2"
   },
   "dependencies": {
-    "@hcengineering/communication-types": "workspace:*",
     "@hcengineering/communication-sdk-types": "workspace:*",
+    "@hcengineering/communication-shared": "workspace:*",
+    "@hcengineering/communication-types": "workspace:*",
     "fast-equals": "^5.0.1"
   },
   "peerDependencies": {

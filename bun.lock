@@ -50,6 +50,7 @@
       "name": "@hcengineering/communication-client-ws",
       "version": "0.1.23",
       "dependencies": {
+        "@hcengineering/communication-client-query": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
         "@msgpack/msgpack": "^3.0.0-beta2",
@@ -65,8 +66,8 @@
       "name": "@hcengineering/communication-cockroach",
       "version": "0.1.23",
       "dependencies": {
-        "@hcengineering/communication-core": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
+        "@hcengineering/communication-shared": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
         "pg": "8.12.0",
         "postgres": "^3.4.4",
@@ -79,25 +80,10 @@
         "typescript": "^5.6.3",
       },
     },
-    "packages/core": {
-      "name": "@hcengineering/communication-core",
-      "version": "0.1.23",
-      "dependencies": {
-        "@hcengineering/communication-types": "workspace:*",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.1.14",
-      },
-      "peerDependencies": {
-        "typescript": "^5.6.3",
-      },
-    },
     "packages/examples": {
       "name": "@hcengineering/communication-examples",
       "version": "0.1.23",
       "dependencies": {
-        "@hcengineering/communication-client-query": "workspace:*",
-        "@hcengineering/communication-client-sqlite": "workspace:*",
         "@hcengineering/communication-client-ws": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
       },
@@ -113,6 +99,7 @@
       "version": "0.1.23",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
+        "@hcengineering/communication-shared": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
         "fast-equals": "^5.0.1",
       },
@@ -151,6 +138,21 @@
         "@types/cors": "^2.8.17",
         "@types/express": "^5.0.0",
         "@types/ws": "^8.5.13",
+      },
+      "peerDependencies": {
+        "typescript": "^5.6.3",
+      },
+    },
+    "packages/shared": {
+      "name": "@hcengineering/communication-shared",
+      "version": "0.1.23",
+      "dependencies": {
+        "@hcengineering/communication-types": "workspace:*",
+        "js-yaml": "^4.1.0",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.1.14",
+        "@types/js-yaml": "^4.0.9",
       },
       "peerDependencies": {
         "typescript": "^5.6.3",
@@ -231,8 +233,6 @@
 
     "@hcengineering/communication-cockroach": ["@hcengineering/communication-cockroach@workspace:packages/cockroach"],
 
-    "@hcengineering/communication-core": ["@hcengineering/communication-core@workspace:packages/core"],
-
     "@hcengineering/communication-examples": ["@hcengineering/communication-examples@workspace:packages/examples"],
 
     "@hcengineering/communication-query": ["@hcengineering/communication-query@workspace:packages/query"],
@@ -240,6 +240,8 @@
     "@hcengineering/communication-sdk-types": ["@hcengineering/communication-sdk-types@workspace:packages/sdk-types"],
 
     "@hcengineering/communication-server": ["@hcengineering/communication-server@workspace:packages/server"],
+
+    "@hcengineering/communication-shared": ["@hcengineering/communication-shared@workspace:packages/shared"],
 
     "@hcengineering/communication-sqlite-wasm": ["@hcengineering/communication-sqlite-wasm@workspace:packages/sqlite-wasm"],
 
@@ -300,6 +302,8 @@
     "@types/express-serve-static-core": ["@types/express-serve-static-core@5.0.6", "", { "dependencies": { "@types/node": "*", "@types/qs": "*", "@types/range-parser": "*", "@types/send": "*" } }, "sha512-3xhRnjJPkULekpSzgtoNYYcTWgEZkp4myc+Saevii5JPnHNvHMRlBSHDbs7Bh1iPPoVTERHEZXyhyLbMEsExsA=="],
 
     "@types/http-errors": ["@types/http-errors@2.0.4", "", {}, "sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA=="],
+
+    "@types/js-yaml": ["@types/js-yaml@4.0.9", "", {}, "sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg=="],
 
     "@types/json-schema": ["@types/json-schema@7.0.15", "", {}, "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="],
 

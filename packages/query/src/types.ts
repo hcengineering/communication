@@ -10,6 +10,11 @@ export const defaultQueryParams = {
   order: SortingOrder.Ascending
 }
 
+export enum Direction {
+  Forward = 1,
+  Backward = -1
+}
+
 //TODO???????
 export type FindParams = Partial<typeof defaultQueryParams>
 
@@ -19,8 +24,8 @@ export interface PagedQuery<R = any, P = FindParams> {
 
   onEvent(event: ResponseEvent): Promise<void>
 
-  loadForward(): Promise<void>
-  loadBackward(): Promise<void>
+  requestLoadNextPage(): Promise<void>
+  requestLoadPrevPage(): Promise<void>
 
   unsubscribe(): Promise<void>
 
