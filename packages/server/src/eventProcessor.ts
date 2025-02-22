@@ -340,8 +340,8 @@ export class EventProcessor {
 
   //eslint-disable-next-line @typescript-eslint/no-unused-vars
   async createMessagesGroup(event: CreateMessagesGroupEvent, _: UserInfo): Promise<Result> {
-    const { fromId, toId, fromDate, toDate, count } = event.group
-    await this.db.createMessagesGroup(event.group.card, event.group.blobId, fromId, toId, fromDate, toDate, count)
+    const { fromDate, toDate, count } = event.group
+    await this.db.createMessagesGroup(event.group.card, event.group.blobId, fromDate, toDate, count)
 
     return {
       responseEvent: undefined,

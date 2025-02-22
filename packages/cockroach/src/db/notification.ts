@@ -3,7 +3,7 @@ import {
     type ContextID,
     type CardID,
     type NotificationContext,
-    type FindNotificationContextParams, SortOrder,
+    type FindNotificationContextParams, SortingOrder,
     type FindNotificationsParams, type Notification,
     type NotificationContextUpdate,
     type WorkspaceID
@@ -115,7 +115,7 @@ export class NotificationsDb extends BaseDb {
                      JOIN ${TableName.Message} m ON n.message_id = m.id
         `;
         const {where, values} = this.buildNotificationWhere(params, personalWorkspace, workspace)
-        const orderBy = params.sort ? `ORDER BY m.created ${params.sort === SortOrder.Asc ? 'ASC' : 'DESC'}` : ''
+        const orderBy = params.order ? `ORDER BY m.created ${params.order === SortingOrder.Ascending ? 'ASC' : 'DESC'}` : ''
         const limit = params.limit ? ` LIMIT ${params.limit}` : ''
         const sql = [select, where, orderBy, limit].join(' ')
 

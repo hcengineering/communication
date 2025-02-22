@@ -22,9 +22,11 @@ import type { DbAdapter } from '@hcengineering/communication-sdk-types'
 import { MessagesDb } from './db/message'
 import { NotificationsDb } from './db/notification'
 import { connect, type PostgresClientReference } from './connection'
+import { MessagesGroupsDb } from './db/messagesGroups.ts'
 
 export class CockroachAdapter implements DbAdapter {
   private readonly message: MessagesDb
+  private readonly messageGroups: MessagesGroupsDb
   private readonly notification: NotificationsDb
 
   constructor(
@@ -33,6 +35,7 @@ export class CockroachAdapter implements DbAdapter {
     private readonly workspace: WorkspaceID
   ) {
     this.message = new MessagesDb(this.sqlClient, this.workspace)
+    this.messageGroups = new MessagesGroupsDb(this.sqlClient, this.workspace)
     this.notification = new NotificationsDb(this.sqlClient, this.workspace)
   }
 
@@ -61,13 +64,11 @@ export class CockroachAdapter implements DbAdapter {
   async createMessagesGroup(
     card: CardID,
     blobId: BlobID,
-    from_id: MessageID,
-    to_id: MessageID,
     from_date: Date,
     to_date: Date,
     count: number
   ): Promise<void> {
-    return await this.message.createMessagesGroup(card, blobId, from_id, to_id, from_date, to_date, count)
+    return await this.messageGroups.createMessagesGroup(card, blobId, from_date, to_date, count)
   }
 
   async createReaction(
@@ -97,7 +98,7 @@ export class CockroachAdapter implements DbAdapter {
   }
 
   async findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
-    return await this.message.findGroups(params)
+    return await this.messageGroups.find(params)
   }
 
   async createNotification(message: MessageID, context: ContextID): Promise<void> {

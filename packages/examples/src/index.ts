@@ -1,7 +1,7 @@
 import {
   type Message,
   type SocialID,
-  SortOrder,
+  SortingOrder,
   type CardID,
   type Window,
   type WorkspaceID
@@ -33,7 +33,7 @@ export async function example() {
 
   let window: Window<Message> | undefined = undefined
 
-  query1.query({ card, sort: SortOrder.Desc }, (res) => {
+  query1.query({ card, order: SortingOrder.Descending }, (res) => {
     window = res
     const r = window.getResult()
     r.reverse()

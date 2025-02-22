@@ -1,6 +1,6 @@
 {
   "name": "@hcengineering/communication-query",
-  "version": "0.1.9",
+  "version": "0.1.23",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "./types/index.d.ts",
@@ -11,7 +11,7 @@
   ],
   "devDependencies": {
     "@types/bun": "^1.1.14",
-     "@types/crypto-js": "^4.2.2"
+    "@types/crypto-js": "^4.2.2"
   },
   "dependencies": {
     "@hcengineering/communication-types": "workspace:*",

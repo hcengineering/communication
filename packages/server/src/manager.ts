@@ -86,7 +86,7 @@ export class Manager {
     }
 
     if (type === 'message') {
-      data.messageQueries.set(queryId, params)
+      data.messageQueries.set(queryId, params as FindMessagesParams)
     } else if (type === 'notification') {
       data.notificationQueries.set(queryId, params)
     } else if (type === 'context') {

@@ -1,6 +1,6 @@
 import {
     type FindNotificationsParams,
-    SortOrder,
+    SortingOrder,
     type Notification,
     type MessageID,
 } from '@hcengineering/communication-types'
@@ -53,7 +53,7 @@ export class NotificationQuery extends BaseQuery<Notification, FindNotifications
         if (this.params.context != null && this.params.context !== event.notification.context) return
 
         if (this.result.isTail()) {
-            if (this.params.sort === SortOrder.Asc) {
+            if (this.params.order === SortingOrder.Ascending) {
                 this.result.push(event.notification)
             } else {
                 this.result.unshift(event.notification)

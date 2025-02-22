@@ -3,7 +3,7 @@ import {
     type MessageID,
     type Message,
     type Patch,
-    SortOrder
+    SortingOrder
 } from '@hcengineering/communication-types'
 import {
     type AttachmentCreatedEvent,
@@ -67,7 +67,7 @@ export class MessagesQuery extends BaseQuery<Message, FindMessagesParams> {
         if (!this.match(message)) return
 
         if (this.result.isTail()) {
-            if (this.params.sort === SortOrder.Asc) {
+            if (this.params.order === SortingOrder.Ascending) {
                 this.result.push(message)
             } else {
                 this.result.unshift(message)

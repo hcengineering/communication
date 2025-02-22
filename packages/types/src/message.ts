@@ -27,8 +27,6 @@ export interface Message extends Object {
 export interface MessagesGroup {
   card: CardID
   blobId: BlobID
-  fromId: MessageID
-  toId: MessageID
   fromDate: Date
   toDate: Date
   count: number

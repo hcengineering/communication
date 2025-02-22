@@ -1,13 +1,13 @@
 import type { Window } from '@hcengineering/communication-types'
 
-import type { Query } from './types'
+import type { PagedQuery } from './types'
 
 export class WindowImpl<T> implements Window<T> {
   constructor(
     private readonly result: T[],
     private readonly isTail: boolean,
     private readonly isHead: boolean,
-    private readonly query: Query<T>
+    private readonly query: PagedQuery<T>
   ) {}
 
   getResult(): T[] {

@@ -25,15 +25,7 @@ export interface DbAdapter {
 
   createPatch(card: CardID, message: MessageID, content: RichText, creator: SocialID, created: Date): Promise<void>
 
-  createMessagesGroup(
-    card: CardID,
-    blobId: BlobID,
-    from_id: MessageID,
-    to_id: MessageID,
-    from_date: Date,
-    to_date: Date,
-    count: number
-  ): Promise<void>
+  createMessagesGroup(card: CardID, blobId: BlobID, from_date: Date, to_date: Date, count: number): Promise<void>
 
   createReaction(card: CardID, message: MessageID, reaction: string, creator: SocialID, created: Date): Promise<void>
 

@@ -23,8 +23,6 @@ export interface MessagesGroupDb {
     workspace_id: WorkspaceID,
     card_id: CardID,
     blob_id: BlobID,
-    from_id: MessageID,
-    to_id: MessageID,
     from_date: Date,
     to_date: Date,
     count: number
@@ -84,8 +82,8 @@ export function toMessage(raw: RawMessage): Message {
         card: raw.card_id,
         content: lastPatch?.content ?? raw.content,
         creator: raw.creator,
-        created: new Date(raw.created),
-        edited: lastPatch?.created ? new Date(lastPatch.created) : undefined,
+        created: raw.created,
+        edited: lastPatch?.created ?? undefined,
         reactions: (raw.reactions ?? []).map(toReaction),
         attachments: (raw.attachments ?? []).map(toAttachment)
     }
@@ -96,7 +94,7 @@ export function toReaction(raw: ReactionDb): Reaction {
         message: raw.message_id,
         reaction: raw.reaction,
         creator: raw.creator,
-        created: new Date(raw.created)
+        created: raw.created
     }
 }
 
@@ -105,7 +103,7 @@ export function toAttachment(raw: AttachmentDb): Attachment {
         message: raw.message_id,
         card: raw.card_id,
         creator: raw.creator,
-        created: new Date(raw.created)
+        created: raw.created
     }
 }
 
@@ -113,10 +111,8 @@ export function toMessagesGroup(raw: MessagesGroupDb): MessagesGroup {
     return {
         card: raw.card_id,
         blobId: raw.blob_id,
-        fromId: raw.from_id,
-        toId: raw.to_id,
-        fromDate: new Date(raw.from_date),
-        toDate: new Date(raw.to_date),
+        fromDate: raw.from_date,
+        toDate: raw.to_date,
         count: raw.count
     }
 }

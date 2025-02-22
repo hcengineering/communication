@@ -87,8 +87,20 @@ export function connect(connectionString: string, database?: string): PostgresCl
       },
       database,
       max: 10,
-      transform: {
-        undefined: null
+      fetch_types: false,
+      prepare: false,
+      types: {
+        // https://jdbc.postgresql.org/documentation/publicapi/constant-values.html
+        int8: {
+          to: 0,
+          from: [20],
+          parse: (value: number) => Number(value)
+        },
+        timestamp: {
+          to: 0,
+          from: [1114, 1184],
+          parse: (value: string) => new Date(value)
+        }
       },
       ...extraOptions
     })

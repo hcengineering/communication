@@ -7,7 +7,7 @@ import type {
   QueryClient
 } from '@hcengineering/communication-sdk-types'
 
-import type { Query, QueryId } from './types'
+import type { PagedQuery, QueryId } from './types'
 import { MessagesQuery } from './messages/query'
 import { NotificationQuery } from './notifications/query'
 
@@ -19,7 +19,7 @@ const maxQueriesCache = 10
 
 export class LiveQueries {
   private readonly client: QueryClient
-  private readonly queries = new Map<QueryId, Query>()
+  private readonly queries = new Map<QueryId, PagedQuery>()
   private readonly unsubscribed = new Set<QueryId>()
   private counter: number = 0
 
@@ -78,7 +78,7 @@ export class LiveQueries {
     callback: NotificationsQueryCallback
   ): NotificationQuery {
     const id = ++this.counter
-    const exists = this.findNotificationQuery(params)
+    const exists = this.findNotificationQuery(params as any)
 
     if (exists !== undefined) {
       if (this.unsubscribed.has(id)) {
@@ -106,7 +106,7 @@ export class LiveQueries {
   private findNotificationQuery(params: FindMessagesParams): NotificationQuery | undefined {
     for (const query of this.queries.values()) {
       if (query instanceof NotificationQuery) {
-        if (!this.queryCompare(params, query.params)) continue
+        if (!this.queryCompare(params, query.params as any)) continue
         return query
       }
     }
@@ -136,7 +136,7 @@ export class LiveQueries {
     this.unsubscribed.delete(id)
   }
 
-  private unsubscribeQuery(query: Query): void {
+  private unsubscribeQuery(query: PagedQuery): void {
     this.unsubscribed.add(query.id)
     query.removeCallback()
     if (this.unsubscribed.size > maxQueriesCache) {

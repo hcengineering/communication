@@ -18,8 +18,6 @@ CREATE TABLE IF NOT EXISTS communication.messages_groups
     card_id      VARCHAR(255) NOT NULL,
     blob_id      UUID         NOT NULL,
 
-    from_id      INT8         NOT NULL,
-    to_id        INT8         NOT NULL,
     from_date    TIMESTAMPTZ  NOT NULL,
     to_date      TIMESTAMPTZ  NOT NULL,
     count        INT          NOT NULL,
