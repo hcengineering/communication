@@ -5,7 +5,9 @@ import {
     type FindMessagesParams,
     type SocialID,
     type RichText,
-    SortingOrder
+    SortingOrder,
+    type FindPatchesParams,
+    type Patch
 } from '@hcengineering/communication-types';
 import { generateMessageId } from '@hcengineering/communication-shared';
 
@@ -32,7 +34,12 @@ export class MessagesDb extends BaseDb {
             created: created,
         }
 
-        await this.insert(TableName.Message, dbData)
+        const sql= `INSERT INTO ${TableName.Message} (workspace_id, card_id, id, content, creator, created)
+            VALUES ($1::uuid, $2, $3::bigint, $4, $5, $6::timestamptz)`
+
+        console.log(sql)
+        console.log(dbData)
+        await this.client.unsafe(sql, [dbData.workspace_id, dbData.card_id, dbData.id.toString() , dbData.content, dbData.creator, dbData.created])
 
         return dbData.id as MessageID
     }
@@ -198,6 +205,12 @@ export class MessagesDb extends BaseDb {
                   AND r.workspace_id = m.workspace_id 
                   AND r.card_id = m.card_id
                 ), '[]'::jsonb) AS reactions`
+    }
+
+    // Find patches
+    async findPatches (params: FindPatchesParams): Promise<Patch[]> {
+        //TODO: implement
+        return []
     }
 }
 

@@ -14,7 +14,8 @@ import type {
   BlobID,
   FindMessagesGroupsParams,
   MessagesGroup,
-  WorkspaceID
+  WorkspaceID,
+  Patch
 } from '@hcengineering/communication-types'
 
 export interface DbAdapter {
@@ -35,9 +36,10 @@ export interface DbAdapter {
 
   removeAttachment(message: MessageID, attachment: CardID): Promise<void>
 
-  findMessages(query: FindMessagesParams): Promise<Message[]>
+  findMessages(params: FindMessagesParams): Promise<Message[]>
+  findPatches(params: FindMessagesParams): Promise<Patch[]>
 
-  findMessagesGroups(query: FindMessagesGroupsParams): Promise<MessagesGroup[]>
+  findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]>
 
   createNotification(message: MessageID, context: ContextID): Promise<void>
 

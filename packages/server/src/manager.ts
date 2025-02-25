@@ -13,9 +13,11 @@ import type {
   FindMessagesParams,
   FindNotificationContextParams,
   FindNotificationsParams,
+  FindPatchesParams,
   Message,
   MessageID,
   MessagesGroup,
+  Patch,
   WorkspaceID
 } from '@hcengineering/communication-types'
 
@@ -60,6 +62,10 @@ export class Manager {
 
   async findMessagesGroups(info: ConnectionInfo, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
     return await this.db.findMessagesGroups(params)
+  }
+
+  async findPatches(info: ConnectionInfo, params: FindPatchesParams): Promise<Patch[]> {
+    return await this.db.findPatches(params)
   }
 
   async event(info: ConnectionInfo, event: RequestEvent): Promise<EventResult> {

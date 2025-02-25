@@ -12,17 +12,25 @@ export enum RequestEventType {
   CreateMessage = 'createMessage',
   RemoveMessage = 'removeMessage',
   RemoveMessages = 'removeMessages',
+
   CreatePatch = 'createPatch',
+
   CreateReaction = 'createReaction',
   RemoveReaction = 'removeReaction',
+
   CreateAttachment = 'createAttachment',
   RemoveAttachment = 'removeAttachment',
+
+  CreateThread = 'createThread',
+
+  CreateMessagesGroup = 'createMessagesGroup',
+
   CreateNotification = 'createNotification',
   RemoveNotification = 'removeNotification',
+
   CreateNotificationContext = 'createNotificationContext',
   RemoveNotificationContext = 'removeNotificationContext',
-  UpdateNotificationContext = 'updateNotificationContext',
-  CreateMessagesGroup = 'createMessagesGroup'
+  UpdateNotificationContext = 'updateNotificationContext'
 }
 
 export type RequestEvent =
@@ -98,6 +106,14 @@ export interface RemoveAttachmentEvent {
   card: CardID
   message: MessageID
   attachment: CardID
+}
+
+
+export interface CreateThreadEvent {
+  type: RequestEventType.CreateThread
+  card: CardID
+  message: MessageID
+  thread: CardID
 }
 
 export interface CreateNotificationEvent {

@@ -48,7 +48,17 @@ export interface FindNotificationContextParams extends FindParams {
 export interface FindMessagesGroupsParams extends FindParams {
   card?: CardID
   blobId?: BlobID
-  fromDate?: Exclusive<Record<ComparisonOperator, Date>> | Date
-  toDate?: Exclusive<Record<ComparisonOperator, Date>> | Date
+  fromDate?: Partial<Record<ComparisonOperator, Date>> | Date
+  toDate?: Partial<Record<ComparisonOperator, Date>> | Date
   orderBy?: 'fromDate' | 'toDate'
+}
+
+export interface FindPatchesParams extends FindParams {
+  card: CardID
+  messageId?: Partial<Record<ComparisonOperator, MessageID>> | MessageID
+}
+
+export interface FindThreadsParams extends FindParams {
+  card: CardID
+  messageId?: Partial<Record<ComparisonOperator, MessageID>> | MessageID
 }

@@ -15,7 +15,10 @@ import {
   type Reaction,
   type WorkspaceID,
   type FindMessagesGroupsParams,
-  type MessagesGroup
+  type MessagesGroup,
+  PatchType,
+  type FindPatchesParams,
+  type Patch
 } from '@hcengineering/communication-types'
 import {
   type Client,
@@ -66,7 +69,11 @@ class DbClient implements Client {
   async createPatch(card: CardID, message: MessageID, content: RichText, creator: SocialID): Promise<void> {
     const created = new Date()
     await this.db.createPatch(card, message, content, creator, created)
-    this.onEvent({ type: ResponseEventType.PatchCreated, card, patch: { message, content, creator, created } })
+    this.onEvent({
+      type: ResponseEventType.PatchCreated,
+      card,
+      patch: { message, type: PatchType.update, content, creator, created }
+    })
   }
 
   async createReaction(card: CardID, message: MessageID, reaction: string, creator: SocialID): Promise<void> {
@@ -102,6 +109,10 @@ class DbClient implements Client {
 
   async findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
     return await this.db.findMessagesGroups(params)
+  }
+
+  async findPatches(params: FindPatchesParams): Promise<Patch[]> {
+    return await this.db.findPatches(params)
   }
 
   async findMessage(params: FindMessagesParams): Promise<Message | undefined> {

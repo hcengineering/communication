@@ -7,8 +7,8 @@ export type SocialID = PersonId
 export type WorkspaceID = WorkspaceUuid
 export type RichText = string
 
-export type ID = string | number
-export type MessageID = number & { message: true }
+export type ID = string | bigint
+export type MessageID = bigint & { message: true }
 
 interface Object {
   creator: SocialID
@@ -34,7 +34,15 @@ export interface MessagesGroup {
 
 export interface Patch extends Object {
   message: MessageID
-  content: RichText
+  type: PatchType
+  content: string
+}
+
+export enum PatchType {
+  update = 'update',
+  addReaction = 'addReaction',
+  removeReaction = 'removeReaction',
+  threadUpdate = 'threadUpdate'
 }
 
 export interface Reaction extends Object {
@@ -45,4 +53,13 @@ export interface Reaction extends Object {
 export interface Attachment extends Object {
   message: MessageID
   card: CardID
+}
+
+export interface Thread {
+  card: CardID
+  message: MessageID
+  thread: CardID
+  repliesCount: number
+  replied: SocialID[]
+  lastReply: Date
 }

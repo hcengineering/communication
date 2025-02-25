@@ -14,12 +14,20 @@ export interface FileMessage {
   creator: SocialID
   created: Date
   reactions: FileReaction[]
+  thread?: FileThread
 }
 
 export interface FileReaction {
   reaction: string
   creator: SocialID
   created: Date
+}
+
+export interface FileThread {
+  thread: CardID
+  repliesCount: number
+  lastReply: Date
+  replied: SocialID[]
 }
 
 export interface ParsedFile {

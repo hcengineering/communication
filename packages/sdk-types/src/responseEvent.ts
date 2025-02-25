@@ -9,7 +9,8 @@ import type {
   Patch,
   Reaction,
   SocialID,
-  Notification
+  Notification,
+  Thread
 } from '@hcengineering/communication-types'
 
 export enum ResponseEventType {
@@ -21,6 +22,7 @@ export enum ResponseEventType {
   ReactionRemoved = 'reactionRemoved',
   AttachmentCreated = 'attachmentCreated',
   AttachmentRemoved = 'attachmentRemoved',
+  ThreadCreated = 'threadCreated',
   NotificationCreated = 'notificationCreated',
   NotificationRemoved = 'notificationRemoved',
   NotificationContextCreated = 'notificationContextCreated',
@@ -91,6 +93,11 @@ export interface AttachmentRemovedEvent {
   card: CardID
   message: MessageID
   attachment: CardID
+}
+
+export interface ThreadCreatedEvent {
+  type: ResponseEventType.ThreadCreated
+  thread: Thread
 }
 
 export interface NotificationCreatedEvent {

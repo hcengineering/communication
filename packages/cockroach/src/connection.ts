@@ -87,8 +87,8 @@ export function connect(connectionString: string, database?: string): PostgresCl
       },
       database,
       max: 10,
-      fetch_types: false,
-      prepare: false,
+      // fetch_types: false,
+      // prepare: false,
       types: {
         // https://jdbc.postgresql.org/documentation/publicapi/constant-values.html
         int8: {

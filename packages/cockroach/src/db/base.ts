@@ -12,9 +12,11 @@ export class BaseDb {
         const keys = Object.keys(data)
         const values = Object.values(data)
         const sql = `
-            INSERT INTO ${table} (${keys.map((k) => `"${k}"`).join(', ')})
+            INSERT INTO ${table} (${keys.map((k) => `${k}`).join(', ')})
             VALUES (${keys.map((_, idx) => `$${idx + 1}`).join(', ')});
         `
+        console.log(sql)
+        console.log(values)
         await this.client.unsafe(sql, values)
     }
 

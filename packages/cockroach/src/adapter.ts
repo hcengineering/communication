@@ -15,7 +15,9 @@ import {
   type BlobID,
   type MessagesGroup,
   type FindMessagesGroupsParams,
-  type WorkspaceID
+  type WorkspaceID,
+  type FindPatchesParams,
+  type Patch
 } from '@hcengineering/communication-types'
 import type { DbAdapter } from '@hcengineering/communication-sdk-types'
 
@@ -99,6 +101,10 @@ export class CockroachAdapter implements DbAdapter {
 
   async findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
     return await this.messageGroups.find(params)
+  }
+
+  async findPatches(params: FindPatchesParams): Promise<Patch[]> {
+    return await this.message.findPatches(params)
   }
 
   async createNotification(message: MessageID, context: ContextID): Promise<void> {

@@ -4,7 +4,8 @@ import {
   type Reaction,
   type Attachment,
   type SocialID,
-  type WorkspaceID
+  type WorkspaceID,
+  PatchType
 } from '@hcengineering/communication-types'
 import {
   type CreateAttachmentEvent,
@@ -126,6 +127,7 @@ export class EventProcessor {
 
     const patch: Patch = {
       message: event.message,
+      type: PatchType.update,
       content: event.content,
       creator: event.creator,
       created: created

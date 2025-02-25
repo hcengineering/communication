@@ -1,21 +1,21 @@
 import {
-  type Attachment,
   type CardID,
   type ContextID,
   type FindMessagesGroupsParams,
   type FindMessagesParams,
   type FindNotificationContextParams,
   type FindNotificationsParams,
+  type FindPatchesParams,
   type Message,
   type MessageID,
   type MessagesGroup,
   type Notification,
   type NotificationContext,
   type NotificationContextUpdate,
-  type Reaction,
   type RichText,
   type SocialID,
-  type WorkspaceID
+  type WorkspaceID,
+  type Patch
 } from '@hcengineering/communication-types'
 import {
   RequestEventType,
@@ -134,43 +134,15 @@ class WsClient implements Client {
   }
 
   async findMessages(params: FindMessagesParams, queryId?: number): Promise<Message[]> {
-    const rawMessages = await this.ws.send('findMessages', [params, queryId])
-    return rawMessages.map((it: any) => this.toMessage(it))
+    return await this.ws.send('findMessages', [params, queryId])
   }
 
   async findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
     return await this.ws.send('findMessagesGroups', [params])
   }
 
-  toMessage(raw: any): Message {
-    return {
-      id: raw.id,
-      card: raw.card,
-      content: raw.content,
-      creator: raw.creator,
-      created: new Date(raw.created),
-      edited: new Date(raw.edited),
-      reactions: raw.reactions.map((it: any) => this.toReaction(it)),
-      attachments: raw.attachments.map((it: any) => this.toAttachment(it))
-    }
-  }
-
-  toAttachment(raw: any): Attachment {
-    return {
-      message: raw.message,
-      card: raw.card,
-      creator: raw.creator,
-      created: new Date(raw.created)
-    }
-  }
-
-  toReaction(raw: any): Reaction {
-    return {
-      message: raw.message,
-      reaction: raw.reaction,
-      creator: raw.creator,
-      created: new Date(raw.created)
-    }
+  async findPatches(params: FindPatchesParams): Promise<Patch[]> {
+    return await this.ws.send('findPatches', [params])
   }
 
   async createNotification(message: MessageID, context: ContextID): Promise<void> {

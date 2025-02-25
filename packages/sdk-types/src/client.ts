@@ -11,7 +11,9 @@ import type {
   SocialID,
   Notification,
   FindMessagesGroupsParams,
-  MessagesGroup
+  MessagesGroup,
+  FindPatchesParams,
+  Patch
 } from '@hcengineering/communication-types'
 import type { FindMessagesParams } from '@hcengineering/communication-types'
 
@@ -38,6 +40,7 @@ export interface Client {
   onEvent(event: ResponseEvent): void
 
   findMessages(params: FindMessagesParams, queryId?: number): Promise<Message[]>
+  findPatches(params: FindPatchesParams): Promise<Patch[]>
   findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]>
   findNotificationContexts(params: FindNotificationContextParams, queryId?: number): Promise<NotificationContext[]>
   findNotifications(params: FindNotificationsParams, queryId?: number): Promise<Notification[]>
