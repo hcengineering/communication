@@ -1,10 +1,9 @@
 {
   "name": "@hcengineering/communication",
-  "type": "module",
   "workspaces": ["packages/*"],
   "scripts": {
     "publish": "sh scripts/publish.sh",
-    "build": "sh scripts/build.sh && tsc --noEmit",
+    "bundle": "sh scripts/bundle.sh && tsc --noEmit",
     "lint": "eslint packages/**/src/*.ts",
     "format": "prettier --write packages/**/src/*.ts && bun run lint"
   },
