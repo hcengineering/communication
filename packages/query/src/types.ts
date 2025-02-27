@@ -1,7 +1,7 @@
 import { type ResponseEvent } from '@hcengineering/communication-sdk-types'
 import { SortingOrder, type Window } from '@hcengineering/communication-types'
 
-import { QueryResult } from './result.ts'
+import { QueryResult } from './result'
 
 export type QueryId = number
 
@@ -15,21 +15,20 @@ export enum Direction {
   Backward = -1
 }
 
-//TODO???????
 export type FindParams = Partial<typeof defaultQueryParams>
 
 export interface PagedQuery<R = any, P = FindParams> {
   readonly id: QueryId
   readonly params: P
 
-  onEvent(event: ResponseEvent): Promise<void>
+  onEvent: (event: ResponseEvent) => Promise<void>
 
-  requestLoadNextPage(): Promise<void>
-  requestLoadPrevPage(): Promise<void>
+  requestLoadNextPage: () => Promise<void>
+  requestLoadPrevPage: () => Promise<void>
 
-  unsubscribe(): Promise<void>
+  unsubscribe: () => Promise<void>
 
-  setCallback(callback: (window: Window<R>) => void): void
-  removeCallback(): void
-  copyResult(): QueryResult<R> | undefined
+  setCallback: (callback: (window: Window<R>) => void) => void
+  removeCallback: () => void
+  copyResult: () => QueryResult<R> | undefined
 }

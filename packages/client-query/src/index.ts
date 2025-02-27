@@ -14,7 +14,7 @@ export function createNotificationsQuery(): NotificationsQuery {
   return new NotificationsQuery(lq)
 }
 
-export function initLiveQueries(client: QueryClient, workspace: WorkspaceID, filesUrl: string) {
+export function initLiveQueries(client: QueryClient, workspace: WorkspaceID, filesUrl: string): void {
   if (lq != null) {
     lq.close()
   }

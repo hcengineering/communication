@@ -35,7 +35,7 @@ export class BaseQuery<T, P extends FindParams> implements PagedQuery<T, P> {
         if (!isTail) {
           res.pop()
         }
-        const qResult = new QueryResult(res, this.getObjectId)
+        const qResult = new QueryResult(res, (x) => this.getObjectId(x))
         qResult.setTail(isTail)
         qResult.setHead(isHead)
 
@@ -53,25 +53,25 @@ export class BaseQuery<T, P extends FindParams> implements PagedQuery<T, P> {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async find(params: FindParams): Promise<T[]> {
-    /*Implement in subclass*/
+    /* Implement in subclass */
     return [] as T[]
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected getObjectId(object: T): ID {
-    /*Implement in subclass*/
+    /* Implement in subclass */
     return '' as ID
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected getObjectDate(object: T): Date {
-    /*Implement in subclass*/
-    return new Date(0) as Date
+    /* Implement in subclass */
+    return new Date(0)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async onEvent(event: ResponseEvent): Promise<void> {
-    /*Implement in subclass*/
+    /* Implement in subclass */
   }
 
   setCallback(callback: QueryCallback<T>): void {
@@ -97,7 +97,7 @@ export class BaseQuery<T, P extends FindParams> implements PagedQuery<T, P> {
     this.callback(window)
   }
 
-  async requestLoadNextPage() {
+  async requestLoadNextPage(): Promise<void> {
     if (this.result instanceof Promise) {
       this.result = await this.result
     }
@@ -136,7 +136,7 @@ export class BaseQuery<T, P extends FindParams> implements PagedQuery<T, P> {
     })
   }
 
-  async requestLoadPrevPage() {
+  async requestLoadPrevPage(): Promise<void> {
     if (this.result instanceof Promise) {
       this.result = await this.result
     }

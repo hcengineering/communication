@@ -63,18 +63,19 @@ export class LiveQueries {
   private createMessagesQuery(params: FindMessagesParams, callback: MessagesQueryCallback): MessagesQuery {
     const id = ++this.counter
 
-    //TODO: fix create query from cache und use same queru for same params
-    //const exists = this.findMessagesQuery(params)
-    // if (exists !== undefined) {
-    //   if (this.unsubscribed.has(id)) {
-    //     this.unsubscribed.delete(id)
-    //     exists.setCallback(callback)
-    //     return exists
-    //   } else {
-    //     const result = exists.copyResult()
-    //     return new MessagesQuery(this.client, this.workspace, id, params, callback)
-    //   }
-    // }
+    // TODO: fix create query from cache und use same queru for same params
+    const exists = this.findMessagesQuery(params)
+
+    if (exists !== undefined) {
+      if (this.unsubscribed.has(id)) {
+        this.unsubscribed.delete(id)
+        exists.setCallback(callback)
+        return exists
+      } else {
+        const result = exists.copyResult()
+        return new MessagesQuery(this.client, this.workspace, this.filesUrl, id, params, callback, result)
+      }
+    }
 
     return new MessagesQuery(this.client, this.workspace, this.filesUrl, id, params, callback)
   }
