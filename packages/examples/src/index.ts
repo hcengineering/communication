@@ -45,7 +45,7 @@ export async function example() {
   })
 
   async function editMessage(message: Message) {
-    await client.createPatch(card, message.id, message.content + '_1_', creator1)
+    await client.updateMessage(card, message.id, message.content + '_1_', creator1)
   }
 
   async function deleteMessage(message: Message) {

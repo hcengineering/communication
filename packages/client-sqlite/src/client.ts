@@ -16,9 +16,7 @@ import {
   type WorkspaceID,
   type FindMessagesGroupsParams,
   type MessagesGroup,
-  PatchType,
-  type FindPatchesParams,
-  type Patch
+  PatchType
 } from '@hcengineering/communication-types'
 import {
   type Client,
@@ -29,7 +27,8 @@ import {
 } from '@hcengineering/communication-sdk-types'
 import { createDbAdapter as createSqliteDbAdapter } from '@hcengineering/communication-sqlite-wasm'
 
-class DbClient implements Client {
+//TODO: FIXME
+class DbClient {
   onEvent: (event: ResponseEvent) => void = () => {}
 
   constructor(
@@ -66,9 +65,9 @@ class DbClient implements Client {
     this.onEvent({ type: ResponseEventType.MessageRemoved, message, card })
   }
 
-  async createPatch(card: CardID, message: MessageID, content: RichText, creator: SocialID): Promise<void> {
+  async updateMessage(card: CardID, message: MessageID, content: RichText, creator: SocialID): Promise<void> {
     const created = new Date()
-    await this.db.createPatch(card, message, content, creator, created)
+    await this.db.createPatch(card, message, PatchType.update, content, creator, created)
     this.onEvent({
       type: ResponseEventType.PatchCreated,
       card,
@@ -109,10 +108,6 @@ class DbClient implements Client {
 
   async findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
     return await this.db.findMessagesGroups(params)
-  }
-
-  async findPatches(params: FindPatchesParams): Promise<Patch[]> {
-    return await this.db.findPatches(params)
   }
 
   async findMessage(params: FindMessagesParams): Promise<Message | undefined> {
@@ -175,9 +170,15 @@ class DbClient implements Client {
     return await this.db.findContexts(params, [this.personalWorkspace])
   }
 
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
   async findNotifications(params: FindNotificationsParams): Promise<Notification[]> {
     //TODO: should we filter by workspace?
     return await this.db.findNotifications(params, this.personalWorkspace)
+  }
+
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async createThread(card: CardID, message: MessageID, thread: CardID, created: Date): Promise<void> {
+    //TODO: implement
   }
 
   async unsubscribeQuery() {
@@ -195,5 +196,5 @@ export async function getSqliteClient(
   dbUrl = 'file:communication.sqlite3?vfs=opfs'
 ): Promise<Client> {
   const db = await createSqliteDbAdapter(dbUrl)
-  return new DbClient(db, workspace, personalWorkspace)
+  return new DbClient(db, workspace, personalWorkspace) as unknown as Client
 }

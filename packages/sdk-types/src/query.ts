@@ -6,7 +6,6 @@ export type QueryClient = Pick<
   Client,
   | 'onEvent'
   | 'findMessages'
-  | 'findPatches'
   | 'findMessagesGroups'
   | 'findNotificationContexts'
   | 'findNotifications'

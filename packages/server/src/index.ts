@@ -4,8 +4,7 @@ import type {
   FindMessagesParams,
   Message,
   MessagesGroup,
-  WorkspaceID,
-  Patch
+  WorkspaceID
 } from '@hcengineering/communication-types'
 import { createDbAdapter } from '@hcengineering/communication-cockroach'
 import type {
@@ -46,10 +45,6 @@ export class Api implements ServerApi {
 
   async findMessagesGroups(info: ConnectionInfo, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
     return await this.manager.findMessagesGroups(info, params)
-  }
-
-  async findPatches(info: ConnectionInfo, params: FindMessagesParams): Promise<Patch[]> {
-    return await this.manager.findPatches(info, params)
   }
 
   async unsubscribeQuery(info: ConnectionInfo, id: number): Promise<void> {

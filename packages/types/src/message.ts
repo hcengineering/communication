@@ -7,19 +7,18 @@ export type SocialID = PersonId
 export type WorkspaceID = WorkspaceUuid
 export type RichText = string
 
-export type ID = string | bigint
-export type MessageID = bigint & { message: true }
+export type ID = string
+export type MessageID = string & { message: true }
 
-interface Object {
-  creator: SocialID
-  created: Date
-}
-
-export interface Message extends Object {
+export interface Message {
   id: MessageID
   card: CardID
   content: RichText
+  creator: SocialID
+  created: Date
+
   edited?: Date
+  thread?: Thread
   reactions: Reaction[]
   attachments: Attachment[]
 }
@@ -27,32 +26,42 @@ export interface Message extends Object {
 export interface MessagesGroup {
   card: CardID
   blobId: BlobID
+  fromId: MessageID
+  toId: MessageID
   fromDate: Date
   toDate: Date
   count: number
+  patches: Patch[]
 }
 
-export interface Patch extends Object {
+export interface Patch {
   message: MessageID
   type: PatchType
   content: string
+  creator: SocialID
+  created: Date
 }
 
 export enum PatchType {
   update = 'update',
   addReaction = 'addReaction',
   removeReaction = 'removeReaction',
-  threadUpdate = 'threadUpdate'
+  addReply = 'addReply',
+  removeReply = 'removeReply'
 }
 
-export interface Reaction extends Object {
+export interface Reaction {
   message: MessageID
   reaction: string
+  creator: SocialID
+  created: Date
 }
 
-export interface Attachment extends Object {
+export interface Attachment {
   message: MessageID
   card: CardID
+  creator: SocialID
+  created: Date
 }
 
 export interface Thread {
@@ -60,6 +69,5 @@ export interface Thread {
   message: MessageID
   thread: CardID
   repliesCount: number
-  replied: SocialID[]
   lastReply: Date
 }

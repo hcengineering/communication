@@ -39,7 +39,9 @@ import {
   ResponseEventType,
   type CreateMessagesGroupEvent,
   type RemoveMessagesEvent,
-  type MessagesRemovedEvent
+  type CreateThreadEvent,
+  type RemoveMessagesGroupEvent,
+  type RemovePatchesEvent
 } from '@hcengineering/communication-sdk-types'
 
 export type Result = {
@@ -88,6 +90,12 @@ export class EventProcessor {
         return await this.updateNotificationContext(event, user)
       case RequestEventType.CreateMessagesGroup:
         return await this.createMessagesGroup(event, user)
+      case RequestEventType.CreateThread:
+        return await this.createThread(event, user)
+      case RequestEventType.RemoveMessagesGroup:
+        return await this.removeMessagesGroup(event, user)
+      case RequestEventType.RemovePatches:
+        return await this.removePatches(event, user)
     }
   }
 
@@ -123,7 +131,7 @@ export class EventProcessor {
       throw new Error('Forbidden')
     }
     const created = new Date()
-    await this.db.createPatch(event.card, event.message, event.content, event.creator, created)
+    await this.db.createPatch(event.card, event.message, PatchType.update, event.content, event.creator, created)
 
     const patch: Patch = {
       message: event.message,
@@ -168,24 +176,10 @@ export class EventProcessor {
 
   //eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async removeMessages(event: RemoveMessagesEvent, _: UserInfo): Promise<Result> {
-    const ids = await this.db.removeMessages(event.card, event.messages)
-
-    if (event.silent === true) {
-      return {
-        responseEvent: undefined,
-        result: { ids }
-      }
-    }
-
-    const responseEvent: MessagesRemovedEvent = {
-      type: ResponseEventType.MessagesRemoved,
-      card: event.card,
-      messages: ids
-    }
+    await this.db.removeMessages(event.card, event.fromId, event.toId)
 
     return {
-      responseEvent,
-      result: { ids }
+      result: {}
     }
   }
 
@@ -342,9 +336,30 @@ export class EventProcessor {
 
   //eslint-disable-next-line @typescript-eslint/no-unused-vars
   async createMessagesGroup(event: CreateMessagesGroupEvent, _: UserInfo): Promise<Result> {
-    const { fromDate, toDate, count } = event.group
-    await this.db.createMessagesGroup(event.group.card, event.group.blobId, fromDate, toDate, count)
+    const { fromDate, toDate, fromId, toId, count } = event.group
+    await this.db.createMessagesGroup(event.group.card, event.group.blobId, fromDate, toDate, fromId, toId, count)
 
+    return {
+      responseEvent: undefined,
+      result: {}
+    }
+  }
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async createThread(event: CreateThreadEvent, _: UserInfo): Promise<Result> {
+    return {
+      responseEvent: undefined,
+      result: {}
+    }
+  }
+
+  async removeMessagesGroup(event: RemoveMessagesGroupEvent, user: UserInfo): Promise<Result> {
+    return {
+      responseEvent: undefined,
+      result: {}
+    }
+  }
+
+  async removePatches(event: RemovePatchesEvent, user: UserInfo): Promise<Result> {
     return {
       responseEvent: undefined,
       result: {}

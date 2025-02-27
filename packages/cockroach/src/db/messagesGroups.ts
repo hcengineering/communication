@@ -3,7 +3,8 @@ import {
     SortingOrder,
     type BlobID,
     type MessagesGroup,
-    type FindMessagesGroupsParams
+    type FindMessagesGroupsParams,
+    type MessageID
 } from '@hcengineering/communication-types'
 
 import {BaseDb} from './base.ts'
@@ -16,14 +17,16 @@ import {getCondition} from './utils.ts';
 
 export class MessagesGroupsDb extends BaseDb {
     //MessagesGroup
-    async createMessagesGroup(card: CardID, blobId: BlobID, from_date: Date, to_date: Date, count: number): Promise<void> {
+    async createMessagesGroup(card: CardID, blobId: BlobID, from_date: Date, to_date: Date, fromID: MessageID, toID: MessageID, count: number): Promise<void> {
         const dbData: MessagesGroupDb = {
             workspace_id: this.workspace,
             card_id: card,
             blob_id: blobId,
             from_date,
             to_date,
-            count
+            count,
+            from_id: fromID,
+            to_id: toID
         }
         await this.insert(TableName.MessagesGroup, dbData)
     }

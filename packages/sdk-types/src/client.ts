@@ -11,9 +11,7 @@ import type {
   SocialID,
   Notification,
   FindMessagesGroupsParams,
-  MessagesGroup,
-  FindPatchesParams,
-  Patch
+  MessagesGroup
 } from '@hcengineering/communication-types'
 import type { FindMessagesParams } from '@hcengineering/communication-types'
 
@@ -22,13 +20,15 @@ import type { ResponseEvent } from './responseEvent.ts'
 export interface Client {
   createMessage(card: CardID, content: RichText, creator: SocialID): Promise<MessageID>
   removeMessage(card: CardID, id: MessageID): Promise<void>
-  createPatch(card: CardID, message: MessageID, content: RichText, creator: SocialID): Promise<void>
+  updateMessage(card: CardID, message: MessageID, content: RichText, creator: SocialID): Promise<void>
 
   createReaction(card: CardID, message: MessageID, reaction: string, creator: SocialID): Promise<void>
   removeReaction(card: CardID, message: MessageID, reaction: string, creator: SocialID): Promise<void>
 
   createAttachment(card: CardID, message: MessageID, attachment: CardID, creator: SocialID): Promise<void>
   removeAttachment(card: CardID, message: MessageID, attachment: CardID): Promise<void>
+
+  createThread(card: CardID, message: MessageID, thread: CardID, created: Date): Promise<void>
 
   createNotification(message: MessageID, context: ContextID): Promise<void>
   removeNotification(message: MessageID, context: ContextID): Promise<void>
@@ -40,7 +40,6 @@ export interface Client {
   onEvent(event: ResponseEvent): void
 
   findMessages(params: FindMessagesParams, queryId?: number): Promise<Message[]>
-  findPatches(params: FindPatchesParams): Promise<Patch[]>
   findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]>
   findNotificationContexts(params: FindNotificationContextParams, queryId?: number): Promise<NotificationContext[]>
   findNotifications(params: FindNotificationsParams, queryId?: number): Promise<Notification[]>

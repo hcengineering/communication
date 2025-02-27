@@ -52,13 +52,3 @@ export interface FindMessagesGroupsParams extends FindParams {
   toDate?: Partial<Record<ComparisonOperator, Date>> | Date
   orderBy?: 'fromDate' | 'toDate'
 }
-
-export interface FindPatchesParams extends FindParams {
-  card: CardID
-  messageId?: Partial<Record<ComparisonOperator, MessageID>> | MessageID
-}
-
-export interface FindThreadsParams extends FindParams {
-  card: CardID
-  messageId?: Partial<Record<ComparisonOperator, MessageID>> | MessageID
-}

@@ -16,8 +16,8 @@ import {
   type MessagesGroup,
   type FindMessagesGroupsParams,
   type WorkspaceID,
-  type FindPatchesParams,
-  type Patch
+  PatchType,
+  type Thread
 } from '@hcengineering/communication-types'
 import type { DbAdapter } from '@hcengineering/communication-sdk-types'
 
@@ -48,6 +48,7 @@ export class CockroachAdapter implements DbAdapter {
   async createPatch(
     card: CardID,
     message: MessageID,
+    type: PatchType,
     content: RichText,
     creator: SocialID,
     created: Date
@@ -55,22 +56,24 @@ export class CockroachAdapter implements DbAdapter {
     return await this.message.createPatch(card, message, content, creator, created)
   }
 
-  async removeMessage(card: CardID, message: MessageID): Promise<MessageID | undefined> {
-    return await this.message.removeMessage(card, message)
+  async removeMessage(card: CardID, message: MessageID): Promise<void> {
+    await this.message.removeMessage(card, message)
   }
 
-  async removeMessages(card: CardID, ids: MessageID[]): Promise<MessageID[]> {
-    return await this.message.removeMessages(card, ids)
+  async removeMessages(card: CardID, fromId: MessageID, toId: MessageID): Promise<void> {
+    await this.message.removeMessages(card, fromId, toId)
   }
 
   async createMessagesGroup(
     card: CardID,
     blobId: BlobID,
-    from_date: Date,
-    to_date: Date,
+    fromDate: Date,
+    toDate: Date,
+    fromID: MessageID,
+    toID: MessageID,
     count: number
   ): Promise<void> {
-    return await this.messageGroups.createMessagesGroup(card, blobId, from_date, to_date, count)
+    return await this.messageGroups.createMessagesGroup(card, blobId, fromDate, toDate, fromID, toID, count)
   }
 
   async createReaction(
@@ -101,10 +104,6 @@ export class CockroachAdapter implements DbAdapter {
 
   async findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
     return await this.messageGroups.find(params)
-  }
-
-  async findPatches(params: FindPatchesParams): Promise<Patch[]> {
-    return await this.message.findPatches(params)
   }
 
   async createNotification(message: MessageID, context: ContextID): Promise<void> {
@@ -148,8 +147,29 @@ export class CockroachAdapter implements DbAdapter {
     return await this.notification.findNotifications(params, personalWorkspace, workspace)
   }
 
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async findThread(thread: CardID): Promise<Thread | undefined> {
+    //TODO: implement
+    return undefined
+  }
   close(): void {
     this.db.close()
+  }
+
+  async createThread(card: CardID, message: MessageID, thread: CardID, created: Date): Promise<void> {
+    //TODO: implement
+  }
+
+  async updateThread(thread: CardID, lastReply: Date, op: 'increment' | 'decrement'): Promise<void> {
+    //TODO: implement
+  }
+
+  async removeMessagesGroup(card: CardID, blob: BlobID): Promise<void> {
+    //TODO: implement
+  }
+
+  async removePatches(card: CardID, fromId: MessageID, toId: MessageID): Promise<void> {
+    //TODO: implement
   }
 }
 

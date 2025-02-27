@@ -13,11 +13,9 @@ import type {
   FindMessagesParams,
   FindNotificationContextParams,
   FindNotificationsParams,
-  FindPatchesParams,
   Message,
   MessageID,
   MessagesGroup,
-  Patch,
   WorkspaceID
 } from '@hcengineering/communication-types'
 
@@ -62,10 +60,6 @@ export class Manager {
 
   async findMessagesGroups(info: ConnectionInfo, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
     return await this.db.findMessagesGroups(params)
-  }
-
-  async findPatches(info: ConnectionInfo, params: FindPatchesParams): Promise<Patch[]> {
-    return await this.db.findPatches(params)
   }
 
   async event(info: ConnectionInfo, event: RequestEvent): Promise<EventResult> {
@@ -149,8 +143,6 @@ export class Manager {
           { card: event.card, id: event.message },
           Array.from(info.messageQueries.values())
         )
-      case ResponseEventType.MessagesRemoved:
-        return this.matchMessagesQuery({ card: event.card }, Array.from(info.messageQueries.values()))
       case ResponseEventType.ReactionCreated:
         return this.matchMessagesQuery(
           { card: event.card, id: event.reaction.message },
@@ -169,6 +161,11 @@ export class Manager {
       case ResponseEventType.AttachmentRemoved:
         return this.matchMessagesQuery(
           { card: event.card, id: event.message },
+          Array.from(info.messageQueries.values())
+        )
+      case ResponseEventType.ThreadCreated:
+        return this.matchMessagesQuery(
+          { card: event.thread.card, id: event.thread.message },
           Array.from(info.messageQueries.values())
         )
       case ResponseEventType.NotificationCreated:

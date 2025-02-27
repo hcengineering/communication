@@ -8,9 +8,11 @@ CREATE TABLE IF NOT EXISTS communication.messages
     creator      VARCHAR(255) NOT NULL,
     created      TIMESTAMPTZ  NOT NULL,
 
-    PRIMARY KEY (id, card_id, workspace_id)
+    PRIMARY KEY (workspace_id, card_id, id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_messages_workspace_card ON communication.messages (workspace_id, card_id);
+CREATE INDEX IF NOT EXISTS idx_messages_workspace_card_id ON communication.messages (workspace_id, card_id, id);
 
 CREATE TABLE IF NOT EXISTS communication.messages_groups
 (
@@ -20,7 +22,12 @@ CREATE TABLE IF NOT EXISTS communication.messages_groups
 
     from_date    TIMESTAMPTZ  NOT NULL,
     to_date      TIMESTAMPTZ  NOT NULL,
+    from_id      INT8         NOT NULL,
+    to_id        INT8         NOT NULL,
     count        INT          NOT NULL,
 
     PRIMARY KEY (workspace_id, card_id, blob_id)
 );
+
+
+CREATE INDEX IF NOT EXISTS idx_messages_groups_workspace_card ON communication.messages_groups (workspace_id, card_id);

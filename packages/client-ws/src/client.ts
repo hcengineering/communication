@@ -5,7 +5,6 @@ import {
   type FindMessagesParams,
   type FindNotificationContextParams,
   type FindNotificationsParams,
-  type FindPatchesParams,
   type Message,
   type MessageID,
   type MessagesGroup,
@@ -14,8 +13,7 @@ import {
   type NotificationContextUpdate,
   type RichText,
   type SocialID,
-  type WorkspaceID,
-  type Patch
+  type WorkspaceID
 } from '@hcengineering/communication-types'
 import {
   RequestEventType,
@@ -79,7 +77,7 @@ class WsClient implements Client {
     await this.sendEvent(event)
   }
 
-  async createPatch(card: CardID, message: MessageID, content: RichText, creator: SocialID): Promise<void> {
+  async updateMessage(card: CardID, message: MessageID, content: RichText, creator: SocialID): Promise<void> {
     const event: CreatePatchEvent = {
       type: RequestEventType.CreatePatch,
       card,
@@ -139,10 +137,6 @@ class WsClient implements Client {
 
   async findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
     return await this.ws.send('findMessagesGroups', [params])
-  }
-
-  async findPatches(params: FindPatchesParams): Promise<Patch[]> {
-    return await this.ws.send('findPatches', [params])
   }
 
   async createNotification(message: MessageID, context: ContextID): Promise<void> {
@@ -208,6 +202,10 @@ class WsClient implements Client {
 
   private async sendEvent(event: RequestEvent): Promise<EventResult> {
     return await this.ws.send('event', [event])
+  }
+  //eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async createThread(card: CardID, message: MessageID, thread: CardID, created: Date): Promise<void> {
+    //TODO: implement
   }
 
   close() {

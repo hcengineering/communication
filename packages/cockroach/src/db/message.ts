@@ -5,9 +5,7 @@ import {
     type FindMessagesParams,
     type SocialID,
     type RichText,
-    SortingOrder,
-    type FindPatchesParams,
-    type Patch
+    SortingOrder
 } from '@hcengineering/communication-types';
 import { generateMessageId } from '@hcengineering/communication-shared';
 
@@ -49,13 +47,14 @@ export class MessagesDb extends BaseDb {
         return result[0] as MessageID | undefined
     }
 
-    async removeMessages(card: CardID, ids: MessageID[]): Promise<MessageID[]> {
-        const result = await this.removeWithReturn(TableName.Message, {
-            workspace_id: this.workspace,
-            card_id: card,
-            id: ids
-        }, "id")
-        return result.map((it: any) => it.id)
+    async removeMessages(card: CardID, fromId: MessageID, toId: MessageID): Promise<void> {
+        // const result = await this.removeWithReturn(TableName.Message, {
+        //     workspace_id: this.workspace,
+        //     card_id: card,
+        //     id: ids
+        // }, "id")
+        // return result.map((it: any) => it.id)
+        // TODO: implement
     }
 
     async createPatch(card: CardID, message: MessageID, content: RichText, creator: SocialID, created: Date): Promise<void> {
@@ -205,12 +204,6 @@ export class MessagesDb extends BaseDb {
                   AND r.workspace_id = m.workspace_id 
                   AND r.card_id = m.card_id
                 ), '[]'::jsonb) AS reactions`
-    }
-
-    // Find patches
-    async findPatches (params: FindPatchesParams): Promise<Patch[]> {
-        //TODO: implement
-        return []
     }
 }
 

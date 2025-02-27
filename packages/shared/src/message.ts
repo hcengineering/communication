@@ -3,7 +3,7 @@ import type { MessageID } from '@hcengineering/communication-types'
 let lastTimestamp = 0
 let counter = 0n
 
-export function generateMessageId (): MessageID {
+export function generateMessageId(): MessageID {
   const timestamp = Math.floor(Date.now() / 1000)
 
   if (timestamp !== lastTimestamp) {
@@ -14,10 +14,10 @@ export function generateMessageId (): MessageID {
   const id = (BigInt(timestamp) << 20n) | counter
   counter++
 
-  return id as MessageID
+  return id.toString() as MessageID
 }
 
-export function parseMessageId (messageId: MessageID): Date {
+export function parseMessageId(messageId: MessageID): Date {
   const timestamp = Number(BigInt(messageId) >> 20n)
 
   return new Date(timestamp * 1000)

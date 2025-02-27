@@ -5,8 +5,8 @@
       "name": "@hcengineering/communication",
       "devDependencies": {
         "@eslint/js": "^9.21.0",
-        "@types/bun": "^1.2.3",
-        "bun-types": "^1.2.3",
+        "@types/bun": "^1.2.4",
+        "bun-types": "^1.2.4",
         "eslint": "^9.21.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-prettier": "^5.2.3",
@@ -16,7 +16,7 @@
     },
     "packages/client-query": {
       "name": "@hcengineering/communication-client-query",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-query": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
@@ -32,7 +32,7 @@
     },
     "packages/client-sqlite": {
       "name": "@hcengineering/communication-client-sqlite",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-sqlite-wasm": "workspace:*",
@@ -48,7 +48,7 @@
     },
     "packages/client-ws": {
       "name": "@hcengineering/communication-client-ws",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-client-query": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
@@ -64,7 +64,7 @@
     },
     "packages/cockroach": {
       "name": "@hcengineering/communication-cockroach",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-shared": "workspace:*",
@@ -82,7 +82,7 @@
     },
     "packages/examples": {
       "name": "@hcengineering/communication-examples",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-client-ws": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
@@ -96,7 +96,7 @@
     },
     "packages/query": {
       "name": "@hcengineering/communication-query",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-shared": "workspace:*",
@@ -113,7 +113,7 @@
     },
     "packages/sdk-types": {
       "name": "@hcengineering/communication-sdk-types",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-types": "workspace:*",
       },
@@ -126,7 +126,7 @@
     },
     "packages/server": {
       "name": "@hcengineering/communication-server",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-cockroach": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
@@ -145,7 +145,7 @@
     },
     "packages/shared": {
       "name": "@hcengineering/communication-shared",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-types": "workspace:*",
         "js-yaml": "^4.1.0",
@@ -160,7 +160,7 @@
     },
     "packages/sqlite-wasm": {
       "name": "@hcengineering/communication-sqlite-wasm",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
@@ -177,7 +177,7 @@
     },
     "packages/types": {
       "name": "@hcengineering/communication-types",
-      "version": "0.1.33",
+      "version": "0.1.44",
       "dependencies": {
         "@hcengineering/card": "0.7.2",
         "@hcengineering/core": "0.7.2",
@@ -287,7 +287,7 @@
 
     "@types/body-parser": ["@types/body-parser@1.19.5", "", { "dependencies": { "@types/connect": "*", "@types/node": "*" } }, "sha512-fB3Zu92ucau0iQ0JMCFQE7b/dv8Ot07NI3KaZIkIUNXq82k4eBAqUaneXfleGY9JWskeS9y+u0nXMyspcuQrCg=="],
 
-    "@types/bun": ["@types/bun@1.2.3", "", { "dependencies": { "bun-types": "1.2.3" } }, "sha512-054h79ipETRfjtsCW9qJK8Ipof67Pw9bodFWmkfkaUaRiIQ1dIV2VTlheshlBx3mpKr0KeK8VqnMMCtgN9rQtw=="],
+    "@types/bun": ["@types/bun@1.2.4", "", { "dependencies": { "bun-types": "1.2.4" } }, "sha512-QtuV5OMR8/rdKJs213iwXDpfVvnskPXY/S0ZiFbsTjQZycuqPbMW8Gf/XhLfwE5njW8sxI2WjISURXPlHypMFA=="],
 
     "@types/connect": ["@types/connect@3.4.38", "", { "dependencies": { "@types/node": "*" } }, "sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug=="],
 
@@ -361,7 +361,7 @@
 
     "braces": ["braces@3.0.3", "", { "dependencies": { "fill-range": "^7.1.1" } }, "sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA=="],
 
-    "bun-types": ["bun-types@1.2.3", "", { "dependencies": { "@types/node": "*", "@types/ws": "~8.5.10" } }, "sha512-P7AeyTseLKAvgaZqQrvp3RqFM3yN9PlcLuSTe7SoJOfZkER73mLdT2vEQi8U64S1YvM/ldcNiQjn0Sn7H9lGgg=="],
+    "bun-types": ["bun-types@1.2.4", "", { "dependencies": { "@types/node": "*", "@types/ws": "~8.5.10" } }, "sha512-nDPymR207ZZEoWD4AavvEaa/KZe/qlrbMSchqpQwovPZCKc7pwMoENjEtHgMKaAjJhy+x6vfqSBA1QU3bJgs0Q=="],
 
     "callsites": ["callsites@3.1.0", "", {}, "sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ=="],
 

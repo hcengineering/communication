@@ -23,9 +23,12 @@ export interface MessagesGroupDb {
     workspace_id: WorkspaceID,
     card_id: CardID,
     blob_id: BlobID,
+    from_id: MessageID,
+    to_id: MessageID,
     from_date: Date,
     to_date: Date,
     count: number
+    patches?: PatchDb[]
 }
 
 export interface PatchDb {
@@ -111,8 +114,11 @@ export function toMessagesGroup(raw: MessagesGroupDb): MessagesGroup {
     return {
         card: raw.card_id,
         blobId: raw.blob_id,
+        fromId: raw.from_id,
+        toId: raw.to_id,
         fromDate: raw.from_date,
         toDate: raw.to_date,
-        count: raw.count
+        count: raw.count,
+        patches: []
     }
 }
