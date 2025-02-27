@@ -1,4 +1,4 @@
-//Full copy from @hcengineering/postgres
+// Full copy from @hcengineering/postgres
 import postgres from 'postgres'
 import { v4 as uuid } from 'uuid'
 
@@ -86,22 +86,9 @@ export function connect(connectionString: string, database?: string): PostgresCl
         application_name: 'communication'
       },
       database,
-      max: 10,
-      // fetch_types: false,
-      // prepare: false,
-      types: {
-        // https://jdbc.postgresql.org/documentation/publicapi/constant-values.html
-        int8: {
-          to: 0,
-          from: [20],
-          parse: (value: number) => Number(value)
-        },
-        timestamp: {
-          to: 0,
-          from: [1114, 1184],
-          parse: (value: string) => new Date(value)
-        }
-      },
+      max: 5,
+      fetch_types: false,
+      prepare: false,
       ...extraOptions
     })
 

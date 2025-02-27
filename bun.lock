@@ -16,7 +16,7 @@
     },
     "packages/client-query": {
       "name": "@hcengineering/communication-client-query",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-query": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
@@ -32,7 +32,7 @@
     },
     "packages/client-sqlite": {
       "name": "@hcengineering/communication-client-sqlite",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-sqlite-wasm": "workspace:*",
@@ -48,7 +48,7 @@
     },
     "packages/client-ws": {
       "name": "@hcengineering/communication-client-ws",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-client-query": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
@@ -64,12 +64,11 @@
     },
     "packages/cockroach": {
       "name": "@hcengineering/communication-cockroach",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-shared": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
-        "pg": "8.12.0",
         "postgres": "^3.4.4",
         "uuid": "^11.0.3",
       },
@@ -82,7 +81,7 @@
     },
     "packages/examples": {
       "name": "@hcengineering/communication-examples",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-client-ws": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
@@ -96,7 +95,7 @@
     },
     "packages/query": {
       "name": "@hcengineering/communication-query",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-shared": "workspace:*",
@@ -113,7 +112,7 @@
     },
     "packages/sdk-types": {
       "name": "@hcengineering/communication-sdk-types",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-types": "workspace:*",
       },
@@ -126,7 +125,7 @@
     },
     "packages/server": {
       "name": "@hcengineering/communication-server",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-cockroach": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
@@ -145,7 +144,7 @@
     },
     "packages/shared": {
       "name": "@hcengineering/communication-shared",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-types": "workspace:*",
         "js-yaml": "^4.1.0",
@@ -160,7 +159,7 @@
     },
     "packages/sqlite-wasm": {
       "name": "@hcengineering/communication-sqlite-wasm",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
@@ -177,7 +176,7 @@
     },
     "packages/types": {
       "name": "@hcengineering/communication-types",
-      "version": "0.1.44",
+      "version": "0.1.46",
       "dependencies": {
         "@hcengineering/card": "0.7.2",
         "@hcengineering/core": "0.7.2",
@@ -517,33 +516,9 @@
 
     "periscopic": ["periscopic@3.1.0", "", { "dependencies": { "@types/estree": "^1.0.0", "estree-walker": "^3.0.0", "is-reference": "^3.0.0" } }, "sha512-vKiQ8RRtkl9P+r/+oefh25C3fhybptkHKCZSPlcXiJux2tJF55GnEj3BVn4A5gKfq9NWWXXrxkHBwVPUfH0opw=="],
 
-    "pg": ["pg@8.12.0", "", { "dependencies": { "pg-connection-string": "^2.6.4", "pg-pool": "^3.6.2", "pg-protocol": "^1.6.1", "pg-types": "^2.1.0", "pgpass": "1.x" }, "optionalDependencies": { "pg-cloudflare": "^1.1.1" }, "peerDependencies": { "pg-native": ">=3.0.1" }, "optionalPeers": ["pg-native"] }, "sha512-A+LHUSnwnxrnL/tZ+OLfqR1SxLN3c/pgDztZ47Rpbsd4jUytsTtwQo/TLPRzPJMp/1pbhYVhH9cuSZLAajNfjQ=="],
-
-    "pg-cloudflare": ["pg-cloudflare@1.1.1", "", {}, "sha512-xWPagP/4B6BgFO+EKz3JONXv3YDgvkbVrGw2mTo3D6tVDQRh1e7cqVGvyR3BE+eQgAvx1XhW/iEASj4/jCWl3Q=="],
-
-    "pg-connection-string": ["pg-connection-string@2.7.0", "", {}, "sha512-PI2W9mv53rXJQEOb8xNR8lH7Hr+EKa6oJa38zsK0S/ky2er16ios1wLKhZyxzD7jUReiWokc9WK5nxSnC7W1TA=="],
-
-    "pg-int8": ["pg-int8@1.0.1", "", {}, "sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw=="],
-
-    "pg-pool": ["pg-pool@3.7.1", "", { "peerDependencies": { "pg": ">=8.0" } }, "sha512-xIOsFoh7Vdhojas6q3596mXFsR8nwBQBXX5JiV7p9buEVAGqYL4yFzclON5P9vFrpu1u7Zwl2oriyDa89n0wbw=="],
-
-    "pg-protocol": ["pg-protocol@1.7.1", "", {}, "sha512-gjTHWGYWsEgy9MsY0Gp6ZJxV24IjDqdpTW7Eh0x+WfJLFsm/TJx1MzL6T0D88mBvkpxotCQ6TwW6N+Kko7lhgQ=="],
-
-    "pg-types": ["pg-types@2.2.0", "", { "dependencies": { "pg-int8": "1.0.1", "postgres-array": "~2.0.0", "postgres-bytea": "~1.0.0", "postgres-date": "~1.0.4", "postgres-interval": "^1.1.0" } }, "sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA=="],
-
-    "pgpass": ["pgpass@1.0.5", "", { "dependencies": { "split2": "^4.1.0" } }, "sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug=="],
-
     "picomatch": ["picomatch@2.3.1", "", {}, "sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA=="],
 
     "postgres": ["postgres@3.4.5", "", {}, "sha512-cDWgoah1Gez9rN3H4165peY9qfpEo+SA61oQv65O3cRUE1pOEoJWwddwcqKE8XZYjbblOJlYDlLV4h67HrEVDg=="],
-
-    "postgres-array": ["postgres-array@2.0.0", "", {}, "sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA=="],
-
-    "postgres-bytea": ["postgres-bytea@1.0.0", "", {}, "sha512-xy3pmLuQqRBZBXDULy7KbaitYqLcmxigw14Q5sj8QBVLqEwXfeybIKVWiqAXTlcvdvb0+xkOtDbfQMOf4lST1w=="],
-
-    "postgres-date": ["postgres-date@1.0.7", "", {}, "sha512-suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q=="],
-
-    "postgres-interval": ["postgres-interval@1.2.0", "", { "dependencies": { "xtend": "^4.0.0" } }, "sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ=="],
 
     "prelude-ls": ["prelude-ls@1.2.1", "", {}, "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="],
 
@@ -572,8 +547,6 @@
     "shebang-regex": ["shebang-regex@3.0.0", "", {}, "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A=="],
 
     "source-map-js": ["source-map-js@1.2.1", "", {}, "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="],
-
-    "split2": ["split2@4.2.0", "", {}, "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg=="],
 
     "strip-json-comments": ["strip-json-comments@3.1.1", "", {}, "sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig=="],
 
@@ -606,8 +579,6 @@
     "which": ["which@2.0.2", "", { "dependencies": { "isexe": "^2.0.0" }, "bin": { "node-which": "./bin/node-which" } }, "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA=="],
 
     "word-wrap": ["word-wrap@1.2.5", "", {}, "sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA=="],
-
-    "xtend": ["xtend@4.0.2", "", {}, "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ=="],
 
     "yocto-queue": ["yocto-queue@0.1.0", "", {}, "sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q=="],
 
