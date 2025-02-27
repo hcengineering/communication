@@ -11,7 +11,7 @@ import type {
   QueryClient
 } from '@hcengineering/communication-sdk-types'
 
-import type { PagedQuery, QueryId } from './types'
+import type { FindParams, PagedQuery, QueryId } from './types'
 import { MessagesQuery } from './messages/query'
 import { NotificationQuery } from './notifications/query'
 
@@ -62,8 +62,6 @@ export class LiveQueries {
 
   private createMessagesQuery(params: FindMessagesParams, callback: MessagesQueryCallback): MessagesQuery {
     const id = ++this.counter
-
-    // TODO: fix create query from cache und use same queru for same params
     const exists = this.findMessagesQuery(params)
 
     if (exists !== undefined) {
@@ -85,7 +83,7 @@ export class LiveQueries {
     callback: NotificationsQueryCallback
   ): NotificationQuery {
     const id = ++this.counter
-    const exists = this.findNotificationQuery(params as any)
+    const exists = this.findNotificationQuery(params)
 
     if (exists !== undefined) {
       if (this.unsubscribed.has(id)) {
@@ -110,16 +108,16 @@ export class LiveQueries {
     }
   }
 
-  private findNotificationQuery(params: FindMessagesParams): NotificationQuery | undefined {
+  private findNotificationQuery(params: FindNotificationsParams): NotificationQuery | undefined {
     for (const query of this.queries.values()) {
       if (query instanceof NotificationQuery) {
-        if (!this.queryCompare(params, query.params as any)) continue
+        if (!this.queryCompare(params, query.params)) continue
         return query
       }
     }
   }
 
-  private queryCompare(q1: FindMessagesParams, q2: FindMessagesParams): boolean {
+  private queryCompare(q1: FindParams, q2: FindParams): boolean {
     if (Object.keys(q1).length !== Object.keys(q2).length) {
       return false
     }
