@@ -1,6 +1,6 @@
 {
   "name": "@hcengineering/communication-server",
-  "version": "0.1.54",
+  "version": "0.1.58",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "./types/index.d.ts",
@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@hcengineering/core": "0.7.2",
+    "@hcengineering/server-token": "0.7.2",
     "@hcengineering/communication-cockroach": "workspace:*",
     "@hcengineering/communication-sdk-types": "workspace:*",
     "@hcengineering/communication-types": "workspace:*"
