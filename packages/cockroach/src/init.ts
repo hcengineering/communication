@@ -20,7 +20,7 @@ const migrationsTableName = 'communication._migrations'
 let isInitialized = false
 
 export async function initSchema(sql: postgres.Sql) {
-  if(isInitialized) return
+  if (isInitialized) return
   console.log('🗃️ Initializing schema...')
   await sql.unsafe('CREATE SCHEMA IF NOT EXISTS communication;')
   await sql.unsafe(`CREATE TABLE IF NOT EXISTS ${migrationsTableName}

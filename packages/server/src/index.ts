@@ -33,9 +33,8 @@ import type {
   RequestEvent,
   ServerApi
 } from '@hcengineering/communication-sdk-types'
-import {setMetadata} from "@hcengineering/platform";
-import serverToken from "@hcengineering/server-token";
-
+import { setMetadata } from '@hcengineering/platform'
+import serverToken from '@hcengineering/server-token'
 
 import { type BroadcastSessionsFunc, Manager } from './manager'
 import { getMetadata, type Metadata } from './metadata'
