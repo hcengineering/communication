@@ -4,19 +4,19 @@
     "": {
       "name": "@hcengineering/communication",
       "devDependencies": {
-        "@eslint/js": "^9.23.0",
-        "@types/bun": "^1.2.8",
-        "bun-types": "^1.2.8",
-        "eslint": "^9.23.0",
+        "@eslint/js": "^9.24.0",
+        "@types/bun": "^1.2.9",
+        "bun-types": "^1.2.9",
+        "eslint": "^9.24.0",
         "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-prettier": "^5.2.5",
+        "eslint-plugin-prettier": "^5.2.6",
         "prettier": "^3.5.3",
-        "typescript-eslint": "^8.29.0",
+        "typescript-eslint": "^8.29.1",
       },
     },
     "packages/client-query": {
       "name": "@hcengineering/communication-client-query",
-      "version": "0.1.155",
+      "version": "0.1.166",
       "dependencies": {
         "@hcengineering/communication-query": "workspace:*",
         "@hcengineering/communication-sdk-types": "workspace:*",
@@ -32,7 +32,7 @@
     },
     "packages/cockroach": {
       "name": "@hcengineering/communication-cockroach",
-      "version": "0.1.155",
+      "version": "0.1.166",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-shared": "workspace:*",
@@ -49,7 +49,7 @@
     },
     "packages/query": {
       "name": "@hcengineering/communication-query",
-      "version": "0.1.155",
+      "version": "0.1.166",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-shared": "workspace:*",
@@ -67,7 +67,7 @@
     },
     "packages/rest-client": {
       "name": "@hcengineering/communication-rest-client",
-      "version": "0.1.155",
+      "version": "0.1.166",
       "dependencies": {
         "@hcengineering/communication-sdk-types": "workspace:*",
         "@hcengineering/communication-shared": "workspace:*",
@@ -85,7 +85,7 @@
     },
     "packages/sdk-types": {
       "name": "@hcengineering/communication-sdk-types",
-      "version": "0.1.155",
+      "version": "0.1.166",
       "dependencies": {
         "@hcengineering/communication-types": "workspace:*",
         "@hcengineering/core": "^0.7.28",
@@ -99,7 +99,7 @@
     },
     "packages/server": {
       "name": "@hcengineering/communication-server",
-      "version": "0.1.155",
+      "version": "0.1.166",
       "dependencies": {
         "@hcengineering/account-client": "^0.7.28",
         "@hcengineering/communication-cockroach": "workspace:*",
@@ -121,7 +121,7 @@
     },
     "packages/shared": {
       "name": "@hcengineering/communication-shared",
-      "version": "0.1.155",
+      "version": "0.1.166",
       "dependencies": {
         "@hcengineering/communication-types": "workspace:*",
       },
@@ -134,10 +134,11 @@
     },
     "packages/types": {
       "name": "@hcengineering/communication-types",
-      "version": "0.1.155",
+      "version": "0.1.166",
       "dependencies": {
         "@hcengineering/card": "^0.7.28",
         "@hcengineering/core": "^0.7.28",
+        "@hcengineering/tags": "^0.7.28",
       },
       "devDependencies": {
         "@types/bun": "^1.1.14",
@@ -148,7 +149,7 @@
     },
     "packages/yaml": {
       "name": "@hcengineering/communication-yaml",
-      "version": "0.1.155",
+      "version": "0.1.166",
       "dependencies": {
         "@hcengineering/communication-shared": "workspace:*",
         "@hcengineering/communication-types": "workspace:*",
@@ -224,11 +225,17 @@
 
     "@hcengineering/platform": ["@hcengineering/platform@0.7.28", "https://npm.pkg.github.com/download/@hcengineering/platform/0.7.28/2126ff97284b679ceab3c86f24febd73a3a28712", { "dependencies": { "intl-messageformat": "^10.7.14" } }, "sha512-0zEifwsLdOs/M6TZ9xnPrQTTlhwW28sooiyL4ZfQsiC2AJUy05vLP5/W8V9eDLta+EiR5bjtlulGsg1GfPjUoQ=="],
 
+    "@hcengineering/preference": ["@hcengineering/preference@0.7.28", "https://npm.pkg.github.com/download/@hcengineering/preference/0.7.28/f1739991cc012d194fa18f99565ae5bd64f0ad07", { "dependencies": { "@hcengineering/core": "^0.7.28", "@hcengineering/platform": "^0.7.28", "@hcengineering/ui": "^0.7.28" } }, "sha512-WwwOfjZ1TLdTfPhQGvSjo8dS63HyuE7BDVhfstxP8D+H4BI5UKYoev/6vlwQf/3d+jI1S4f2ivO//IDJAD7sGg=="],
+
     "@hcengineering/server-token": ["@hcengineering/server-token@0.7.28", "https://npm.pkg.github.com/download/@hcengineering/server-token/0.7.28/b1cffcb628aa0c6ac73171ef340c8ccf0f85ab07", { "dependencies": { "@hcengineering/core": "^0.7.28", "@hcengineering/platform": "^0.7.28", "jwt-simple": "^0.5.6" } }, "sha512-TaHwzxuoFKN6jnWHIZk0UcRmB+UQ1QE1HZzUh5doPSFUYOAtTrSb32iJDA8e8oEADcJpOp9RGIUP/EP/VED7BQ=="],
+
+    "@hcengineering/tags": ["@hcengineering/tags@0.7.28", "https://npm.pkg.github.com/download/@hcengineering/tags/0.7.28/42545cc43e3c61e32ce96be87c245fa929f5cbb6", { "dependencies": { "@hcengineering/core": "^0.7.28", "@hcengineering/platform": "^0.7.28", "@hcengineering/ui": "^0.7.28", "@hcengineering/view": "^0.7.28" } }, "sha512-2KCVUu5N/GAkDsDRbdUi7gnBq4ze1Z3eCLoc8nz2G/zeAjAga8gmWkZEbXqAC8rNVqBQv72EKeJFGJyqnev6Xw=="],
 
     "@hcengineering/theme": ["@hcengineering/theme@0.7.28", "https://npm.pkg.github.com/download/@hcengineering/theme/0.7.28/557640a7ba2ffaa4d6e5411a54577f60dc528300", { "dependencies": { "@hcengineering/analytics": "^0.7.28", "@hcengineering/platform": "^0.7.28", "svelte": "^4.2.19" } }, "sha512-Hv3wQKHr327TC7wMHCBiG4bMtg8vSlb7+UFwdKI8ztEs3359meqkXu+exqi7Nl5334voXIz5ZFxjwZwOMzNSFA=="],
 
     "@hcengineering/ui": ["@hcengineering/ui@0.7.28", "https://npm.pkg.github.com/download/@hcengineering/ui/0.7.28/82025fc775702ea8c8569611356662bfbf28eb74", { "dependencies": { "@hcengineering/analytics": "^0.7.28", "@hcengineering/core": "^0.7.28", "@hcengineering/platform": "^0.7.28", "@hcengineering/theme": "^0.7.28", "autolinker": "4.0.0", "date-fns": "^2.30.0", "date-fns-tz": "^2.0.0", "dompurify": "^3.1.6", "emojibase": "^16.0.0", "fast-equals": "^5.2.2", "hls.js": "^1.5.20", "plyr": "^3.7.8", "svelte": "^4.2.19" } }, "sha512-QsUpO0+Idu1n2dC6KtorPJ6SSp30It8FHSuG3Y+Awv4td/ftVocOSFqhskbk+us9Yw9KqOYgkqhGYEHbfRfw4Q=="],
+
+    "@hcengineering/view": ["@hcengineering/view@0.7.28", "https://npm.pkg.github.com/download/@hcengineering/view/0.7.28/8aad5b07d3750463a78aae1b9482361f2ff9f45e", { "dependencies": { "@hcengineering/core": "^0.7.28", "@hcengineering/platform": "^0.7.28", "@hcengineering/preference": "^0.7.28", "@hcengineering/ui": "^0.7.28" } }, "sha512-cG0isakqIxuiAG7T2KyRnztfOp3falr+oG77Qod915EeBKNEDqXfNrD29Dp04Wwf5TowifDT9smLzAyH8l6kgg=="],
 
     "@humanfs/core": ["@humanfs/core@0.19.1", "", {}, "sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA=="],
 
