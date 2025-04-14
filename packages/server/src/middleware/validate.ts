@@ -166,10 +166,12 @@ const SortingOrder = z.string()
 // Find params
 const dateOrRecordSchema = z.union([z.date(), z.record(z.date())])
 
-const FindParamsSchema = z.object({
-  order: SortingOrder.optional(),
-  limit: z.number().optional()
-}).strict()
+const FindParamsSchema = z
+  .object({
+    order: SortingOrder.optional(),
+    limit: z.number().optional()
+  })
+  .strict()
 
 const FindMessagesParamsSchema = FindParamsSchema.extend({
   id: MessageID.optional(),
@@ -222,9 +224,11 @@ const FindLabelsParamsSchema = FindParamsSchema.extend({
 
 //Events
 
-const BaseRequestEventSchema = z.object({
-  _id: z.string().optional()
-}).strict()
+const BaseRequestEventSchema = z
+  .object({
+    _id: z.string().optional()
+  })
+  .strict()
 
 //Label events
 const CreateLabelEventSchema = BaseRequestEventSchema.extend({
