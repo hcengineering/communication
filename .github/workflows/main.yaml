@@ -47,8 +47,9 @@ jobs:
           scope: '@hcengineering'
 
       - name: Prepare deps
-        run: | 
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > .npmrc
+        run: |
+          echo "@hcengineering:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
 
       - name: Install dependencies
         run: bun install
