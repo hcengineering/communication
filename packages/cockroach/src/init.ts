@@ -54,7 +54,7 @@ export async function initSchema(sql: postgres.Sql) {
 }
 
 function getMigrations(): [string, string][] {
-  return [migrationO1(), migrationO2(), migrationO3(), migrationO4()]
+  return [migrationO1(), migrationO2(), migrationO3(), migrationO4(), migrationO5()]
 }
 
 function migrationO1(): [string, string] {
@@ -229,10 +229,15 @@ function migrationO4(): [string, string] {
   const sql = `
       ALTER TABLE communication.messages
           ADD COLUMN IF NOT EXISTS external_id VARCHAR(255);
+  `
+  return ['message_add_external_id_column', sql]
+}
 
+function migrationO5(): [string, string] {
+  const sql = `
       CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_unique_external_id
           ON communication.messages (external_id)
           WHERE external_id IS NOT NULL;
   `
-  return ['message_add_external_id_column', sql]
+  return ['message_add_external_id_column_unique_index', sql]
 }
