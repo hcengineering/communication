@@ -161,7 +161,7 @@ const MessagesGroup = z.any()
 const PatchType = z.string()
 const RichText = z.string()
 const SocialID = z.string()
-const SortingOrder = z.string()
+const SortingOrder = z.number()
 
 // Find params
 const dateOrRecordSchema = z.union([z.date(), z.record(z.date())])
