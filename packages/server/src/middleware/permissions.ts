@@ -96,9 +96,9 @@ export class PermissionsMiddleware extends BaseMiddleware implements Middleware 
     return await this.provideFindNotifications(session, paramsWithAccount, queryId)
   }
 
-  async findLabels(session: SessionData, params: FindLabelsParams): Promise<Label[]> {
+  async findLabels(session: SessionData, params: FindLabelsParams, queryId?: QueryId): Promise<Label[]> {
     const paramsWithAccount = this.expandParamsWithAccount(session, params)
-    return await this.provideFindLabels(session, paramsWithAccount)
+    return await this.provideFindLabels(session, paramsWithAccount, queryId)
   }
 
   private checkSocialId(session: SessionData, creator: SocialID): void {

@@ -44,8 +44,12 @@ export class BaseMiddleware implements Middleware {
     return await this.provideFindMessages(session, params, queryId)
   }
 
-  async findMessagesGroups(session: SessionData, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
-    return await this.provideFindMessagesGroups(session, params)
+  async findMessagesGroups(
+    session: SessionData,
+    params: FindMessagesGroupsParams,
+    queryId?: QueryId
+  ): Promise<MessagesGroup[]> {
+    return await this.provideFindMessagesGroups(session, params, queryId)
   }
 
   async findNotificationContexts(
@@ -64,8 +68,8 @@ export class BaseMiddleware implements Middleware {
     return await this.provideFindNotifications(session, params, queryId)
   }
 
-  async findLabels(session: SessionData, params: FindLabelsParams): Promise<Label[]> {
-    return await this.provideFindLabels(session, params)
+  async findLabels(session: SessionData, params: FindLabelsParams, queryId?: QueryId): Promise<Label[]> {
+    return await this.provideFindLabels(session, params, queryId)
   }
 
   async event(session: SessionData, event: RequestEvent, derived: boolean): Promise<EventResult> {

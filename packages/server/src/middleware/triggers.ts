@@ -34,9 +34,6 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
   }
 
   async response(session: SessionData, event: ResponseEvent): Promise<void> {
-    const matchedTriggers = triggers.filter(([_, type]) => type === event.type)
-    if (matchedTriggers.length === 0) return
-
     const ctx: Omit<TriggerCtx, 'ctx'> = {
       metadata: this.context.metadata,
       db: this.db,
@@ -47,6 +44,19 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
         return (await this.context.head?.event(session, event, true)) ?? {}
       }
     }
+    await this.applyTriggers(session, event, ctx)
+    void notify(
+      {
+        ...ctx,
+        ctx: this.ctx.newChild('create-notifications', {})
+      },
+      event
+    ).then((res) => void this.propagate(session, res))
+  }
+
+  private async applyTriggers(session: SessionData, event: ResponseEvent, ctx: Omit<TriggerCtx, 'ctx'>) {
+    const matchedTriggers = triggers.filter(([_, type]) => type === event.type)
+    if (matchedTriggers.length === 0) return
 
     const derived = (
       await Promise.all(
@@ -62,26 +72,25 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
       )
     ).flat()
 
+    await this.propagate(session, derived)
+  }
+
+  private async propagate(session: SessionData, derived: RequestEvent[]) {
+    if (derived.length === 0) return
+    if (this.context.head === undefined) return
     await Promise.all(derived.map((d) => this.context.head?.event(session, d, true)))
-    void notify(
-      {
-        ...ctx,
-        ctx: this.ctx.newChild('create-notifications', {})
-      },
-      event
-    )
   }
 }
 
 export function createTriggersDb(db: DbAdapter): TriggersDb {
   return {
-    findMessagesGroups: db.findMessagesGroups,
-    findMessages: db.findMessages,
-    findCollaborators: db.findCollaborators,
-    findNotifications: db.findNotifications,
-    findNotificationContexts: db.findNotificationContexts,
-    findLabels: db.findLabels,
-    findThread: db.findThread,
-    getCollaboratorsCursor: db.getCollaboratorsCursor
+    findMessagesGroups: (params) => db.findMessagesGroups(params),
+    findMessages: (params) => db.findMessages(params),
+    findCollaborators: (params) => db.findCollaborators(params),
+    findNotifications: (params) => db.findNotifications(params),
+    findNotificationContexts: (params) => db.findNotificationContexts(params),
+    findLabels: (params) => db.findLabels(params),
+    findThread: (params) => db.findThread(params),
+    getCollaboratorsCursor: (card, date, size) => db.getCollaboratorsCursor(card, date, size)
   }
 }

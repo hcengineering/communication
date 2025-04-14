@@ -83,11 +83,12 @@ export class Middlewares {
     context: MiddlewareContext,
     createFns: MiddlewareCreateFn[]
   ): Promise<Middlewares> {
-    const pipeline = new Middlewares(ctx, context)
+    const middlewares = new Middlewares(ctx, context)
 
-    pipeline.head = await pipeline.buildChain(ctx, createFns, pipeline.context)
-    context.head = pipeline.head
-    return pipeline
+    const head = await middlewares.buildChain(ctx, createFns, middlewares.context)
+    middlewares.head = head
+    context.head = head
+    return middlewares
   }
 
   private async buildChain(

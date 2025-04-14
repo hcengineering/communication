@@ -85,7 +85,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
 
     const result = await this.provideFindNotificationContexts(session, params, queryId)
     if (queryId != null && session.sessionId != null && session.sessionId !== '') {
-      this.subscribeContextQuery(session, queryId, params, result)
+      this.subscribeContextQuery(session, queryId, result)
     }
     return result
   }
@@ -118,7 +118,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
     data.contextQueries.delete(queryId)
   }
 
-  async response(_: SessionData, event: ResponseEvent): Promise<void> {
+  async response(session: SessionData, event: ResponseEvent): Promise<void> {
     const sessionIds: string[] = []
     for (const [sessionId, session] of this.dataBySessionId.entries()) {
       if (this.match(event, session)) {
@@ -133,6 +133,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
         this.context.ctx.error('Failed to broadcast event', { error: e })
       }
     }
+    await this.provideResponse(session, event)
   }
 
   closeSession(sessionId: string): void {
@@ -150,13 +151,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
     data.messageQueries.set(queryId, params as FindMessagesParams)
   }
 
-  private subscribeContextQuery(
-    session: SessionData,
-    queryId: QueryId,
-    params: FindNotificationContextParams,
-    result: NotificationContext[]
-  ): void {
-    if (params.notifications == null) return
+  private subscribeContextQuery(session: SessionData, queryId: QueryId, result: NotificationContext[]): void {
     const data = this.createSession(session)
     if (data == null) return
 
