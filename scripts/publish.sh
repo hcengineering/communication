@@ -63,6 +63,7 @@ bump_global_version
 for pkg in packages/*; do
   if [ -d "$pkg" ]; then
     update_package_json "$pkg"
+    rm -rf "$pkg/types" "$pkg/dist"
   fi
 done
 
