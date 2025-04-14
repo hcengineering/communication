@@ -35,7 +35,7 @@ import type {
 } from '@hcengineering/communication-types'
 import { z } from 'zod'
 
-import type { Middleware, MiddlewareContext } from '../types'
+import type { Middleware, MiddlewareContext, QueryId } from '../types'
 import { BaseMiddleware } from './base'
 import { ApiError } from '../error'
 
@@ -52,32 +52,41 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
     }
   }
 
-  async findMessages(session: SessionData, params: FindMessagesParams): Promise<Message[]> {
+  async findMessages(session: SessionData, params: FindMessagesParams, queryId?: QueryId): Promise<Message[]> {
     this.validate(params, FindMessagesParamsSchema)
-    return await this.provideFindMessages(session, params)
+    return await this.provideFindMessages(session, params, queryId)
   }
 
-  async findMessagesGroups(session: SessionData, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
+  async findMessagesGroups(
+    session: SessionData,
+    params: FindMessagesGroupsParams,
+    queryId?: QueryId
+  ): Promise<MessagesGroup[]> {
     this.validate(params, FindMessagesGroupsParamsSchema)
-    return await this.provideFindMessagesGroups(session, params)
+    return await this.provideFindMessagesGroups(session, params, queryId)
   }
 
   async findNotificationContexts(
     session: SessionData,
-    params: FindNotificationContextParams
+    params: FindNotificationContextParams,
+    queryId?: QueryId
   ): Promise<NotificationContext[]> {
     this.validate(params, FindNotificationContextParamsSchema)
-    return await this.provideFindNotificationContexts(session, params)
+    return await this.provideFindNotificationContexts(session, params, queryId)
   }
 
-  async findNotifications(session: SessionData, params: FindNotificationsParams): Promise<Notification[]> {
+  async findNotifications(
+    session: SessionData,
+    params: FindNotificationsParams,
+    queryId?: QueryId
+  ): Promise<Notification[]> {
     this.validate(params, FindNotificationsParamsSchema)
-    return await this.provideFindNotifications(session, params)
+    return await this.provideFindNotifications(session, params, queryId)
   }
 
-  async findLabels(session: SessionData, params: FindLabelsParams): Promise<Label[]> {
+  async findLabels(session: SessionData, params: FindLabelsParams, queryId?: QueryId): Promise<Label[]> {
     this.validate(params, FindLabelsParamsSchema)
-    return await this.provideFindLabels(session, params)
+    return await this.provideFindLabels(session, params, queryId)
   }
 
   async event(session: SessionData, event: RequestEvent, derived: boolean): Promise<EventResult> {
