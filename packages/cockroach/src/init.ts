@@ -281,6 +281,7 @@ function migrationV5_3(): [string, string] {
       ALTER TABLE communication.messages_groups ADD COLUMN from_date TIMESTAMPTZ;
       ALTER TABLE communication.messages_groups ADD COLUMN to_date TIMESTAMPTZ;
       ALTER TABLE communication.patch ADD COLUMN message_created TIMESTAMPTZ;
+      ALTER TABLE communication.files ADD COLUMN message_created TIMESTAMPTZ;
       ALTER TABLE communication.thread ADD COLUMN IF NOT EXISTS message_created TIMESTAMPTZ NOT NULL DEFAULT now();
       DROP INDEX IF EXISTS communication.thread_workspace_id_card_id_message_id_key CASCADE;
       ALTER TABLE communication.thread ADD CONSTRAINT thread_unique_constraint UNIQUE (message_id);
@@ -305,6 +306,12 @@ function migrationV5_4(): [string, string] {
 
       ALTER TABLE communication.patch ALTER COLUMN message_created SET NOT NULL;
       ALTER TABLE communication.patch DROP COLUMN message_created_sec;
+
+      UPDATE communication.files
+      SET message_created = message_created_sec::TIMESTAMPTZ;
+
+      ALTER TABLE communication.files ALTER COLUMN message_created SET NOT NULL;
+      ALTER TABLE communication.files DROP COLUMN message_created_sec;
   `
   return ['migrate-date-values_v5_4', sql]
 }
@@ -330,5 +337,5 @@ function migrationV5_6(): [string, string] {
       ADD CONSTRAINT reactions_message_fkey FOREIGN KEY (message_id)
         REFERENCES communication.messages (id) ON DELETE CASCADE;
   `
-  return ['migrate-other-constraints', sql]
+  return ['migrate-constraints_v5_6', sql]
 }
