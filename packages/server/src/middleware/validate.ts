@@ -175,7 +175,7 @@ const SortingOrder = z.number()
 const Date = z.union([z.date(), z.string()])
 
 // Find params
-const dateOrRecordSchema = z.union([z.date(), z.string(), z.record(z.string())])
+const dateOrRecordSchema = z.union([Date, z.record(Date)])
 
 const FindParamsSchema = z
   .object({
