@@ -25,9 +25,16 @@ import {
   NotificationRequestEventType,
   type PatchCreatedEvent,
   type RequestEvent,
+  type ThreadCreatedEvent,
   type UpdateThreadEvent
 } from '@hcengineering/communication-sdk-types'
-import { type CardID, PatchType, type File } from '@hcengineering/communication-types'
+import {
+  type AddFilePatchData,
+  type CardID,
+  type CardType,
+  MessageType,
+  PatchType,
+} from '@hcengineering/communication-types'
 import { generateToken } from '@hcengineering/server-token'
 import { concatLink, systemAccountUuid } from '@hcengineering/core'
 
@@ -53,7 +60,7 @@ async function onMessagesRemoved(ctx: TriggerCtx, event: MessagesRemovedEvent): 
       card: thread.card,
       message: thread.message,
       messageCreated: thread.messageCreated,
-      content: thread.thread,
+      data: { thread: thread.thread },
       creator: socialId
     }
     const threadEvent: UpdateThreadEvent = {
@@ -71,7 +78,7 @@ async function onFileCreated(ctx: TriggerCtx, event: FileCreatedEvent): Promise<
   if (message !== undefined) return []
 
   const { file } = event
-  const patchContent: Omit<File, 'card' | 'message' | 'created' | 'creator' | 'messageCreated'> = {
+  const patchData: AddFilePatchData = {
     blobId: file.blobId,
     type: file.type,
     filename: file.filename,
@@ -85,7 +92,7 @@ async function onFileCreated(ctx: TriggerCtx, event: FileCreatedEvent): Promise<
       card: event.card,
       message: file.message,
       messageCreated: file.messageCreated,
-      content: JSON.stringify(patchContent),
+      data: patchData,
       creator: file.creator
     }
   ]
@@ -103,7 +110,7 @@ async function onFileRemoved(ctx: TriggerCtx, event: FileRemovedEvent): Promise<
       card: event.card,
       message: event.message,
       messageCreated: event.messageCreated,
-      content: JSON.stringify({ blobId }),
+      data: { blobId },
       creator: event.creator
     }
   ]
@@ -157,6 +164,7 @@ async function addCollaborators(ctx: TriggerCtx, event: MessageCreatedEvent): Pr
 }
 
 async function addThreadReply(ctx: TriggerCtx, event: MessageCreatedEvent): Promise<RequestEvent[]> {
+  if (event.message.type !== MessageType.Message) return []
   const { message } = event
   const thread = await ctx.db.findThread(message.card)
   if (thread === undefined) return []
@@ -168,7 +176,7 @@ async function addThreadReply(ctx: TriggerCtx, event: MessageCreatedEvent): Prom
       card: thread.card,
       message: thread.message,
       messageCreated: thread.messageCreated,
-      content: thread.thread,
+      data: { thread: thread.thread },
       creator: message.creator
     },
     {
@@ -180,6 +188,29 @@ async function addThreadReply(ctx: TriggerCtx, event: MessageCreatedEvent): Prom
   ]
 }
 
+async function onThreadCreated(ctx: TriggerCtx, event: ThreadCreatedEvent): Promise<RequestEvent[]> {
+  //TODO: or find in files
+  const message = (await ctx.db.findMessages({ card: event.thread.card, id: event.thread.message, limit: 1 }))[0]
+
+  const result: RequestEvent[] = []
+
+  if (message != null) {
+    //TODO: copy with attachments and etc
+    result.push({
+      type: MessageRequestEventType.CreateMessage,
+      messageType: message.type,
+      card: event.thread.thread,
+      cardType: 'communication:type:Thread' as CardType,
+      content: message.content,
+      creator: message.creator,
+      data: message.data,
+      externalId: message.externalId,
+      created: message.created
+    })
+  }
+  return result
+}
+
 const triggers: Triggers = [
   ['add_collaborators_on_message_created', MessageResponseEventType.MessageCreated, addCollaborators as TriggerFn],
   ['add_thread_reply_on_message_created', MessageResponseEventType.MessageCreated, addThreadReply as TriggerFn],
@@ -188,7 +219,8 @@ const triggers: Triggers = [
   ['on_messages_group_created', MessageResponseEventType.MessagesGroupCreated, onMessagesGroupCreated as TriggerFn],
   ['remove_reply_on_messages_removed', MessageResponseEventType.MessagesRemoved, onMessagesRemoved as TriggerFn],
   ['on_file_created', MessageResponseEventType.FileCreated, onFileCreated as TriggerFn],
-  ['on_file_removed', MessageResponseEventType.FileRemoved, onFileRemoved as TriggerFn]
+  ['on_file_removed', MessageResponseEventType.FileRemoved, onFileRemoved as TriggerFn],
+  ['on_thread_created', MessageResponseEventType.ThreadCreated, onThreadCreated as TriggerFn]
 ]
 
 export default triggers

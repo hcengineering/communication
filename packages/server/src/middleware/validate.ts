@@ -165,6 +165,7 @@ const CardType = z.string()
 const ContextID = z.string()
 const LabelID = z.string()
 const MessageData = z.any()
+const PatchData = z.any()
 const MessageID = z.string()
 const MessageType = z.string()
 const MessagesGroup = z.any()
@@ -267,7 +268,8 @@ const CreateMessageEventSchema = BaseRequestEventSchema.extend({
   creator: SocialID,
   data: MessageData.optional(),
   externalId: z.string().optional(),
-  created: Date.optional()
+  created: Date.optional(),
+  id: MessageID.optional()
 }).strict()
 
 const RemoveMessagesEventSchema = BaseRequestEventSchema.extend({
@@ -282,7 +284,7 @@ const CreatePatchEventSchema = BaseRequestEventSchema.extend({
   card: CardID,
   message: MessageID,
   messageCreated: Date,
-  content: RichText,
+  data: PatchData,
   creator: SocialID
 }).strict()
 

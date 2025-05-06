@@ -13,19 +13,19 @@
 // limitations under the License.
 //
 
-import type {
-  FindLabelsParams,
-  FindMessagesGroupsParams,
-  FindMessagesParams,
-  FindNotificationContextParams,
-  FindNotificationsParams,
-  Label,
-  Message,
-  MessagesGroup,
-  Notification,
-  NotificationContext,
-  Patch,
-  Reaction
+import {
+  type FindLabelsParams,
+  type FindMessagesGroupsParams,
+  type FindMessagesParams,
+  type FindNotificationContextParams,
+  type FindNotificationsParams,
+  type Label,
+  type Message,
+  type MessagesGroup,
+  type Notification,
+  type NotificationContext,
+  type Patch,
+  type Reaction,
 } from '@hcengineering/communication-types'
 import {
   type AddCollaboratorsEvent,
@@ -220,7 +220,8 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
       event.creator,
       created,
       event.data,
-      event.externalId
+      event.externalId,
+      event.id
     )
     const message: Message = {
       id,
@@ -257,19 +258,19 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
       event.message,
       event.messageCreated,
       event.patchType,
-      event.content,
+      event.data,
       event.creator,
       created
     )
 
-    const patch: Patch = {
+    const patch = {
       type: event.patchType,
       messageCreated: event.messageCreated,
       message: event.message,
-      content: event.content,
+      data: event.data,
       creator: event.creator,
       created
-    }
+    } as Patch
     const responseEvent: PatchCreatedEvent = {
       _id: event._id,
       type: MessageResponseEventType.PatchCreated,

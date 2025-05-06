@@ -85,13 +85,100 @@ export interface MessagesGroup {
   patches?: Patch[]
 }
 
-export interface Patch {
+interface BasePatch {
   message: MessageID
   messageCreated: Date
   type: PatchType
-  content: string
   creator: SocialID
   created: Date
+
+  data: Record<string, any>
+}
+
+export interface UpdatePatch extends BasePatch {
+  type: PatchType.update
+  data: UpdatePatchData
+}
+
+export interface AddReactionPatch extends BasePatch {
+  type: PatchType.addReaction
+  data: AddReactionPatchData
+}
+
+export interface RemoveReactionPatch extends BasePatch {
+  type: PatchType.removeReaction
+  data: RemoveReactionPatchData
+}
+
+export interface AddReplyPatch extends BasePatch {
+  type: PatchType.addReply
+  data: AddReplyPatchData
+}
+
+export interface RemoveReplyPatch extends BasePatch {
+  type: PatchType.removeReply
+  data: RemoveReplyPatchData
+}
+
+export interface AddFilePatch extends BasePatch {
+  type: PatchType.addFile
+  data: AddFilePatchData
+}
+
+export interface RemoveFilePatch extends BasePatch {
+  type: PatchType.removeFile
+  data: RemoveFilePatchData
+}
+
+export type Patch =
+  | UpdatePatch
+  | AddReactionPatch
+  | RemoveReactionPatch
+  | AddReplyPatch
+  | RemoveReplyPatch
+  | AddFilePatch
+  | RemoveFilePatch
+
+export type PatchData =
+  | UpdatePatchData
+  | AddReactionPatchData
+  | RemoveReactionPatchData
+  | AddFilePatchData
+  | RemoveFilePatchData
+  | AddReplyPatchData
+  | RemoveReplyPatchData
+
+export interface UpdatePatchData {
+  type?: MessageType
+  content?: RichText
+  data?: MessageData
+}
+
+export interface AddReactionPatchData {
+  reaction: string
+}
+
+export interface RemoveReactionPatchData {
+  reaction: string
+}
+
+export interface AddReplyPatchData {
+  thread: CardID
+}
+
+export interface RemoveReplyPatchData {
+  thread: CardID
+}
+
+export interface AddFilePatchData {
+  blobId: BlobID
+  type: string
+  filename: string
+  size: number
+}
+
+export interface RemoveFilePatchData {
+  blobId: BlobID
 }
 
 export enum PatchType {

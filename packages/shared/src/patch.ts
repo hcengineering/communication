@@ -21,10 +21,8 @@ import {
   type Patch,
   type Reaction,
   type SocialID,
-  type File
+  type AddFilePatchData
 } from '@hcengineering/communication-types'
-
-type PatchFile = Pick<File, 'blobId' | 'type' | 'filename' | 'size'>
 
 export function applyPatches(message: Message, patches: Patch[], allowedPatchTypes: PatchType[] = []): Message {
   if (patches.length === 0) return message
@@ -42,25 +40,27 @@ export function applyPatch(message: Message, patch: Patch, allowedPatchTypes: Pa
       return {
         ...message,
         edited: patch.created,
-        content: patch.content
+        content: patch.data.content ?? message.content,
+        type: patch.data.type ?? message.type,
+        data: patch.data.data ?? message.data
       }
     case PatchType.addReaction:
       return addReaction(message, {
         message: message.id,
-        reaction: patch.content,
+        reaction: patch.data.reaction,
         creator: patch.creator,
         created: patch.created
       })
     case PatchType.removeReaction:
-      return removeReaction(message, patch.content, patch.creator)
+      return removeReaction(message, patch.data.reaction, patch.creator)
     case PatchType.addReply:
-      return addReply(message, patch.content as CardID, patch.created)
+      return addReply(message, patch.data.thread, patch.created)
     case PatchType.removeReply:
-      return removeReply(message, patch.content as CardID)
+      return removeReply(message, patch.data.thread)
     case PatchType.addFile:
-      return addFile(message, JSON.parse(patch.content) as PatchFile, patch.created, patch.creator)
+      return addFile(message, patch.data, patch.created, patch.creator)
     case PatchType.removeFile:
-      return removeFile(message, patch.content as BlobID)
+      return removeFile(message, patch.data.blobId)
   }
 
   return message
@@ -108,9 +108,9 @@ function addReply(message: Message, thread: CardID, created: Date): Message {
   }
 }
 
-function addFile(message: Message, file: PatchFile, created: Date, creator: SocialID): Message {
+function addFile(message: Message, data: AddFilePatchData, created: Date, creator: SocialID): Message {
   message.files.push({
-    ...file,
+    ...data,
     card: message.card,
     message: message.id,
     created,
