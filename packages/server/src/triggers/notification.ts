@@ -42,8 +42,8 @@ async function onAddedCollaborators(ctx: TriggerCtx, event: AddedCollaboratorsEv
       type: NotificationRequestEventType.CreateNotificationContext,
       account: collaborator,
       card,
-      lastUpdate: new Date(),
-      lastView: new Date()
+      lastUpdate: event.date,
+      lastView: event.date
     })
   }
   return result
