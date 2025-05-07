@@ -33,7 +33,8 @@ import {
   type SocialID,
   type Thread,
   type MessageData,
-  type Label
+  type Label,
+  type CardType
 } from '@hcengineering/communication-types'
 import { applyPatches } from '@hcengineering/communication-shared'
 
@@ -52,6 +53,7 @@ import {
 
 interface RawMessage extends MessageDb {
   thread_id?: CardID
+  thread_type?: CardType
   replies_count?: number
   last_reply?: Date
   patches?: PatchDb[]
@@ -84,8 +86,6 @@ type RawContext = ContextDb & { id: ContextID } & {
 }
 
 export function toMessage(raw: RawMessage): Message {
-  const lastPatch = raw.patches?.[0]
-
   const patches = (raw.patches ?? []).map((it) => toPatch(it))
 
   const rawMessage: Message = {
@@ -94,17 +94,18 @@ export function toMessage(raw: RawMessage): Message {
     card: raw.card_id,
     content: raw.content,
     creator: raw.creator,
-    created: raw.created,
+    created: new Date(raw.created),
     data: raw.data,
     externalId: raw.external_id,
     thread:
-      raw.thread_id != null
+      raw.thread_id != null && raw.thread_type != null
         ? {
             card: raw.card_id,
             message: String(raw.id) as MessageID,
             messageCreated: new Date(raw.created),
             thread: raw.thread_id,
-            repliesCount: raw.replies_count ?? 0,
+            threadType: raw.thread_type,
+            repliesCount: raw.replies_count ? parseInt(raw.replies_count as any) : 0,
             lastReply: raw.last_reply ?? new Date()
           }
         : undefined,
@@ -124,7 +125,7 @@ export function toReaction(raw: ReactionDb): Reaction {
     message: String(raw.message_id) as MessageID,
     reaction: raw.reaction,
     creator: raw.creator,
-    created: raw.created
+    created: new Date(raw.created)
   }
 }
 
@@ -138,7 +139,7 @@ export function toFile(raw: FileDb): File {
     filename: raw.filename,
     size: parseInt(raw.size as any),
     creator: raw.creator,
-    created: raw.created
+    created: new Date(raw.created)
   }
 }
 
@@ -153,7 +154,7 @@ export function toMessagesGroup(raw: MessagesGroupDb): MessagesGroup {
   }
 }
 
-export function toPatch(raw: PatchDb): Patch {
+export function toPatch(raw: Omit<PatchDb, 'workspace_id'>): Patch {
   return {
     type: raw.type,
     messageCreated: new Date(raw.message_created),
@@ -170,8 +171,9 @@ export function toThread(raw: ThreadDb): Thread {
     message: String(raw.message_id) as MessageID,
     messageCreated: new Date(raw.message_created),
     thread: raw.thread_id,
-    repliesCount: raw.replies_count,
-    lastReply: raw.last_reply
+    threadType: raw.thread_type,
+    repliesCount: parseInt(raw.replies_count as any),
+    lastReply: new Date(raw.last_reply)
   }
 }
 
@@ -213,8 +215,8 @@ function toNotificationRaw(
         type: it.patch_type,
         data: it.patch_data,
         creator: it.patch_creator,
-        created: it.patch_created,
-        message_created: raw.message_created ?? created
+        created: new Date(it.patch_created),
+        message_created: raw.message_created ? new Date(raw.message_created) : created
       })
     )
 

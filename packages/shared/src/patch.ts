@@ -16,12 +16,12 @@
 import {
   PatchType,
   type BlobID,
-  type CardID,
   type Message,
   type Patch,
   type Reaction,
   type SocialID,
-  type AddFilePatchData
+  type AddFilePatchData,
+  type UpdateThreadPatchData
 } from '@hcengineering/communication-types'
 
 export function applyPatches(message: Message, patches: Patch[], allowedPatchTypes: PatchType[] = []): Message {
@@ -41,7 +41,6 @@ export function applyPatch(message: Message, patch: Patch, allowedPatchTypes: Pa
         ...message,
         edited: patch.created,
         content: patch.data.content ?? message.content,
-        type: patch.data.type ?? message.type,
         data: patch.data.data ?? message.data
       }
     case PatchType.addReaction:
@@ -53,14 +52,12 @@ export function applyPatch(message: Message, patch: Patch, allowedPatchTypes: Pa
       })
     case PatchType.removeReaction:
       return removeReaction(message, patch.data.reaction, patch.creator)
-    case PatchType.addReply:
-      return addReply(message, patch.data.thread, patch.created)
-    case PatchType.removeReply:
-      return removeReply(message, patch.data.thread)
     case PatchType.addFile:
       return addFile(message, patch.data, patch.created, patch.creator)
     case PatchType.removeFile:
       return removeFile(message, patch.data.blobId)
+    case PatchType.updateThread:
+      return updateThread(message, patch.data, patch.created)
   }
 
   return message
@@ -81,30 +78,32 @@ function removeReaction(message: Message, emoji: string, creator: SocialID): Mes
   }
 }
 
-function addReply(message: Message, thread: CardID, created: Date): Message {
-  if (message.thread === undefined) {
-    return {
-      ...message,
-      thread: {
-        card: message.card,
-        message: message.id,
-        messageCreated: message.created,
-        thread,
-        repliesCount: 1,
-        lastReply: created
-      }
-    }
+function updateThread(message: Message, data: UpdateThreadPatchData, created: Date): Message {
+  const thread = message.thread ?? {
+    card: message.card,
+    message: message.id,
+    messageCreated: message.created,
+    thread: data.thread,
+    threadType: data.threadType,
+    repliesCount: 0,
+    lastReply: created
   }
 
-  if (message.thread.thread !== thread) return message
+  thread.thread = data.thread
+  thread.threadType = data.threadType
+
+  if (data.replies === 'increment') {
+    thread.repliesCount = thread.repliesCount + 1
+    thread.lastReply = created
+  }
+
+  if (data.replies === 'decrement') {
+    thread.repliesCount = Math.max(thread.repliesCount - 1, 0)
+  }
 
   return {
     ...message,
-    thread: {
-      ...message.thread,
-      repliesCount: message.thread.repliesCount + 1,
-      lastReply: created
-    }
+    thread
   }
 }
 
@@ -127,17 +126,5 @@ function removeFile(message: Message, blobId: BlobID): Message {
   return {
     ...message,
     files
-  }
-}
-
-function removeReply(message: Message, thread: CardID): Message {
-  if (message.thread === undefined || message.thread.thread !== thread) return message
-
-  return {
-    ...message,
-    thread: {
-      ...message.thread,
-      repliesCount: message.thread.repliesCount - 1
-    }
   }
 }

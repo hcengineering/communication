@@ -16,6 +16,7 @@
 import {
   type BlobID,
   type CardID,
+  type CardType,
   type FindMessagesGroupsParams,
   type FindMessagesParams,
   type Message,
@@ -79,18 +80,14 @@ export class MessagesDb extends BaseDb {
       values.push(value)
     }
 
-    const placeholders = keys.map((key, i) => `$${i+1}::${(messageSchema as any)[key]}`);
-      const sql = `INSERT INTO ${TableName.Message} (${keys.join(', ')})
+    const placeholders = keys.map((key, i) => `$${i + 1}::${(messageSchema as any)[key]}`)
+    const sql = `INSERT INTO ${TableName.Message} (${keys.join(', ')})
                    VALUES (${placeholders.join(', ')})
                    RETURNING id::text`
 
-      const result = await this.execute(
-        sql,
-        values,
-        'insert message'
-      )
+    const result = await this.execute(sql, values, 'insert message')
 
-      return result.map((it: any) => it.id)[0]
+    return result.map((it: any) => it.id)[0]
   }
 
   async removeMessages(card: CardID, messages: MessageID[], socialIds?: SocialID[]): Promise<MessageID[]> {
@@ -229,9 +226,11 @@ export class MessagesDb extends BaseDb {
   ): Promise<void> {
     const select = `SELECT m.id
                     FROM ${TableName.Message} m
-                    WHERE m.id = $1::bigint`
+                    WHERE m.workspace_id = $1::uuid
+                      AND m.card_id = $2::varchar
+                      AND m.id = $3::bigint`
 
-    const messageDb = await this.execute(select, [message], 'select message')
+    const messageDb = await this.execute(select, [this.workspace, card, message], 'select message')
 
     if (messageDb.length > 0) {
       const db: ReactionDb = {
@@ -265,9 +264,11 @@ export class MessagesDb extends BaseDb {
   ): Promise<void> {
     const select = `SELECT m.id
                     FROM ${TableName.Message} m
-                    WHERE m.id = $1::bigint`
+                    WHERE m.workspace_id = $1::uuid
+                      AND m.card_id = $2::varchar
+                      AND m.id = $3::bigint`
 
-    const messageDb = await this.execute(select, [message], 'select message')
+    const messageDb = await this.execute(select, [this.workspace, card, message], 'select message')
 
     if (messageDb.length > 0) {
       const sql = `DELETE
@@ -289,6 +290,7 @@ export class MessagesDb extends BaseDb {
     message: MessageID,
     messageCreated: Date,
     thread: CardID,
+    threadType: CardType,
     created: Date
   ): Promise<void> {
     const db: ThreadDb = {
@@ -297,15 +299,25 @@ export class MessagesDb extends BaseDb {
       message_id: message,
       message_created: messageCreated,
       thread_id: thread,
+      thread_type: threadType,
       replies_count: 0,
       last_reply: created
     }
-    const sql = `INSERT INTO ${TableName.Thread} (workspace_id, card_id, message_id, thread_id, replies_count,
+    const sql = `INSERT INTO ${TableName.Thread} (workspace_id, card_id, message_id, thread_id, thread_type, replies_count,
                                                   last_reply, message_created)
-                 VALUES ($1::uuid, $2::varchar, $3::bigint, $4::varchar, $5::int, $6::timestamptz, $7::timestamptz)`
+                 VALUES ($1::uuid, $2::varchar, $3::bigint, $4::varchar, $5::varchar, $6::int, $7::timestamptz, $8::timestamptz)`
     await this.execute(
       sql,
-      [db.workspace_id, db.card_id, db.message_id, db.thread_id, db.replies_count, db.last_reply, db.message_created],
+      [
+        db.workspace_id,
+        db.card_id,
+        db.message_id,
+        db.thread_id,
+        db.thread_type,
+        db.replies_count,
+        db.last_reply,
+        db.message_created
+      ],
       'insert thread'
     )
   }
@@ -413,6 +425,7 @@ export class MessagesDb extends BaseDb {
           'message_created', f.message_created,
           'blob_id', f.blob_id,
           'type', f.type,
+          'size', f.size,
           'filename', f.filename,
           'creator', f.creator,
           'created', f.created
@@ -480,7 +493,7 @@ export class MessagesDb extends BaseDb {
   private buildMainSelect(params: FindMessagesParams): string {
     const orderBy = this.buildOrderBy(params)
     const selectReplies = params.replies
-      ? `t.thread_id as thread_id, t.replies_count as replies_count, t.last_reply as last_reply,`
+      ? `t.thread_id as thread_id, t.thread_type as thread_type, t.replies_count::int as replies_count, t.last_reply as last_reply,`
       : ''
 
     const selectFiles = params.files ? `COALESCE(f.files, '[]'::jsonb) AS files,` : `'[]'::jsonb AS files,`
@@ -571,7 +584,8 @@ export class MessagesDb extends BaseDb {
                         t.message_id::text,
                         t.message_created,
                         t.thread_id,
-                        t.replies_count,
+                        t.thread_type,
+                        t.replies_count::int,
                         t.last_reply
                  FROM ${TableName.Thread} t
                  WHERE t.workspace_id = $1::uuid

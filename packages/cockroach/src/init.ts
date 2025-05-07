@@ -207,6 +207,7 @@ function migrationV1_2(): [string, string] {
           card_id         VARCHAR(255) NOT NULL,
           message_id      INT8         NOT NULL,
           thread_id       VARCHAR(255) NOT NULL,
+          thread_type     VARCHAR(255) NOT NULL,
           replies_count   INT          NOT NULL,
           last_reply      TIMESTAMPTZ  NOT NULL,
           message_created TIMESTAMPTZ  NOT NULL DEFAULT now(),

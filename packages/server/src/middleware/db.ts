@@ -14,6 +14,8 @@
 //
 
 import {
+  type Collaborator,
+  type FindCollaboratorsParams,
   type FindLabelsParams,
   type FindMessagesGroupsParams,
   type FindMessagesParams,
@@ -25,7 +27,7 @@ import {
   type Notification,
   type NotificationContext,
   type Patch,
-  type Reaction,
+  type Reaction
 } from '@hcengineering/communication-types'
 import {
   type AddCollaboratorsEvent,
@@ -117,10 +119,14 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
     return await this.db.findLabels(params)
   }
 
-  async event(session: SessionData, event: RequestEvent): Promise<EventResult> {
+  async findCollaborators(_: SessionData, params: FindCollaboratorsParams): Promise<Collaborator[]> {
+    return await this.db.findCollaborators(params)
+  }
+
+  async event(session: SessionData, event: RequestEvent, derived: boolean): Promise<EventResult> {
     const result = await this.processEvent(session, event)
     if (result.responseEvent) {
-      void this.context.head?.response(session, result.responseEvent)
+      void this.context.head?.response(session, result.responseEvent, derived)
     }
 
     return result.result ?? {}
@@ -506,13 +512,14 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
 
   private async createThread(event: CreateThreadEvent): Promise<Result> {
     const date = new Date()
-    await this.db.createThread(event.card, event.message, event.messageCreated, event.thread, date)
+    await this.db.createThread(event.card, event.message, event.messageCreated, event.thread, event.threadType, date)
     const responseEvent: ThreadCreatedEvent = {
       _id: event._id,
       type: MessageResponseEventType.ThreadCreated,
       thread: {
         card: event.card,
         thread: event.thread,
+        threadType: event.threadType,
         message: event.message,
         messageCreated: event.messageCreated,
         repliesCount: 0,

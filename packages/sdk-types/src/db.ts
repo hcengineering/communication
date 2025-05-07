@@ -98,7 +98,14 @@ export interface DbAdapter {
   ): Promise<void>
   removeFile(card: CardID, message: MessageID, blobId: BlobID): Promise<void>
 
-  createThread(card: CardID, message: MessageID, messageCreated: Date, thread: CardID, created: Date): Promise<void>
+  createThread(
+    card: CardID,
+    message: MessageID,
+    messageCreated: Date,
+    thread: CardID,
+    threadType: CardType,
+    created: Date
+  ): Promise<void>
   updateThread(thread: CardID, op: 'increment' | 'decrement', lastReply?: Date): Promise<void>
 
   findMessages(params: FindMessagesParams): Promise<Message[]>

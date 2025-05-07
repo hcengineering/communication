@@ -115,6 +115,7 @@ export interface ThreadDb {
   message_id: MessageID
   message_created: Date
   thread_id: CardID
+  thread_type: CardType
   replies_count: number
   last_reply: Date
 }

@@ -28,6 +28,7 @@
     "@hcengineering/communication-cockroach": "workspace:*",
     "@hcengineering/communication-sdk-types": "workspace:*",
     "@hcengineering/communication-types": "workspace:*",
+    "@hcengineering/communication-yaml": "workspace:*",
     "@hcengineering/core": "^0.7.88",
     "@hcengineering/server-token": "^0.7.88",
     "@hcengineering/platform": "^0.7.88",

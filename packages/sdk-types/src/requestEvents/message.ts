@@ -135,6 +135,7 @@ export interface CreateThreadEvent extends BaseRequestEvent {
   message: MessageID
   messageCreated: Date
   thread: CardID
+  threadType: CardType
 }
 
 export interface UpdateThreadEvent extends BaseRequestEvent {
