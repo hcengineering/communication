@@ -31,6 +31,8 @@ import {
 } from '@hcengineering/communication-types'
 import {
   type AddCollaboratorsEvent,
+  CardRequestEventType,
+  CardResponseEventType,
   type CreateFileEvent,
   type CreateLabelEvent,
   type CreateMessageEvent,
@@ -61,6 +63,7 @@ import {
   type PatchCreatedEvent,
   type ReactionCreatedEvent,
   type ReactionRemovedEvent,
+  type RemoveCardEvent,
   type RemoveCollaboratorsEvent,
   type RemoveFileEvent,
   type RemoveLabelEvent,
@@ -74,6 +77,7 @@ import {
   type ResponseEvent,
   type SessionData,
   type ThreadCreatedEvent,
+  type UpdateCardTypeEvent,
   type UpdateNotificationContextEvent,
   type UpdateThreadEvent
 } from '@hcengineering/communication-sdk-types'
@@ -174,6 +178,10 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
         return await this.createLabel(event)
       case LabelRequestEventType.RemoveLabel:
         return await this.removeLabel(event)
+      case CardRequestEventType.UpdateCardType:
+        return await this.updateCardType(event)
+      case CardRequestEventType.RemoveCard:
+        return await this.removeCard(event)
     }
   }
 
@@ -207,6 +215,7 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async removeCollaborators(event: RemoveCollaboratorsEvent): Promise<Result> {
+    if (event.collaborators.length === 0) return {}
     await this.db.removeCollaborators(event.card, event.collaborators)
 
     return {
@@ -291,6 +300,12 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async removeMessages(event: RemoveMessagesEvent, session: SessionData): Promise<Result> {
+    if (event.messages.length === 0)
+      return {
+        result: {
+          messages: []
+        }
+      }
     const account = session.account
     const socialIds = systemAccountUuid === account.uuid ? undefined : account.socialIds
     const deleted = await this.db.removeMessages(event.card, event.messages, socialIds)
@@ -389,7 +404,7 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async removeFile(event: RemoveFileEvent): Promise<Result> {
-    await this.db.removeFile(event.card, event.message, event.blobId)
+    await this.db.removeFiles({ card: event.card, message: event.message, blobId: event.blobId })
     const responseEvent: FileRemovedEvent = {
       _id: event._id,
       type: MessageResponseEventType.FileRemoved,
@@ -458,7 +473,10 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async removeNotificationContext(event: RemoveNotificationContextEvent): Promise<Result> {
-    await this.db.removeContext(event.context, event.account)
+    await this.db.removeContexts({
+      id: event.context,
+      account: event.account
+    })
     const responseEvent: NotificationContextRemovedEvent = {
       _id: event._id,
       type: NotificationResponseEventType.NotificationContextRemoved,
@@ -552,7 +570,11 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async removeLabel(event: RemoveLabelEvent): Promise<Result> {
-    await this.db.removeLabel(event.label, event.card, event.account)
+    await this.db.removeLabels({
+      label: event.label,
+      card: event.card,
+      account: event.account
+    })
     return {
       responseEvent: {
         _id: event._id,
@@ -560,6 +582,27 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
         label: event.label,
         card: event.card,
         account: event.account
+      }
+    }
+  }
+
+  private async updateCardType(event: UpdateCardTypeEvent): Promise<Result> {
+    return {
+      responseEvent: {
+        _id: event._id,
+        type: CardResponseEventType.CardTypeUpdated,
+        card: event.card,
+        cardType: event.cardType
+      }
+    }
+  }
+
+  private async removeCard(event: RemoveCardEvent): Promise<Result> {
+    return {
+      responseEvent: {
+        _id: event._id,
+        type: CardResponseEventType.CardRemoved,
+        card: event.card
       }
     }
   }

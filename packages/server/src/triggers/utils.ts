@@ -13,7 +13,12 @@
 // limitations under the License.
 //
 
-import { type CardID, type Message, type MessageID, SortingOrder } from '@hcengineering/communication-types'
+import {
+  type CardID,
+  type Message,
+  type MessageID,
+  SortingOrder
+} from '@hcengineering/communication-types'
 import { loadGroupFile } from '@hcengineering/communication-yaml'
 import { applyPatches } from '@hcengineering/communication-shared'
 
@@ -40,7 +45,6 @@ export async function findMessageInFiles(
 ): Promise<Message | undefined> {
   const filesUrl = ctx.metadata.filesUrl
   if (filesUrl === '') {
-    ctx.ctx.error('FILES_URL is missing', { filesUrl })
     return undefined
   }
 

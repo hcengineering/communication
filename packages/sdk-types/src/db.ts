@@ -40,7 +40,8 @@ import type {
   FindLabelsParams,
   LabelID,
   CardType,
-  PatchData
+  PatchData,
+  File
 } from '@hcengineering/communication-types'
 
 export interface DbAdapter {
@@ -54,7 +55,7 @@ export interface DbAdapter {
     externalId?: string,
     id?: MessageID
   ): Promise<MessageID>
-  removeMessages(card: CardID, ids: MessageID[], socialIds?: SocialID[]): Promise<MessageID[]>
+  removeMessages(card: CardID, ids?: MessageID[], socialIds?: SocialID[]): Promise<MessageID[]>
 
   createPatch(
     card: CardID,
@@ -65,6 +66,8 @@ export interface DbAdapter {
     creator: SocialID,
     created: Date
   ): Promise<void>
+
+  removePatches(card: CardID): Promise<void>
 
   createMessagesGroup(card: CardID, blobId: BlobID, fromDate: Date, toDate: Date, count: number): Promise<void>
   removeMessagesGroup(card: CardID, blobId: BlobID): Promise<void>
@@ -96,7 +99,7 @@ export interface DbAdapter {
     creator: SocialID,
     created: Date
   ): Promise<void>
-  removeFile(card: CardID, message: MessageID, blobId: BlobID): Promise<void>
+  removeFiles(query: Partial<File>): Promise<void>
 
   createThread(
     card: CardID,
@@ -106,6 +109,7 @@ export interface DbAdapter {
     threadType: CardType,
     created: Date
   ): Promise<void>
+  removeThreads(query: Partial<Thread>): Promise<void>
   updateThread(thread: CardID, op: 'increment' | 'decrement', lastReply?: Date): Promise<void>
 
   findMessages(params: FindMessagesParams): Promise<Message[]>
@@ -113,24 +117,26 @@ export interface DbAdapter {
   findThread(thread: CardID): Promise<Thread | undefined>
 
   addCollaborators(card: CardID, cardType: CardType, collaborators: AccountID[], date?: Date): Promise<AccountID[]>
-  removeCollaborators(card: CardID, collaborators: AccountID[]): Promise<void>
+  removeCollaborators(card: CardID, collaborators?: AccountID[]): Promise<void>
   getCollaboratorsCursor(card: CardID, date: Date, size?: number): AsyncIterable<Collaborator[]>
 
   findCollaborators(params: FindCollaboratorsParams): Promise<Collaborator[]>
+  updateCollaborators(params: FindCollaboratorsParams, data: Partial<Collaborator>): Promise<void>
 
   createNotification(context: ContextID, message: MessageID, created: Date): Promise<NotificationID>
   removeNotification(context: ContextID, account: AccountID, untilDate: Date): Promise<void>
 
   createContext(account: AccountID, card: CardID, lastUpdate: Date, lastView: Date): Promise<ContextID>
   updateContext(context: ContextID, account: AccountID, lastUpdate?: Date, lastView?: Date): Promise<void>
-  removeContext(context: ContextID, account: AccountID): Promise<void>
+  removeContexts(query: Partial<NotificationContext>): Promise<void>
 
   findNotificationContexts(params: FindNotificationContextParams): Promise<NotificationContext[]>
   findNotifications(params: FindNotificationsParams): Promise<Notification[]>
 
   createLabel(label: LabelID, card: CardID, cardType: CardType, account: AccountID, created: Date): Promise<void>
-  removeLabel(label: LabelID, card: CardID, account: AccountID): Promise<void>
+  removeLabels(query: Partial<Label>): Promise<void>
   findLabels(params: FindLabelsParams): Promise<Label[]>
+  updateLabels(params: FindLabelsParams, data: Partial<Label>): Promise<void>
 
   close(): void
 }

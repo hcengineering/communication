@@ -29,7 +29,8 @@ import {
   type RichText,
   type SocialID,
   SortingOrder,
-  type Thread
+  type Thread,
+  type File
 } from '@hcengineering/communication-types'
 
 import { BaseDb } from './base'
@@ -90,9 +91,7 @@ export class MessagesDb extends BaseDb {
     return result.map((it: any) => it.id)[0]
   }
 
-  async removeMessages(card: CardID, messages: MessageID[], socialIds?: SocialID[]): Promise<MessageID[]> {
-    if (messages.length === 0) return []
-
+  async removeMessages(card: CardID, messages?: MessageID[], socialIds?: SocialID[]): Promise<MessageID[]> {
     const where: string[] = ['workspace_id = $1::uuid', 'card_id = $2::varchar']
     const values: any[] = [this.workspace, card]
 
@@ -108,10 +107,10 @@ export class MessagesDb extends BaseDb {
       values.push(socialIds)
     }
 
-    if (messages.length === 1) {
+    if (messages && messages.length === 1) {
       where.push(`id = $${index++}::bigint`)
       values.push(messages[0])
-    } else {
+    } else if (messages && messages.length > 1) {
       where.push(`id = ANY($${index++}::bigint[])`)
       values.push(messages)
     }
@@ -156,6 +155,14 @@ export class MessagesDb extends BaseDb {
       [db.workspace_id, db.card_id, db.message_id, db.type, db.data, db.creator, db.created, db.message_created],
       'insert patch'
     )
+  }
+
+  async removePatches(card: CardID): Promise<void> {
+    const sql = `DELETE
+                 FROM ${TableName.Patch}
+                 WHERE workspace_id = $1::uuid
+                   AND card_id = $2::varchar`
+    await this.execute(sql, [this.workspace, card], 'remove patches')
   }
 
   // File
@@ -205,14 +212,27 @@ export class MessagesDb extends BaseDb {
     )
   }
 
-  async removeFile(card: CardID, message: MessageID, blobId: BlobID): Promise<void> {
+  async removeFiles(query: Partial<File>): Promise<void> {
+    const db: Partial<FileDb> = {
+      card_id: query.card,
+      message_id: query.message,
+      blob_id: query.blobId
+    }
+
+    const entries = Object.entries(db).filter(([_, value]) => value != undefined)
+
+    if (entries.length === 0) return
+
+    entries.push(['workspace_id', this.workspace])
+
+    const whereClauses = entries.map(([key], index) => `${key} = $${index + 1}`)
+    const whereValues = entries.map(([_, value]) => value)
+
     const sql = `DELETE
                  FROM ${TableName.File}
-                 WHERE workspace_id = $1::uuid
-                   AND card_id = $2::varchar
-                   AND message_id = $3::bigint
-                   AND blob_id = $4::uuid`
-    await this.execute(sql, [this.workspace, card, message, blobId], 'remove file')
+                 WHERE ${whereClauses.join(' AND ')}`
+
+    await this.execute(sql, whereValues, 'remove files')
   }
 
   // Reaction
@@ -320,6 +340,30 @@ export class MessagesDb extends BaseDb {
       ],
       'insert thread'
     )
+  }
+
+  async removeThreads(query: Partial<Thread>): Promise<void> {
+    const db: Partial<ThreadDb> = {
+      card_id: query.card,
+      message_id: query.message,
+      thread_id: query.thread,
+      thread_type: query.threadType
+    }
+
+    const entries = Object.entries(db).filter(([_, value]) => value != undefined)
+
+    if (entries.length === 0) return
+
+    entries.push(['workspace_id', this.workspace])
+
+    const whereClauses = entries.map(([key], index) => `${key} = $${index + 1}`)
+    const whereValues = entries.map(([_, value]) => value)
+
+    const sql = `DELETE
+                 FROM ${TableName.Thread}
+                 WHERE ${whereClauses.join(' AND ')}`
+
+    await this.execute(sql, whereValues, 'remove threads')
   }
 
   async updateThread(thread: CardID, op: 'increment' | 'decrement', lastReply?: Date): Promise<void> {
