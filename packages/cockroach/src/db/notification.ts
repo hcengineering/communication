@@ -373,19 +373,16 @@ export class NotificationsDb extends BaseDb {
     }
 
     const entries = Object.entries(dbData).filter(([_, value]) => value != undefined)
+    if (entries.length === 0) return
 
     const setClauses = entries.map(([key], index) => `${key} = $${index + 1}`)
     const setValues = entries.map(([_, value]) => value)
 
-    if (setClauses.length === 0) {
-      return
-    }
-
-    const { where, values: whereValues } = this.buildCollaboratorsWhere(params, setValues.length)
+    const { where, values: whereValues } = this.buildCollaboratorsWhere(params, setValues.length, '')
 
     const sql = `UPDATE ${TableName.Collaborators}
              SET ${setClauses.join(', ')}
-             WHERE ${where}`
+             ${where}`
 
     await this.execute(sql, [...setValues, ...whereValues], 'update collaborators')
   }
@@ -408,19 +405,25 @@ export class NotificationsDb extends BaseDb {
 
   private buildCollaboratorsWhere(
     params: FindCollaboratorsParams,
-    startIndex: number = 0
+    startIndex: number = 0,
+    prefix: string = 'c.'
   ): { where: string; values: any[] } {
-    const where: string[] = ['c.workspace_id = $1::uuid', 'c.card_id = $2::varchar']
-    const values: any[] = [this.workspace, params.card]
-    let index = startIndex + values.length + 1
+    const where: string[] = []
+    const values: any[] = []
+    let index = startIndex + 1
+
+    where.push(`${prefix}workspace_id = $${index++}::uuid`)
+    values.push(this.workspace)
+    where.push(`${prefix}card_id = $${index++}::varchar`)
+    values.push(params.card)
 
     if (params.account != null) {
       const accounts = Array.isArray(params.account) ? params.account : [params.account]
       if (accounts.length === 1) {
-        where.push(`c.account = $${index++}::uuid`)
+        where.push(`${prefix}account = $${index++}::uuid`)
         values.push(accounts[0])
       } else if (accounts.length > 1) {
-        where.push(`c.account = ANY($${index++}::uuid[])`)
+        where.push(`${prefix}account = ANY($${index++}::uuid[])`)
         values.push(accounts)
       }
     }

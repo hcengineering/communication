@@ -186,7 +186,10 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async updateThread(event: UpdateThreadEvent): Promise<Result> {
-    await this.db.updateThread(event.thread, event.replies, event.lastReply)
+    await this.db.updateThread(event.thread, {
+      op: event.replies,
+      lastReply: event.lastReply
+    })
     return {
       responseEvent: {
         _id: event._id,

@@ -110,7 +110,14 @@ export interface DbAdapter {
     created: Date
   ): Promise<void>
   removeThreads(query: Partial<Thread>): Promise<void>
-  updateThread(thread: CardID, op: 'increment' | 'decrement', lastReply?: Date): Promise<void>
+  updateThread(
+    thread: CardID,
+    update: {
+      threadType?: CardType
+      op?: 'increment' | 'decrement'
+      lastReply?: Date
+    }
+  ): Promise<void>
 
   findMessages(params: FindMessagesParams): Promise<Message[]>
   findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]>

@@ -166,8 +166,15 @@ export class CockroachAdapter implements DbAdapter {
     await this.message.removeThreads(query)
   }
 
-  async updateThread(thread: CardID, op: 'increment' | 'decrement', lastReply?: Date): Promise<void> {
-    await this.message.updateThread(thread, op, lastReply)
+  async updateThread(
+    thread: CardID,
+    update: {
+      threadType?: CardType
+      op?: 'increment' | 'decrement'
+      lastReply?: Date
+    }
+  ): Promise<void> {
+    await this.message.updateThread(thread, update)
   }
 
   async findMessages(params: FindMessagesParams): Promise<Message[]> {

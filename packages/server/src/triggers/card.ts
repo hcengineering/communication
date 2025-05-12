@@ -27,6 +27,7 @@ import type { TriggerCtx, TriggerFn, Triggers } from '../types'
 async function onCardTypeUpdates(ctx: TriggerCtx, event: CardTypeUpdatedEvent): Promise<RequestEvent[]> {
   await ctx.db.updateCollaborators({ card: event.card }, { cardType: event.cardType })
   await ctx.db.updateLabels({ card: event.card }, { cardType: event.cardType })
+  await ctx.db.updateThread(event.card, { threadType: event.cardType })
   return []
 }
 

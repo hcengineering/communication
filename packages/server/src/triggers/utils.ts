@@ -13,12 +13,7 @@
 // limitations under the License.
 //
 
-import {
-  type CardID,
-  type Message,
-  type MessageID,
-  SortingOrder
-} from '@hcengineering/communication-types'
+import { type CardID, type Message, type MessageID, SortingOrder } from '@hcengineering/communication-types'
 import { loadGroupFile } from '@hcengineering/communication-yaml'
 import { applyPatches } from '@hcengineering/communication-shared'
 

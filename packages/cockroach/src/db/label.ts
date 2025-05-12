@@ -87,19 +87,16 @@ export class LabelsDb extends BaseDb {
     }
 
     const entries = Object.entries(dbData).filter(([_, value]) => value != undefined)
+    if (entries.length === 0) return
 
     const setClauses = entries.map(([key], index) => `${key} = $${index + 1}`)
     const setValues = entries.map(([_, value]) => value)
 
-    if (setClauses.length === 0) {
-      return
-    }
-
-    const { where, values: whereValues } = this.buildWhere(params, setValues.length)
+    const { where, values: whereValues } = this.buildWhere(params, setValues.length, '')
 
     const sql = `UPDATE ${TableName.Label}
              SET ${setClauses.join(', ')}
-             WHERE ${where}`
+             ${where}`
 
     await this.execute(sql, [...setValues, ...whereValues], 'update labels')
   }
@@ -120,24 +117,27 @@ export class LabelsDb extends BaseDb {
     return result.map((it: any) => toLabel(it))
   }
 
-  buildWhere(params: FindLabelsParams, startIndex: number = 0): { where: string; values: any[] } {
-    const where: string[] = ['l.workspace_id = $1::uuid']
-    const values: any[] = [this.workspace]
-    let index = startIndex + values.length + 1
+  buildWhere(params: FindLabelsParams, startIndex: number = 0, prefix = 'l.'): { where: string; values: any[] } {
+    const where: string[] = []
+    const values: any[] = []
+    let index = startIndex + 1
+
+    where.push(`${prefix}workspace_id = $${index++}::uuid`)
+    values.push(this.workspace)
 
     if (params.label != null) {
       const labels = Array.isArray(params.label) ? params.label : [params.label]
       if (labels.length === 1) {
-        where.push(`l.label_id = $${index++}::varchar`)
+        where.push(`${prefix}label_id = $${index++}::varchar`)
         values.push(labels[0])
       } else {
-        where.push(`l.label_id = ANY($${index++}::varchar[])`)
+        where.push(`${prefix}label_id = ANY($${index++}::varchar[])`)
         values.push(labels)
       }
     }
 
     if (params.card != null) {
-      where.push(`l.card_id = $${index++}::varchar`)
+      where.push(`${prefix}card_id = $${index++}::varchar`)
       values.push(params.card)
     }
 
@@ -145,16 +145,16 @@ export class LabelsDb extends BaseDb {
       const types = Array.isArray(params.cardType) ? params.cardType : [params.cardType]
 
       if (types.length === 1) {
-        where.push(`l.card_type = $${index++}::varchar`)
+        where.push(`${prefix}card_type = $${index++}::varchar`)
         values.push(types[0])
       } else {
-        where.push(`l.card_type = ANY($${index++}::varchar[])`)
+        where.push(`${prefix}card_type = ANY($${index++}::varchar[])`)
         values.push(types)
       }
     }
 
     if (params.account != null) {
-      where.push(`l.account = $${index++}::uuid`)
+      where.push(`${prefix}account = $${index++}::uuid`)
       values.push(params.account)
     }
 

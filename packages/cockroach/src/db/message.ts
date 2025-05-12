@@ -366,26 +366,40 @@ export class MessagesDb extends BaseDb {
     await this.execute(sql, whereValues, 'remove threads')
   }
 
-  async updateThread(thread: CardID, op: 'increment' | 'decrement', lastReply?: Date): Promise<void> {
+  async updateThread(
+    thread: CardID,
+    update: {
+      threadType?: CardType
+      op?: 'increment' | 'decrement'
+      lastReply?: Date
+    }
+  ): Promise<void> {
     const set: string[] = []
     const values: any[] = []
-
-    if (lastReply != null) {
-      set.push('last_reply = $3::timestamptz')
-      values.push(lastReply)
+    let index = 0
+    if (update.lastReply != null) {
+      set.push(`last_reply = $${index++}::timestamptz`)
+      values.push(update.lastReply)
     }
 
-    if (op === 'increment') {
+    if (update.op === 'increment') {
       set.push('replies_count = replies_count + 1')
-    } else if (op === 'decrement') {
+    } else if (update.op === 'decrement') {
       set.push('replies_count = GREATEST(replies_count - 1, 0)')
     }
 
-    const update = `UPDATE ${TableName.Thread}`
+    if (update.threadType != null) {
+      set.push(`thread_type = $${index++}::varchar`)
+      values.push(update.threadType)
+    }
+
+    if (set.length === 0) return
+
+    const updateSql = `UPDATE ${TableName.Thread}`
     const setSql = 'SET ' + set.join(', ')
-    const where = 'WHERE workspace_id = $1::uuid AND thread_id = $2::varchar'
-    const sql = [update, setSql, where].join(' ')
-    await this.execute(sql, [this.workspace, thread, ...values], 'update thread')
+    const where = `WHERE workspace_id = $${index++}::uuid AND thread_id = $${index++}::varchar`
+    const sql = [updateSql, setSql, where].join(' ')
+    await this.execute(sql, [...values, this.workspace, thread], 'update thread')
   }
 
   // MessagesGroup
