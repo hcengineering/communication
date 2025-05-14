@@ -411,7 +411,7 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
     if (this.result instanceof Promise) this.result = await this.result
 
     const result = this.result.getResult()
-    const toUpdate = result.find((it) => it.messageId === messageId)
+    const toUpdate = result.find((it) => it.messageId === messageId && it.message && it.message.card === card)
     if (toUpdate == null) return false
 
     this.result.update({
