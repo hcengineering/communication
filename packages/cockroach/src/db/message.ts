@@ -30,7 +30,8 @@ import {
   type SocialID,
   SortingOrder,
   type Thread,
-  type File
+  type File,
+  type BlobMetadata
 } from '@hcengineering/communication-types'
 
 import { BaseDb } from './base'
@@ -174,6 +175,7 @@ export class MessagesDb extends BaseDb {
     fileType: string,
     filename: string,
     size: number,
+    meta: BlobMetadata | undefined,
     creator: SocialID,
     created: Date
   ): Promise<void> {
@@ -187,12 +189,13 @@ export class MessagesDb extends BaseDb {
       size,
       creator,
       created,
-      message_created: messageCreated
+      message_created: messageCreated,
+      meta
     }
     const sql = `INSERT INTO ${TableName.File} (workspace_id, card_id, message_id, blob_id, type, filename, creator,
-                                                created, message_created, size)
+                                                created, message_created, size, meta)
                  VALUES ($1::uuid, $2::varchar, $3::int8, $4::uuid, $5::varchar, $6::varchar, $7::varchar,
-                         $8::timestamptz, $9::timestamptz, $10::int8)`
+                         $8::timestamptz, $9::timestamptz, $10::int8, $11::jsonb)`
 
     await this.execute(
       sql,
@@ -206,7 +209,8 @@ export class MessagesDb extends BaseDb {
         db.creator,
         db.created,
         db.message_created,
-        db.size
+        db.size,
+        db.meta ?? {}
       ],
       'insert file'
     )
@@ -376,7 +380,8 @@ export class MessagesDb extends BaseDb {
   ): Promise<void> {
     const set: string[] = []
     const values: any[] = []
-    let index = 0
+
+    let index = 1
     if (update.lastReply != null) {
       set.push(`last_reply = $${index++}::timestamptz`)
       values.push(update.lastReply)
@@ -485,6 +490,7 @@ export class MessagesDb extends BaseDb {
           'type', f.type,
           'size', f.size,
           'filename', f.filename,
+          'meta', f.meta,
           'creator', f.creator,
           'created', f.created
         )) AS files

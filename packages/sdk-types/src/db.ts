@@ -41,7 +41,8 @@ import type {
   LabelID,
   CardType,
   PatchData,
-  File
+  File,
+  BlobMetadata
 } from '@hcengineering/communication-types'
 
 export interface DbAdapter {
@@ -96,6 +97,7 @@ export interface DbAdapter {
     fileType: string,
     filename: string,
     size: number,
+    meta: BlobMetadata | undefined,
     creator: SocialID,
     created: Date
   ): Promise<void>
@@ -144,6 +146,8 @@ export interface DbAdapter {
   removeLabels(query: Partial<Label>): Promise<void>
   findLabels(params: FindLabelsParams): Promise<Label[]>
   updateLabels(params: FindLabelsParams, data: Partial<Label>): Promise<void>
+
+  getAccountByPersonId(_id: string): Promise<AccountID | undefined>
 
   close(): void
 }

@@ -43,7 +43,8 @@ import {
   type CardType,
   type MessageData,
   type PatchData,
-  type File
+  type File,
+  type BlobMetadata
 } from '@hcengineering/communication-types'
 import type { DbAdapter } from '@hcengineering/communication-sdk-types'
 
@@ -141,10 +142,22 @@ export class CockroachAdapter implements DbAdapter {
     fileType: string,
     filename: string,
     size: number,
+    meta: BlobMetadata | undefined,
     creator: SocialID,
     created: Date
   ): Promise<void> {
-    await this.message.createFile(card, message, messageCreated, blobId, fileType, filename, size, creator, created)
+    await this.message.createFile(
+      card,
+      message,
+      messageCreated,
+      blobId,
+      fileType,
+      filename,
+      size,
+      meta,
+      creator,
+      created
+    )
   }
 
   async removeFiles(query: Partial<File>): Promise<void> {
@@ -259,6 +272,18 @@ export class CockroachAdapter implements DbAdapter {
   }
   updateLabels(params: FindLabelsParams, data: Partial<Label>): Promise<void> {
     return this.label.updateLabels(params, data)
+  }
+
+  //TODO: remove it!
+  async getAccountByPersonId(_id: string): Promise<AccountID | undefined> {
+    const sql = `SELECT data ->> 'personUuid' AS "personUuid"
+                 FROM public.contact
+                 WHERE "workspaceId" = $1::uuid
+                   AND _id = $2::varchar
+                 LIMIT 1`
+    const result = await this.sql.execute(sql, [this.workspace, _id])
+
+    return result?.[0]?.personUuid as AccountID
   }
 }
 

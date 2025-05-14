@@ -326,7 +326,8 @@ const CreateFileEventSchema = BaseRequestEventSchema.extend({
   size: z.number(),
   fileType: z.string(),
   filename: z.string(),
-  creator: SocialID
+  creator: SocialID,
+  meta: z.record(z.string(), z.any()).optional()
 }).strict()
 
 const RemoveFileEventSchema = BaseRequestEventSchema.extend({
@@ -334,7 +335,8 @@ const RemoveFileEventSchema = BaseRequestEventSchema.extend({
   card: CardID,
   message: MessageID,
   messageCreated: DateSchema,
-  creator: SocialID
+  creator: SocialID,
+  blobId: BlobID
 }).strict()
 
 const CreateThreadEventSchema = BaseRequestEventSchema.extend({

@@ -920,15 +920,17 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   private async onFileCreatedEvent(event: FileCreatedEvent): Promise<void> {
-    if (this.params.files !== true) return
+    if (this.params.files !== true || event.file.card !== this.params.card) return
     if (this.result instanceof Promise) this.result = await this.result
 
     const { file } = event
     const message = this.result.get(file.message)
     if (message !== undefined) {
-      message.files.push(file)
-      this.result.update(message)
-      await this.notify()
+      if (!message.files.some((it) => it.blobId === file.blobId)) {
+        message.files.push(file)
+        this.result.update(message)
+        await this.notify()
+      }
     }
 
     const fromNextBuffer = this.next.buffer.find((it) => it.id === file.message)
@@ -984,7 +986,9 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
 }
 
 function addFile(message: Message, file: File): Message {
-  message.files.push(file)
+  if (!message.files.some((it) => it.blobId === file.blobId)) {
+    message.files.push(file)
+  }
   return message
 }
 

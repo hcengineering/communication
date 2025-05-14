@@ -382,6 +382,7 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
       event.fileType,
       event.filename,
       event.size,
+      event.meta,
       event.creator,
       created
     )
@@ -398,6 +399,7 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
         filename: event.filename,
         size: event.size,
         creator: event.creator,
+        meta: event.meta,
         created
       }
     }
