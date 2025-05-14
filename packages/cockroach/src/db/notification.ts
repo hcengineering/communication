@@ -210,6 +210,10 @@ export class NotificationsDb extends BaseDb {
         ON n.message_id = m.id 
         AND nc.workspace_id = m.workspace_id 
         AND nc.card_id = m.card_id
+      LEFT JOIN ${TableName.Thread} t
+        ON nc.workspace_id = t.workspace_id
+        AND nc.card_id = t.card_id
+        AND n.message_id = t.message_id
       LEFT JOIN ${TableName.MessagesGroup} mg 
         ON nc.workspace_id = mg.workspace_id 
         AND nc.card_id = mg.card_id 
@@ -230,20 +234,42 @@ export class NotificationsDb extends BaseDb {
         'message_group_from_date', mg.from_date,
         'message_group_to_date', mg.to_date,
         'message_group_count', mg.count,
+        'message_thread_id', t.thread_id,
+        'message_thread_type', t.thread_type,
+        'message_replies', t.replies_count,
+        'message_last_reply', t.last_reply,
         'message_patches', (
           SELECT COALESCE(
             JSON_AGG(
               JSONB_BUILD_OBJECT(
-                'patch_type', p.type,
-                'patch_data', p.data,
-                'patch_creator', p.creator,
-                'patch_created', p.created
+                'type', p.type,
+                'data', p.data,
+                'creator', p.creator,
+                'created', p.created
               ) ORDER BY p.created DESC
             ), 
             '[]'::JSONB
           ) 
           FROM ${TableName.Patch} p
-          WHERE p.message_id = n.message_id
+          WHERE p.message_id = n.message_id AND p.workspace_id = nc.workspace_id AND p.card_id = nc.card_id
+        ),
+        'message_files', (
+          SELECT COALESCE(
+            JSON_AGG(
+              JSONB_BUILD_OBJECT(
+                      'blob_id', f.blob_id,
+                      'type', f.type,
+                      'size', f.size,
+                      'filename', f.filename,
+                      'meta', f.meta,
+                      'creator', f.creator,
+                      'created', f.created
+              ) ORDER BY f.created ASC
+            ), 
+            '[]'::JSONB
+          ) 
+          FROM ${TableName.File} f
+          WHERE f.message_id = n.message_id AND f.workspace_id = nc.workspace_id AND f.card_id = nc.card_id
         )
       )`
     }
@@ -326,16 +352,33 @@ export class NotificationsDb extends BaseDb {
       mg.from_date AS message_group_from_date,
       mg.to_date AS message_group_to_date,
       mg.count AS message_group_count,
+      t.thread_id AS message_thread_id,
+      t.thread_type AS message_thread_type,
+      t.replies_count AS message_replies,
+      t.last_reply AS message_last_reply,
       (SELECT json_agg(
         jsonb_build_object(
-          'id', p.id,
-          'content', p.content,
+          'type', p.type,
+          'data', p.data,
           'creator', p.creator,
           'created', p.created
         )
       )
       FROM ${TableName.Patch} p
-      WHERE p.message_id = m.id) AS message_patches
+      WHERE p.workspace_id = m.workspace_id AND p.card_id = m.card_id AND p.message_id = m.id) AS message_patches,
+      (SELECT json_agg(
+        jsonb_build_object(
+            'blob_id', f.blob_id,
+            'type', f.type,
+            'size', f.size,
+            'filename', f.filename,
+            'meta', f.meta,
+            'creator', f.creator,
+            'created', f.created
+        )
+      )
+      FROM ${TableName.File} f
+      WHERE f.workspace_id = m.workspace_id AND f.card_id = m.card_id AND f.message_id = m.id) AS message_files
     `
 
       joinMessages = `
@@ -347,6 +390,10 @@ export class NotificationsDb extends BaseDb {
         ON nc.workspace_id = mg.workspace_id
         AND nc.card_id = mg.card_id
         AND n.created BETWEEN mg.from_date AND mg.to_date
+      LEFT JOIN ${TableName.Thread} t
+        ON nc.workspace_id = t.workspace_id
+        AND nc.card_id = t.card_id
+        AND n.message_id = t.message_id
     `
     }
 

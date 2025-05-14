@@ -194,6 +194,8 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
       responseEvent: {
         _id: event._id,
         type: MessageResponseEventType.ThreadUpdated,
+        card: event.card,
+        message: event.message,
         thread: event.thread,
         replies: event.replies,
         lastReply: event.lastReply

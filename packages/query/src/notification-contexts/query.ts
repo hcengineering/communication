@@ -14,13 +14,22 @@
 //
 
 import {
+  type CardID,
   type FindNotificationContextParams,
+  type Message,
+  type MessageID,
   type Notification,
   type NotificationContext,
+  PatchType,
   SortingOrder,
   type WorkspaceID
 } from '@hcengineering/communication-types'
 import {
+  type CardRemovedEvent,
+  CardResponseEventType,
+  type FileCreatedEvent,
+  type FileRemovedEvent,
+  type FindClient,
   MessageResponseEventType,
   type MessagesRemovedEvent,
   type NotificationContextCreatedEvent,
@@ -29,21 +38,21 @@ import {
   type NotificationCreatedEvent,
   NotificationResponseEventType,
   type NotificationsRemovedEvent,
-  type PatchCreatedEvent,
   type PagedQueryCallback,
+  type PatchCreatedEvent,
   type RequestEvent,
   type ResponseEvent,
-  type FindClient,
-  CardResponseEventType,
-  type CardRemovedEvent
+  type ThreadCreatedEvent,
+  type ThreadUpdatedEvent
 } from '@hcengineering/communication-sdk-types'
 import { applyPatch } from '@hcengineering/communication-shared'
 
 import { defaultQueryParams, type PagedQuery, type QueryId } from '../types'
 import { QueryResult } from '../result'
 import { WindowImpl } from '../window'
-import { loadMessageFromGroup } from '../utils'
+import { addFile, createThread, loadMessageFromGroup, removeFile, updateThread } from '../utils'
 
+const allowedPatchTypes = [PatchType.update, PatchType.addFile, PatchType.removeFile, PatchType.updateThread]
 export class NotificationContextsQuery implements PagedQuery<NotificationContext, FindNotificationContextParams> {
   private result: QueryResult<NotificationContext> | Promise<QueryResult<NotificationContext>>
   private forward: Promise<NotificationContext[]> | NotificationContext[] = []
@@ -76,10 +85,11 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     } else {
       const findPromise = this.find(findParams)
       this.result = findPromise.then((res) => {
-        const allLoaded = limit == null || res.length <= limit
-        const isTail = allLoaded || params.lastUpdate == null
-        const isHead = allLoaded
-        if (limit != null && res.length > limit) {
+        const allLoaded = limit == null || res.length < limit
+        const isTail = allLoaded || (params.lastUpdate == null && params.order === SortingOrder.Descending)
+        const isHead = allLoaded || (params.lastUpdate == null && params.order === SortingOrder.Ascending)
+
+        if (limit != null && res.length >= limit) {
           res.pop()
         }
         const qResult = new QueryResult(res, (x) => x.id)
@@ -131,6 +141,17 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
       case CardResponseEventType.CardRemoved:
         await this.onCardRemoved(event)
         break
+      case MessageResponseEventType.FileCreated:
+        await this.onFileCreated(event)
+        break
+      case MessageResponseEventType.FileRemoved:
+        await this.onFileRemoved(event)
+        break
+      case MessageResponseEventType.ThreadCreated:
+        await this.onThreadCreated(event)
+        break
+      case MessageResponseEventType.ThreadUpdated:
+        await this.onThreadUpdated(event)
     }
   }
 
@@ -298,29 +319,55 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
   }
 
   private async onCreatePatchEvent(event: PatchCreatedEvent): Promise<void> {
-    if (this.params.notifications == null) return
-    if (this.forward instanceof Promise) this.forward = await this.forward
-    if (this.backward instanceof Promise) this.backward = await this.backward
-    if (this.result instanceof Promise) this.result = await this.result
-
-    const context = this.result.getResult().find((it) => it.card === event.card)
-    if (context === undefined || (context.notifications ?? []).length === 0) return
-
-    const hasMessage = context.notifications?.some((it) => it.messageId === event.patch.message) ?? false
-    if (!hasMessage) return
-
-    this.result.update({
-      ...context,
-      notifications: context.notifications?.map((it) => ({
-        ...it,
-        message:
-          it.messageId === event.patch.message && it.message != null ? applyPatch(it.message, event.patch) : it.message
-      }))
-    })
-
-    void this.notify()
+    const isUpdated = await this.updateMessage(event.card, event.patch.message, (message) =>
+      applyPatch(message, event.patch, allowedPatchTypes)
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
   }
 
+  private async onFileCreated(event: FileCreatedEvent): Promise<void> {
+    const isUpdated = await this.updateMessage(event.card, event.file.message, (message) =>
+      addFile(message, event.file)
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
+  }
+
+  private async onFileRemoved(event: FileRemovedEvent): Promise<void> {
+    const isUpdated = await this.updateMessage(event.card, event.message, (message) =>
+      removeFile(message, event.blobId)
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
+  }
+
+  private async onThreadCreated(event: ThreadCreatedEvent): Promise<void> {
+    const isUpdated = await this.updateMessage(event.thread.card, event.thread.message, (message) =>
+      createThread(
+        message,
+        event.thread.thread,
+        event.thread.threadType,
+        event.thread.repliesCount,
+        event.thread.lastReply
+      )
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
+  }
+
+  private async onThreadUpdated(event: ThreadUpdatedEvent): Promise<void> {
+    const isUpdated = await this.updateMessage(event.card, event.message, (message) =>
+      updateThread(message, event.thread, event.replies, event.lastReply)
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
+  }
   private async onMessagesRemovedEvent(event: MessagesRemovedEvent): Promise<void> {
     if (this.params.notifications == null) return
     if (this.forward instanceof Promise) this.forward = await this.forward
@@ -581,5 +628,31 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
 
     const window = new WindowImpl(result, isTail, isHead, this)
     this.callback(window)
+  }
+
+  private async updateMessage(
+    card: CardID,
+    messageId: MessageID,
+    updater: (message: Message) => Message
+  ): Promise<boolean> {
+    if (this.params.notifications == null || this.params.notifications.message !== true) return false
+    if (this.forward instanceof Promise) this.forward = await this.forward
+    if (this.backward instanceof Promise) this.backward = await this.backward
+    if (this.result instanceof Promise) this.result = await this.result
+    const context = this.result.getResult().find((it) => it.card === card)
+    if (context === undefined || (context.notifications ?? []).length === 0) return false
+
+    const hasMessage = context.notifications?.some((it) => it.messageId === messageId) ?? false
+    if (!hasMessage) return false
+
+    this.result.update({
+      ...context,
+      notifications: context.notifications?.map((it) => ({
+        ...it,
+        message: it.messageId === messageId && it.message != null ? updater(it.message) : it.message
+      }))
+    })
+
+    return true
   }
 }

@@ -34,7 +34,8 @@ import {
   type Thread,
   type MessageData,
   type Label,
-  type CardType
+  type CardType,
+  type BlobMetadata
 } from '@hcengineering/communication-types'
 import { applyPatches } from '@hcengineering/communication-shared'
 
@@ -73,11 +74,24 @@ interface RawNotification extends NotificationDb {
   message_group_from_date?: Date
   message_group_to_date?: Date
   message_group_count?: number
+  message_thread_id?: CardID
+  message_thread_type?: CardType
+  message_replies?: number
+  message_last_reply?: Date
   message_patches?: {
-    patch_type: PatchType
-    patch_data: Record<string, any>
-    patch_creator: SocialID
-    patch_created: Date
+    type: PatchType
+    data: Record<string, any>
+    creator: SocialID
+    created: Date
+  }[]
+  message_files?: {
+    blob_id: BlobID
+    type: string
+    size: number
+    filename: string
+    meta?: BlobMetadata
+    creator: SocialID
+    created: Date
   }[]
 }
 
@@ -137,7 +151,7 @@ export function toFile(raw: Omit<FileDb, 'workspace_id'>): File {
     blobId: raw.blob_id,
     type: raw.type,
     filename: raw.filename,
-    size: parseInt(raw.size as any),
+    size: Number(raw.size),
     meta: raw.meta,
     creator: raw.creator,
     created: new Date(raw.created)
@@ -203,24 +217,52 @@ function toNotificationRaw(
 
   let message: Message | undefined
 
+  const patches = (raw.message_patches ?? []).map((it) =>
+    toPatch({
+      card_id: card,
+      message_id: raw.message_id,
+      type: it.type,
+      data: it.data,
+      creator: it.creator,
+      created: new Date(it.created),
+      message_created: raw.message_created ?? created
+    })
+  )
+
   if (
     raw.message_content != null &&
     raw.message_creator != null &&
     raw.message_created != null &&
     raw.message_type != null
   ) {
-    const patches = (raw.message_patches ?? []).map((it) =>
-      toPatch({
+    const messageFiles = raw.message_files?.map((it) =>
+      toFile({
         card_id: card,
         message_id: raw.message_id,
-        type: it.patch_type,
-        data: it.patch_data,
-        creator: it.patch_creator,
-        created: new Date(it.patch_created),
-        message_created: raw.message_created ? new Date(raw.message_created) : created
+        blob_id: it.blob_id,
+        type: it.type,
+        size: it.size,
+        filename: it.filename,
+        meta: it.meta,
+        creator: it.creator,
+        created: it.created,
+        message_created: raw.message_created ?? created
       })
     )
 
+    let thread: Thread | undefined = undefined
+
+    if (raw.message_thread_id != null && raw.message_thread_type != null) {
+      thread = {
+        card,
+        message: String(raw.message_id) as MessageID,
+        messageCreated: raw.message_created ? new Date(raw.message_created) : created,
+        thread: raw.message_thread_id,
+        threadType: raw.message_thread_type,
+        repliesCount: Number(raw.message_replies ?? 0),
+        lastReply: raw.message_last_reply ? new Date(raw.message_last_reply) : created
+      }
+    }
     message = {
       id: String(raw.message_id) as MessageID,
       type: raw.message_type,
@@ -232,7 +274,8 @@ function toNotificationRaw(
       created: new Date(raw.message_created),
       edited: undefined,
       reactions: [],
-      files: []
+      files: messageFiles ?? [],
+      thread
     }
 
     if (patches.length > 0) {
@@ -259,7 +302,8 @@ function toNotificationRaw(
       blobId: raw.message_group_blob_id,
       fromDate: new Date(raw.message_group_from_date),
       toDate: new Date(raw.message_group_to_date),
-      count: raw.message_group_count ?? 0
+      count: raw.message_group_count ?? 0,
+      patches
     }
   }
 

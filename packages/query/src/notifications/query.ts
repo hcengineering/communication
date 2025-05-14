@@ -14,27 +14,40 @@
 //
 
 import {
+  type CardID,
   type FindNotificationsParams,
+  type Message,
+  type MessageID,
   type Notification,
+  PatchType,
   SortingOrder,
   type WorkspaceID
 } from '@hcengineering/communication-types'
 import {
+  type FileCreatedEvent,
+  type FileRemovedEvent,
   type FindClient,
+  MessageResponseEventType,
   type NotificationContextRemovedEvent,
   type NotificationContextUpdatedEvent,
   type NotificationCreatedEvent,
   NotificationResponseEventType,
   type NotificationsRemovedEvent,
   type PagedQueryCallback,
+  type PatchCreatedEvent,
   type RequestEvent,
-  type ResponseEvent
+  type ResponseEvent,
+  type ThreadCreatedEvent,
+  type ThreadUpdatedEvent
 } from '@hcengineering/communication-sdk-types'
+import { applyPatch } from '@hcengineering/communication-shared'
 
 import { defaultQueryParams, type PagedQuery, type QueryId } from '../types'
 import { QueryResult } from '../result'
 import { WindowImpl } from '../window'
-import { loadMessageFromGroup } from '../utils'
+import { addFile, createThread, loadMessageFromGroup, removeFile, updateThread } from '../utils'
+
+const allowedPatchTypes = [PatchType.update, PatchType.addFile, PatchType.removeFile, PatchType.updateThread]
 
 export class NotificationQuery implements PagedQuery<Notification, FindNotificationsParams> {
   private result: QueryResult<Notification> | Promise<QueryResult<Notification>>
@@ -95,9 +108,23 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
         await this.onUpdateNotificationContextEvent(event)
         break
       }
-      case NotificationResponseEventType.NotificationContextRemoved: {
+      case NotificationResponseEventType.NotificationContextRemoved:
         await this.onRemoveNotificationContextEvent(event)
-      }
+        break
+      case MessageResponseEventType.PatchCreated:
+        await this.onCreatePatchEvent(event)
+        break
+      case MessageResponseEventType.FileCreated:
+        await this.onFileCreated(event)
+        break
+      case MessageResponseEventType.FileRemoved:
+        await this.onFileRemoved(event)
+        break
+      case MessageResponseEventType.ThreadCreated:
+        await this.onThreadCreated(event)
+        break
+      case MessageResponseEventType.ThreadUpdated:
+        await this.onThreadUpdated(event)
     }
   }
 
@@ -286,6 +313,56 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
     }
   }
 
+  private async onCreatePatchEvent(event: PatchCreatedEvent): Promise<void> {
+    const isUpdated = await this.updateMessage(event.card, event.patch.message, (message) =>
+      applyPatch(message, event.patch, allowedPatchTypes)
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
+  }
+
+  private async onFileCreated(event: FileCreatedEvent): Promise<void> {
+    const isUpdated = await this.updateMessage(event.card, event.file.message, (message) =>
+      addFile(message, event.file)
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
+  }
+
+  private async onFileRemoved(event: FileRemovedEvent): Promise<void> {
+    const isUpdated = await this.updateMessage(event.card, event.message, (message) =>
+      removeFile(message, event.blobId)
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
+  }
+
+  private async onThreadCreated(event: ThreadCreatedEvent): Promise<void> {
+    const isUpdated = await this.updateMessage(event.thread.card, event.thread.message, (message) =>
+      createThread(
+        message,
+        event.thread.thread,
+        event.thread.threadType,
+        event.thread.repliesCount,
+        event.thread.lastReply
+      )
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
+  }
+
+  private async onThreadUpdated(event: ThreadUpdatedEvent): Promise<void> {
+    const isUpdated = await this.updateMessage(event.card, event.message, (message) =>
+      updateThread(message, event.thread, event.replies, event.lastReply)
+    )
+    if (isUpdated) {
+      void this.notify()
+    }
+  }
   private async notify(): Promise<void> {
     if (!this.callback) return
     if (this.result instanceof Promise) this.result = await this.result
@@ -323,5 +400,25 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
       void this.notify()
       return res
     })
+  }
+
+  private async updateMessage(
+    card: CardID,
+    messageId: MessageID,
+    updater: (message: Message) => Message
+  ): Promise<boolean> {
+    if (this.params.message !== true) return false
+    if (this.result instanceof Promise) this.result = await this.result
+
+    const result = this.result.getResult()
+    const toUpdate = result.find((it) => it.messageId === messageId)
+    if (toUpdate == null) return false
+
+    this.result.update({
+      ...toUpdate,
+      message: toUpdate.message != null ? updater(toUpdate.message) : toUpdate.message
+    })
+
+    return true
   }
 }

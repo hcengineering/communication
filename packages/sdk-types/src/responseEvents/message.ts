@@ -124,6 +124,8 @@ export interface ThreadCreatedEvent extends BaseResponseEvent {
 
 export interface ThreadUpdatedEvent extends BaseResponseEvent {
   type: MessageResponseEventType.ThreadUpdated
+  card: CardID
+  message: MessageID
   thread: CardID
   replies: 'increment' | 'decrement'
   lastReply?: Date

@@ -147,7 +147,7 @@ export interface DbAdapter {
   findLabels(params: FindLabelsParams): Promise<Label[]>
   updateLabels(params: FindLabelsParams, data: Partial<Label>): Promise<void>
 
-  getAccountByPersonId(_id: string): Promise<AccountID | undefined>
+  getAccountsByPersonIds(ids: string[]): Promise<AccountID[]>
 
   close(): void
 }
