@@ -275,15 +275,15 @@ export class CockroachAdapter implements DbAdapter {
   }
 
   //TODO: remove it!
-  async getAccountByPersonId(_id: string): Promise<AccountID | undefined> {
+  async getAccountsByPersonIds(ids: string[]): Promise<AccountID[]> {
+    if (ids.length === 0) return []
     const sql = `SELECT data ->> 'personUuid' AS "personUuid"
                  FROM public.contact
                  WHERE "workspaceId" = $1::uuid
-                   AND _id = $2::varchar
-                 LIMIT 1`
-    const result = await this.sql.execute(sql, [this.workspace, _id])
+                   AND _id = ANY($2::text[])`
+    const result = await this.sql.execute(sql, [this.workspace, ids])
 
-    return result?.[0]?.personUuid as AccountID
+    return result?.map((it) => it.personUuid as AccountID).filter((it) => it != null) ?? []
   }
 }
 
