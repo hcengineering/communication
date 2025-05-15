@@ -26,7 +26,9 @@ import {
   type NotificationContext,
   SortingOrder,
   type NotificationID,
-  type CardType
+  type CardType,
+  type NotificationType,
+  type NotificationContent
 } from '@hcengineering/communication-types'
 
 import { BaseDb } from './base'
@@ -97,16 +99,28 @@ export class NotificationsDb extends BaseDb {
     return this.client.cursor<Collaborator>(sql, [this.workspace, card, date], size)
   }
 
-  async createNotification(context: ContextID, message: MessageID, created: Date): Promise<NotificationID> {
+  async createNotification(
+    context: ContextID,
+    message: MessageID,
+    type: NotificationType,
+    content: NotificationContent | undefined,
+    created: Date
+  ): Promise<NotificationID> {
     const db: Omit<NotificationDb, 'id'> = {
+      type,
       message_id: message,
       context_id: context,
-      created
+      created,
+      content: content ?? {}
     }
-    const sql = `INSERT INTO ${TableName.Notification} (message_id, context_id, created)
-                     VALUES ($1::bigint, $2::int8, $3::timestamptz)
+    const sql = `INSERT INTO ${TableName.Notification} (message_id, context_id, created, type, content)
+                     VALUES ($1::bigint, $2::int8, $3::timestamptz, $4::varchar, $5::jsonb)
                      RETURNING id::text`
-    const result = await this.execute(sql, [db.message_id, db.context_id, db.created], 'insert notification')
+    const result = await this.execute(
+      sql,
+      [db.message_id, db.context_id, db.created, db.type, db.content],
+      'insert notification'
+    )
     return result[0].id as NotificationID
   }
 
@@ -191,7 +205,7 @@ export class NotificationsDb extends BaseDb {
     const withNotifications = params.notifications != null
     const withMessages = params.notifications?.message === true
 
-    const { where, values, index } = this.buildContextWhere(params)
+    const { where, values } = this.buildContextWhere(params)
     const limit = params.limit != null ? `LIMIT ${Number(params.limit)}` : ''
     const orderBy =
       params.order != null ? `ORDER BY nc.last_update ${params.order === SortingOrder.Ascending ? 'ASC' : 'DESC'}` : ''
@@ -201,6 +215,8 @@ export class NotificationsDb extends BaseDb {
     JSONB_BUILD_OBJECT(
       'id', n.id::text,
       'created', n.created,
+      'type', n.type,
+      'content', n.content,
       'message_id', n.message_id::text
     )`
 
@@ -222,6 +238,8 @@ export class NotificationsDb extends BaseDb {
       buildObject = `
       JSONB_BUILD_OBJECT(
         'id', n.id::text,
+        'type', n.type,
+        'content', n.content,
         'created', n.created,
         'message_id', n.message_id::text,
         'message_type', m.type,
@@ -280,8 +298,8 @@ export class NotificationsDb extends BaseDb {
 
     if (withNotifications) {
       const { where: whereNotifications, values: valuesNotifications } = this.buildNotificationWhere(
-        { read: params.notifications?.read },
-        index,
+        { read: params.notifications?.read, type: params.notifications?.type },
+        values.length,
         true
       )
 
@@ -335,7 +353,7 @@ export class NotificationsDb extends BaseDb {
   async findNotifications(params: FindNotificationsParams): Promise<Notification[]> {
     const withMessage = params.message === true
 
-    let select = 'SELECT  n.id, n.created,n.message_id, n.context_id, nc.last_view '
+    let select = 'SELECT  n.id, n.created, n.message_id, n.type, n.content, n.context_id, nc.last_view '
 
     let joinMessages = ''
 
@@ -551,6 +569,11 @@ export class NotificationsDb extends BaseDb {
         where.push(`nc.account = ANY ($${index++}::uuid[])`)
         values.push(accounts)
       }
+    }
+
+    if (params.type != null) {
+      where.push(`n.type = $${index++}::varchar`)
+      values.push(params.type)
     }
 
     if (params.read === true) {

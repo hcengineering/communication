@@ -287,10 +287,12 @@ function toNotificationRaw(
     return {
       id: String(raw.id) as NotificationID,
       read,
+      type: raw.type,
       messageId: String(raw.message_id) as MessageID,
       created,
       context: String(id) as ContextID,
-      message
+      message,
+      content: raw.content
     }
   }
 
@@ -309,11 +311,13 @@ function toNotificationRaw(
 
   return {
     id: String(raw.id) as NotificationID,
+    type: raw.type,
     read,
     messageId: raw.message_id,
     created,
     context: String(id) as ContextID,
-    messageGroup
+    messageGroup,
+    content: raw.content
   }
 }
 

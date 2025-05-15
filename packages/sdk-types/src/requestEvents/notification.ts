@@ -13,7 +13,15 @@
 // limitations under the License.
 //
 
-import type { CardID, ContextID, MessageID, AccountID, CardType } from '@hcengineering/communication-types'
+import type {
+  CardID,
+  ContextID,
+  MessageID,
+  AccountID,
+  CardType,
+  NotificationType,
+  NotificationContent
+} from '@hcengineering/communication-types'
 import type { BaseRequestEvent } from './common'
 
 export enum NotificationRequestEventType {
@@ -39,6 +47,8 @@ export type NotificationRequestEvent =
 
 export interface CreateNotificationEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.CreateNotification
+  notificationType: NotificationType
+  content?: NotificationContent
   context: ContextID
   message: MessageID
   created: Date

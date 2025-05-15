@@ -42,7 +42,9 @@ import type {
   CardType,
   PatchData,
   File,
-  BlobMetadata
+  BlobMetadata,
+  NotificationContent,
+  NotificationType
 } from '@hcengineering/communication-types'
 
 export interface DbAdapter {
@@ -132,7 +134,13 @@ export interface DbAdapter {
   findCollaborators(params: FindCollaboratorsParams): Promise<Collaborator[]>
   updateCollaborators(params: FindCollaboratorsParams, data: Partial<Collaborator>): Promise<void>
 
-  createNotification(context: ContextID, message: MessageID, created: Date): Promise<NotificationID>
+  createNotification(
+    context: ContextID,
+    message: MessageID,
+    type: NotificationType,
+    content: NotificationContent | undefined,
+    created: Date
+  ): Promise<NotificationID>
   removeNotification(context: ContextID, account: AccountID, untilDate: Date): Promise<void>
 
   createContext(account: AccountID, card: CardID, lastUpdate: Date, lastView: Date): Promise<ContextID>

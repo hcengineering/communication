@@ -27,13 +27,17 @@ import {
   type CardType,
   type ContextID,
   type Message,
-  MessageType,
+  type MessageID,
   NewMessageLabelID,
-  type NotificationContext
+  type NotificationContext,
+  NotificationType,
+  type Reaction,
+  type ReactionNotificationContent
 } from '@hcengineering/communication-types'
 
 import type { TriggerCtx } from '../types'
 import { findAccount } from '../utils'
+import { findMessage } from '../triggers/utils.ts'
 
 const BATCH_SIZE = 500
 
@@ -42,9 +46,56 @@ export async function notify(ctx: TriggerCtx, event: ResponseEvent): Promise<Req
     case MessageResponseEventType.MessageCreated: {
       return await notifyMessage(ctx, event.message, event.cardType)
     }
+    case MessageResponseEventType.ReactionCreated: {
+      return await notifyReaction(ctx, event.card, event.reaction.message, event.messageCreated, event.reaction)
+    }
   }
 
   return []
+}
+
+async function notifyReaction(
+  ctx: TriggerCtx,
+  card: CardID,
+  message: MessageID,
+  messageCreated: Date,
+  reaction: Reaction
+): Promise<RequestEvent[]> {
+  const result: RequestEvent[] = []
+
+  const msg = await findMessage(ctx, card, message, messageCreated)
+  if (msg == null) return result
+
+  const messageAccount = await findAccount(ctx, msg.creator)
+  if (messageAccount == null) return result
+
+  const reactionAccount = await findAccount(ctx, reaction.creator)
+  if (reactionAccount === messageAccount) return result
+
+  const context = (await ctx.db.findNotificationContexts({ card: card, account: messageAccount }))[0]
+  let contextId: ContextID | undefined = context?.id
+
+  if (context == null) {
+    contextId = await createContext(ctx, messageAccount, card, reaction.created, reaction.created)
+  }
+
+  if (contextId == null) return result
+
+  const content: ReactionNotificationContent = {
+    emoji: reaction.reaction,
+    creator: reaction.creator
+  }
+  result.push({
+    type: NotificationRequestEventType.CreateNotification,
+    notificationType: NotificationType.Reaction,
+    account: messageAccount,
+    context: contextId,
+    message: message,
+    created: reaction.created,
+    content
+  })
+
+  return result
 }
 
 async function notifyMessage(ctx: TriggerCtx, message: Message, cardType: CardType): Promise<RequestEvent[]> {
@@ -105,6 +156,7 @@ async function processCollaborator(
 
   result.push({
     type: NotificationRequestEventType.CreateNotification,
+    notificationType: NotificationType.Message,
     account: collaborator,
     context: contextId,
     message: message.id,

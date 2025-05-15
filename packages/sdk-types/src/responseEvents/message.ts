@@ -82,6 +82,7 @@ export interface ReactionCreatedEvent extends BaseResponseEvent {
   type: MessageResponseEventType.ReactionCreated
   card: CardID
   reaction: Reaction
+  messageCreated: Date
 }
 
 export interface ReactionRemovedEvent extends BaseResponseEvent {

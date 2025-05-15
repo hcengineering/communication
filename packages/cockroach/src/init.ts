@@ -100,7 +100,7 @@ async function init(sql: postgres.Sql) {
 }
 
 function getMigrations(): [string, string][] {
-  return [migrationV1_1(), migrationV1_2()]
+  return [migrationV1_1(), migrationV1_2(), migrationV2_1()]
 }
 
 function migrationV1_1(): [string, string] {
@@ -232,11 +232,11 @@ function migrationV1_2(): [string, string] {
 
       CREATE TABLE IF NOT EXISTS communication.notifications
       (
-          id         INT8        NOT NULL DEFAULT unique_rowid(),
-          context_id INT8        NOT NULL,
-          message_id INT8        NOT NULL,
-          created    TIMESTAMPTZ NOT NULL,
-          content    JSONB       NOT NULL DEFAULT '{}',
+          id         INT8         NOT NULL DEFAULT unique_rowid(),
+          context_id INT8         NOT NULL,
+          message_id INT8         NOT NULL,
+          created    TIMESTAMPTZ  NOT NULL,
+          content    JSONB        NOT NULL DEFAULT '{}',
           PRIMARY KEY (id),
           FOREIGN KEY (context_id) REFERENCES communication.notification_context (id) ON DELETE CASCADE
       );
@@ -265,4 +265,11 @@ function migrationV1_2(): [string, string] {
       );
   `
   return ['reinit_tables-v1_2', sql]
+}
+
+function migrationV2_1(): [string, string] {
+  const sql = `
+  ALTER TABLE communication.notifications ADD COLUMN IF NOT EXISTS  type VARCHAR(255) NOT NULL DEFAULT 'message';
+  `
+  return ['add_type_column_to_notifications-v2_1', sql]
 }

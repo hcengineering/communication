@@ -212,10 +212,8 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
     if (this.result instanceof Promise) this.result = await this.result
     if (this.result.get(event.notification.id)) return
     if (!this.result.isTail()) return
-    if (this.params.context && this.params.context !== event.notification.context) return
-
-    const notifications = this.filterNotifications([event.notification])
-    if (notifications.length === 0) return
+    const match = this.match(event.notification)
+    if (!match) return
 
     if (this.params.order === SortingOrder.Ascending) {
       this.result.push(event.notification)
@@ -400,6 +398,13 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
       void this.notify()
       return res
     })
+  }
+
+  private match(notification: Notification): boolean {
+    if (this.params.context !== undefined && this.params.context !== notification.context) return false
+    if (this.params.type !== undefined && this.params.type !== notification.type) return false
+    if (this.params.read !== undefined && this.params.read !== notification.read) return false
+    return true
   }
 
   private async updateMessage(

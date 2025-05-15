@@ -218,6 +218,7 @@ const FindNotificationContextParamsSchema = FindParamsSchema.extend({
   account: z.union([AccountID, z.array(AccountID)]).optional(),
   notifications: z
     .object({
+      type: z.string().optional(),
       message: z.boolean().optional(),
       limit: z.number(),
       order: SortingOrder,
@@ -228,6 +229,7 @@ const FindNotificationContextParamsSchema = FindParamsSchema.extend({
 
 const FindNotificationsParamsSchema = FindParamsSchema.extend({
   context: ContextID.optional(),
+  type: z.string().optional(),
   read: z.boolean().optional(),
   created: dateOrRecordSchema.optional(),
   account: z.union([AccountID, z.array(AccountID)]).optional(),
@@ -370,6 +372,8 @@ const RemoveMessagesGroupEventSchema = BaseRequestEventSchema.extend({
 
 const CreateNotificationEventSchema = BaseRequestEventSchema.extend({
   type: z.literal(NotificationRequestEventType.CreateNotification),
+  notificationType: z.string(),
+  content: z.record(z.any()).optional(),
   context: ContextID,
   message: MessageID,
   created: DateSchema,

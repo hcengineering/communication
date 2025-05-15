@@ -352,7 +352,8 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
       _id: event._id,
       type: MessageResponseEventType.ReactionCreated,
       card: event.card,
-      reaction
+      reaction,
+      messageCreated: event.messageCreated
     }
     return {
       responseEvent
@@ -427,7 +428,13 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async createNotification(event: CreateNotificationEvent): Promise<Result> {
-    const id = await this.db.createNotification(event.context, event.message, event.created)
+    const id = await this.db.createNotification(
+      event.context,
+      event.message,
+      event.notificationType,
+      event.content,
+      event.created
+    )
 
     return {
       responseEvent: {
@@ -435,6 +442,8 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
         type: NotificationResponseEventType.NotificationCreated,
         notification: {
           id,
+          type: event.notificationType,
+          content: event.content ?? {},
           context: event.context,
           messageId: event.message,
           read: false,

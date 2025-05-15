@@ -423,6 +423,8 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     if (this.backward instanceof Promise) this.backward = await this.backward
     if (this.result instanceof Promise) this.result = await this.result
 
+    const match = this.matchNotification(event.notification)
+    if (!match) return
     const context = this.result.get(event.notification.context)
     if (context !== undefined) {
       const message =
@@ -466,7 +468,40 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     if (this.backward instanceof Promise) this.backward = await this.backward
     if (this.result instanceof Promise) this.result = await this.result
 
-    this.result.delete(event.context)
+    const length = this.result.length
+    const deleted = this.result.delete(event.context)
+
+    if (deleted != null) {
+      if (this.params.limit && length >= this.params.limit && this.result.length < this.params.limit) {
+        await this.reinit(length)
+      } else {
+        void this.notify()
+      }
+    }
+  }
+
+  private async reinit(limit: number): Promise<void> {
+    if (this.forward instanceof Promise) this.forward = await this.forward
+    if (this.backward instanceof Promise) this.backward = await this.backward
+    if (this.result instanceof Promise) this.result = await this.result
+    this.result = this.find({ ...this.params, limit: limit + 1 }).then((res) => {
+      const isTail =
+        res.length <= limit || (this.params.order === SortingOrder.Descending && this.params.lastUpdate == null)
+      const isHead =
+        res.length <= limit || (this.params.order === SortingOrder.Ascending && this.params.lastUpdate == null)
+      if (res.length > limit) {
+        res.pop()
+      }
+
+      const result = new QueryResult(res, (it) => it.id)
+      result.setHead(isHead)
+      result.setTail(isTail)
+      return result
+    })
+    void this.result.then((res) => {
+      void this.notify()
+      return res
+    })
   }
 
   private async onUpdateNotificationContextEvent(event: NotificationContextUpdatedEvent): Promise<void> {
@@ -613,6 +648,15 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
       }
     }
 
+    return true
+  }
+
+  private matchNotification(notification: Notification): boolean {
+    if (this.params.notifications === undefined) return false
+    if (this.params.notifications.type !== undefined && this.params.notifications.type !== notification.type)
+      return false
+    if (this.params.notifications.read !== undefined && this.params.notifications.read !== notification.read)
+      return false
     return true
   }
 

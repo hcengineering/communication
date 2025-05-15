@@ -44,7 +44,9 @@ import {
   type MessageData,
   type PatchData,
   type File,
-  type BlobMetadata
+  type BlobMetadata,
+  NotificationType,
+  type NotificationContent
 } from '@hcengineering/communication-types'
 import type { DbAdapter } from '@hcengineering/communication-sdk-types'
 
@@ -219,8 +221,14 @@ export class CockroachAdapter implements DbAdapter {
     await this.notification.updateCollaborators(params, data)
   }
 
-  async createNotification(context: ContextID, message: MessageID, messageCreated: Date): Promise<NotificationID> {
-    return await this.notification.createNotification(context, message, messageCreated)
+  async createNotification(
+    context: ContextID,
+    message: MessageID,
+    type: NotificationType,
+    content: NotificationContent | undefined,
+    created: Date
+  ): Promise<NotificationID> {
+    return await this.notification.createNotification(context, message, type, content, created)
   }
 
   async removeNotification(context: ContextID, account: AccountID, untilDate: Date): Promise<void> {
