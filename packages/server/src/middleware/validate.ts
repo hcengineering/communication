@@ -415,7 +415,8 @@ const CreateNotificationContextEventSchema = BaseRequestEventSchema.extend({
   card: CardID,
   account: AccountID,
   lastView: DateSchema,
-  lastUpdate: DateSchema
+  lastUpdate: DateSchema,
+  lastNotify: DateSchema.optional()
 }).strict()
 
 const RemoveNotificationContextEventSchema = BaseRequestEventSchema.extend({
@@ -430,7 +431,8 @@ const UpdateNotificationContextEventSchema = BaseRequestEventSchema.extend({
   account: AccountID,
   updates: z.object({
     lastView: DateSchema.optional(),
-    lastUpdate: DateSchema.optional()
+    lastUpdate: DateSchema.optional(),
+    lastNotify: DateSchema.optional()
   })
 }).strict()
 

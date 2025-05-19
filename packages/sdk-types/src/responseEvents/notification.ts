@@ -84,6 +84,7 @@ export interface NotificationContextUpdatedEvent extends BaseResponseEvent {
   account: AccountID
   lastView?: Date
   lastUpdate?: Date
+  lastNotify?: Date
 }
 
 export interface AddedCollaboratorsEvent extends BaseResponseEvent {

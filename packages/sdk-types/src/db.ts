@@ -140,7 +140,13 @@ export interface DbAdapter {
   updateNotification(query: UpdateNotificationQuery, updates: NotificationUpdates): Promise<void>
   removeNotifications(query: RemoveNotificationsQuery): Promise<NotificationID[]>
 
-  createContext(account: AccountID, card: CardID, lastUpdate: Date, lastView: Date): Promise<ContextID>
+  createContext(
+    account: AccountID,
+    card: CardID,
+    lastUpdate: Date,
+    lastView: Date,
+    lastNotify?: Date
+  ): Promise<ContextID>
   updateContext(context: ContextID, account: AccountID, updates: NotificationContextUpdates): Promise<void>
   removeContexts(query: RemoveNotificationContextQuery): Promise<void>
 
@@ -184,7 +190,7 @@ export type UpdateNotificationQuery = {
   created?: Partial<Record<ComparisonOperator, Date>> | Date
 }
 
-export type NotificationContextUpdates = Partial<Pick<NotificationContext, 'lastView' | 'lastUpdate'>>
+export type NotificationContextUpdates = Partial<Pick<NotificationContext, 'lastView' | 'lastUpdate' | 'lastNotify'>>
 
 export type ThreadUpdates = {
   threadType?: CardType

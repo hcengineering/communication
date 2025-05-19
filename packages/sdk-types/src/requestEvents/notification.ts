@@ -82,6 +82,7 @@ export interface CreateNotificationContextEvent extends BaseRequestEvent {
   account: AccountID
   lastView: Date
   lastUpdate: Date
+  lastNotify?: Date
 }
 
 export interface RemoveNotificationContextEvent extends BaseRequestEvent {
@@ -97,6 +98,7 @@ export interface UpdateNotificationContextEvent extends BaseRequestEvent {
   updates: {
     lastView?: Date
     lastUpdate?: Date
+    lastNotify?: Date
   }
 }
 

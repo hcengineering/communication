@@ -611,15 +611,16 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
         ...contextToUpdate,
         lastUpdate: event.lastUpdate ?? contextToUpdate.lastUpdate,
         lastView: event.lastView ?? contextToUpdate.lastView,
+        lastNotify: event.lastNotify ?? contextToUpdate.lastNotify,
         notifications: newNotifications
       }
       this.result.update(updated)
     }
-    if (event.lastUpdate != null) {
+    if (event.lastNotify != null) {
       this.result.sort((a, b) =>
         this.params.order === SortingOrder.Descending
-          ? b.lastUpdate.getTime() - a.lastUpdate.getTime()
-          : a.lastUpdate.getTime() - b.lastUpdate.getTime()
+          ? (b.lastNotify?.getTime() ?? 0) - (a.lastNotify?.getTime() ?? 0)
+          : (a.lastNotify?.getTime() ?? 0) - (b.lastNotify?.getTime() ?? 0)
       )
     }
     void this.notify()

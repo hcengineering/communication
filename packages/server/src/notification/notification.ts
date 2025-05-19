@@ -33,7 +33,8 @@ import {
   NotificationType,
   type Reaction,
   type ReactionNotificationContent,
-  type SocialID
+  type SocialID,
+  SortingOrder
 } from '@hcengineering/communication-types'
 
 import type { TriggerCtx } from '../types'
@@ -93,6 +94,32 @@ async function removeReactionNotification(
 
   if (toDelete === undefined) return result
 
+  const context = (await ctx.db.findNotificationContexts({ card: card, account: messageAccount, limit: 1 }))[0]
+  if (context == null) return result
+  if (context.lastNotify && context.lastNotify.getTime() === toDelete.created.getTime()) {
+    const lastNotification = (
+      await ctx.db.findNotifications({
+        account: messageAccount,
+        context: context.id,
+        created: {
+          less: context.lastNotify
+        },
+        order: SortingOrder.Descending,
+        limit: 1
+      })
+    )[0]
+    if (lastNotification != null) {
+      result.push({
+        type: NotificationRequestEventType.UpdateNotificationContext,
+        context: context.id,
+        account: messageAccount,
+        updates: {
+          lastNotify: lastNotification.created
+        }
+      })
+    }
+  }
+
   result.push({
     type: NotificationRequestEventType.RemoveNotifications,
     context: toDelete.context,
@@ -144,6 +171,14 @@ async function notifyReaction(
     content
   })
 
+  result.push({
+    type: NotificationRequestEventType.UpdateNotificationContext,
+    context: contextId,
+    account: messageAccount,
+    updates: {
+      lastNotify: reaction.created
+    }
+  })
   return result
 }
 
@@ -231,7 +266,8 @@ async function createOrUpdateContext(
       collaborator,
       message.card,
       message.created,
-      isOwn ? message.created : undefined
+      isOwn ? message.created : undefined,
+      isOwn ? undefined : message.created
     )
 
     return {
@@ -253,7 +289,8 @@ async function createOrUpdateContext(
         account: collaborator,
         updates: {
           lastView,
-          lastUpdate
+          lastUpdate,
+          lastNotify: isOwn ? undefined : message.created
         }
       }
     ]
@@ -265,7 +302,8 @@ async function createContext(
   account: AccountID,
   card: CardID,
   lastUpdate: Date,
-  lastView?: Date
+  lastView?: Date,
+  lastNotify?: Date
 ): Promise<ContextID | undefined> {
   try {
     const result = (await ctx.execute({
@@ -273,7 +311,8 @@ async function createContext(
       account,
       card,
       lastUpdate,
-      lastView: lastView ?? new Date(lastUpdate.getTime() - 1)
+      lastView: lastView ?? new Date(lastUpdate.getTime() - 1),
+      lastNotify
     })) as CreateNotificationContextResult
 
     return result.id

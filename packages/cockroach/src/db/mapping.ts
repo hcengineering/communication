@@ -199,6 +199,7 @@ export function toNotificationContext(raw: RawContext): NotificationContext {
     account: raw.account,
     lastView,
     lastUpdate: new Date(raw.last_update),
+    lastNotify: raw.last_notify != null ? new Date(raw.last_notify) : undefined,
     notifications: (raw.notifications ?? [])
       .filter((it) => it.id != null)
       .map((it) => toNotificationRaw(raw.id, raw.card_id, it))

@@ -140,6 +140,7 @@ export interface ContextDb {
   account: AccountID
   last_update: Date
   last_view: Date
+  last_notify?: Date
 }
 
 export interface CollaboratorDb {

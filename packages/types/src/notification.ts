@@ -57,5 +57,6 @@ export interface NotificationContext {
   account: AccountID
   lastUpdate: Date
   lastView: Date
+  lastNotify?: Date
   notifications?: Notification[]
 }

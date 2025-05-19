@@ -107,7 +107,9 @@ function getMigrations(): [string, string][] {
     migrationV2_2(),
     migrationV2_3(),
     migrationV2_4(),
-    migrationV2_5()
+    migrationV2_5(),
+    migrationV2_6(),
+    migrationV2_7()
   ]
 }
 
@@ -314,4 +316,20 @@ function migrationV2_5(): [string, string] {
           ALTER COLUMN message_created SET NOT NULL;
   `
   return ['init_and_set_not_null_message_created_notifications-v2_4', sql]
+}
+
+function migrationV2_6(): [string, string] {
+  const sql = `
+      ALTER TABLE communication.notification_context
+          ADD COLUMN IF NOT EXISTS last_notify TIMESTAMPTZ;
+  `
+  return ['add_last_notify_column_to_notification_context-v2_6', sql]
+}
+
+function migrationV2_7(): [string, string] {
+  const sql = `
+      UPDATE communication.notification_context
+      SET last_notify = last_update;`
+
+  return ['set_last_notify_to_last_update-v2_7', sql]
 }

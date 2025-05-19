@@ -205,20 +205,27 @@ export class NotificationsDb extends BaseDb {
     return result.map((row: any) => row.id)
   }
 
-  async createContext(account: AccountID, card: CardID, lastUpdate: Date, lastView: Date): Promise<ContextID> {
+  async createContext(
+    account: AccountID,
+    card: CardID,
+    lastUpdate: Date,
+    lastView: Date,
+    lastNotify?: Date
+  ): Promise<ContextID> {
     const db: ContextDb = {
       workspace_id: this.workspace,
       card_id: card,
       account,
       last_view: lastView,
-      last_update: lastUpdate
+      last_update: lastUpdate,
+      last_notify: lastNotify
     }
-    const sql = `INSERT INTO ${TableName.NotificationContext} (workspace_id, card_id, account, last_view, last_update)
-                     VALUES ($1::uuid, $2::varchar, $3::uuid, $4::timestamptz, $5::timestamptz)
+    const sql = `INSERT INTO ${TableName.NotificationContext} (workspace_id, card_id, account, last_view, last_update, last_notify)
+                     VALUES ($1::uuid, $2::varchar, $3::uuid, $4::timestamptz, $5::timestamptz, $6::timestamptz)
                      RETURNING id::text`
     const result = await this.execute(
       sql,
-      [db.workspace_id, db.card_id, db.account, db.last_view, db.last_update],
+      [db.workspace_id, db.card_id, db.account, db.last_view, db.last_update, db.last_notify ?? null],
       'insert notification context'
     )
     return result[0].id as ContextID
@@ -256,6 +263,10 @@ export class NotificationsDb extends BaseDb {
       dbData.last_update = updates.lastUpdate
     }
 
+    if (updates.lastNotify != null) {
+      dbData.last_notify = updates.lastNotify
+    }
+
     if (Object.keys(dbData).length === 0) {
       return
     }
@@ -277,7 +288,7 @@ export class NotificationsDb extends BaseDb {
     const { where, values } = this.buildContextWhere(params)
     const limit = params.limit != null ? `LIMIT ${Number(params.limit)}` : ''
     const orderBy =
-      params.order != null ? `ORDER BY nc.last_update ${params.order === SortingOrder.Ascending ? 'ASC' : 'DESC'}` : ''
+      params.order != null ? `ORDER BY nc.last_notify ${params.order === SortingOrder.Ascending ? 'ASC' : 'DESC'}` : ''
 
     let joinMessages = ''
     let buildNotificationObject = `
@@ -406,7 +417,8 @@ export class NotificationsDb extends BaseDb {
              nc.card_id,
              nc.account,
              nc.last_view,
-             nc.last_update
+             nc.last_update,
+             nc.last_notify
                ${notificationsSelect}
       FROM ${TableName.NotificationContext} nc
         ${joinNotifications}
@@ -497,7 +509,6 @@ export class NotificationsDb extends BaseDb {
     const sql = [select, joinMessages, where, orderBy, limit].join(' ')
 
     const result = await this.execute(sql, values, 'find notifications')
-    console.log(result)
 
     return result.map((it: any) => toNotification(it))
   }
@@ -652,6 +663,13 @@ export class NotificationsDb extends BaseDb {
     if (params.type != null) {
       where.push(`n.type = $${index++}::varchar`)
       values.push(params.type)
+    }
+
+    const createdCondition = getCondition('n', 'created', index, params.created, 'timestamptz')
+    if (createdCondition != null) {
+      where.push(createdCondition.where)
+      values.push(...createdCondition.values)
+      index = createdCondition.index
     }
 
     if (params.read === true) {
