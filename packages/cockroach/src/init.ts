@@ -100,7 +100,15 @@ async function init(sql: postgres.Sql) {
 }
 
 function getMigrations(): [string, string][] {
-  return [migrationV1_1(), migrationV1_2(), migrationV2_1()]
+  return [
+    migrationV1_1(),
+    migrationV1_2(),
+    migrationV2_1(),
+    migrationV2_2(),
+    migrationV2_3(),
+    migrationV2_4(),
+    migrationV2_5()
+  ]
 }
 
 function migrationV1_1(): [string, string] {
@@ -232,11 +240,12 @@ function migrationV1_2(): [string, string] {
 
       CREATE TABLE IF NOT EXISTS communication.notifications
       (
-          id         INT8         NOT NULL DEFAULT unique_rowid(),
-          context_id INT8         NOT NULL,
-          message_id INT8         NOT NULL,
-          created    TIMESTAMPTZ  NOT NULL,
-          content    JSONB        NOT NULL DEFAULT '{}',
+          id         INT8        NOT NULL DEFAULT unique_rowid(),
+          context_id INT8        NOT NULL,
+          read       BOOLEAN     NOT NULL DEFAULT false,
+          message_id INT8        NOT NULL,
+          created    TIMESTAMPTZ NOT NULL,
+          content    JSONB       NOT NULL DEFAULT '{}',
           PRIMARY KEY (id),
           FOREIGN KEY (context_id) REFERENCES communication.notification_context (id) ON DELETE CASCADE
       );
@@ -269,7 +278,40 @@ function migrationV1_2(): [string, string] {
 
 function migrationV2_1(): [string, string] {
   const sql = `
-  ALTER TABLE communication.notifications ADD COLUMN IF NOT EXISTS  type VARCHAR(255) NOT NULL DEFAULT 'message';
+      ALTER TABLE communication.notifications
+          ADD COLUMN IF NOT EXISTS type VARCHAR(255) NOT NULL DEFAULT 'message';
   `
   return ['add_type_column_to_notifications-v2_1', sql]
+}
+
+function migrationV2_2(): [string, string] {
+  const sql = `
+      ALTER TABLE communication.notifications
+          ADD COLUMN IF NOT EXISTS read BOOLEAN NOT NULL DEFAULT false;
+  `
+  return ['add_read_column_to_notifications-v2_2', sql]
+}
+
+function migrationV2_3(): [string, string] {
+  const sql = `UPDATE communication.notifications SET read = true; `
+  return ['set_read_to_true-v2_3', sql]
+}
+
+function migrationV2_4(): [string, string] {
+  const sql = `
+      ALTER TABLE communication.notifications
+          ADD COLUMN IF NOT EXISTS message_created TIMESTAMPTZ;
+  `
+  return ['add_message_created_column_to_notifications-v2_4', sql]
+}
+
+function migrationV2_5(): [string, string] {
+  const sql = `
+      UPDATE communication.notifications
+      SET message_created = created;
+
+      ALTER TABLE communication.notifications
+          ALTER COLUMN message_created SET NOT NULL;
+  `
+  return ['init_and_set_not_null_message_created_notifications-v2_4', sql]
 }

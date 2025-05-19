@@ -14,20 +14,85 @@
 //
 
 import { applyPatches } from '@hcengineering/communication-shared'
-import type {
-  BlobID,
-  CardID,
-  CardType,
-  File,
-  Message,
-  MessageID,
-  MessagesGroup,
-  Patch,
-  Reaction,
-  SocialID,
-  WorkspaceID
+import {
+  type BlobID,
+  type CardID,
+  type CardType,
+  type File,
+  type FindNotificationsParams,
+  type Message,
+  type MessageID,
+  type MessagesGroup,
+  type Notification,
+  type Patch,
+  type Reaction,
+  type SocialID,
+  SortingOrder,
+  type WorkspaceID
 } from '@hcengineering/communication-types'
 import { loadGroupFile } from '@hcengineering/communication-yaml'
+import type { FindClient } from '@hcengineering/communication-sdk-types'
+
+export async function findMessage(
+  client: FindClient,
+  workspace: WorkspaceID,
+  filesUrl: string,
+  card: CardID,
+  id: MessageID,
+  created: Date,
+  reactions?: boolean,
+  files?: boolean,
+  replies?: boolean
+): Promise<Message | undefined> {
+  const message = (await client.findMessages({ card, id, limit: 1, files, reactions, replies }))[0]
+  if (message !== undefined) {
+    return message
+  }
+  return await findMessageInFiles(client, workspace, filesUrl, card, id, created)
+}
+
+export async function findMessageInFiles(
+  client: FindClient,
+  workspace: WorkspaceID,
+  filesUrl: string,
+  card: CardID,
+  id: MessageID,
+  created: Date
+): Promise<Message | undefined> {
+  if (filesUrl === '') {
+    return undefined
+  }
+
+  const group = (
+    await client.findMessagesGroups({
+      card,
+      fromDate: { lessOrEqual: created },
+      toDate: { greaterOrEqual: created },
+      limit: 1,
+      order: SortingOrder.Ascending,
+      orderBy: 'fromDate'
+    })
+  )[0]
+
+  if (group === undefined) {
+    return undefined
+  }
+
+  try {
+    const parsedFile = await loadGroupFile(workspace, filesUrl, group, { retries: 3 })
+    const messageFromFile = parsedFile.messages.find((it) => it.id === id)
+    if (messageFromFile === undefined) {
+      return undefined
+    }
+
+    const patches = (group.patches ?? []).filter((it) => it.message === id)
+
+    return patches.length > 0 ? applyPatches(messageFromFile, patches) : messageFromFile
+  } catch (e) {
+    console.error('Failed to find message in files', { card, id, created })
+    console.error('Error:', { error: e })
+  }
+}
 
 export async function loadMessageFromGroup(
   id: MessageID,
@@ -118,4 +183,27 @@ export function updateThread(
     replies === 'increment' ? message.thread.repliesCount + 1 : Math.max(message.thread.repliesCount - 1, 0)
   message.thread.lastReply = lastReply ?? message.thread.lastReply
   return message
+}
+
+export function matchNotification(notification: Notification, params: FindNotificationsParams): boolean {
+  if (params.type !== undefined && params.type !== notification.type) return false
+  if (params.read !== undefined && params.read !== notification.read) return false
+  if (params.id !== undefined && params.id !== notification.id) return false
+  if (params.context !== undefined && params.context !== notification.context) return false
+
+  const created = notification.created.getTime()
+
+  if (params.created) {
+    if (params.created instanceof Date) {
+      if (created !== params.created.getTime()) return false
+    } else {
+      const { greater, less, greaterOrEqual, lessOrEqual } = params.created
+      if (greater && created <= greater.getTime()) return false
+      if (less && created >= less.getTime()) return false
+      if (greaterOrEqual && created < greaterOrEqual.getTime()) return false
+      if (lessOrEqual && created > lessOrEqual.getTime()) return false
+    }
+  }
+
+  return true
 }

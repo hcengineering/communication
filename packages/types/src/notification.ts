@@ -32,7 +32,8 @@ export interface Notification {
   read: boolean
   created: Date
   content: NotificationContent
-  messageId?: MessageID
+  messageId: MessageID
+  messageCreated: Date
   message?: Message
   messageGroup?: MessagesGroup
   patches?: Patch[]

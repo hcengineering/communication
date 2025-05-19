@@ -20,9 +20,11 @@ import type {
   AccountID,
   CardType,
   NotificationType,
-  NotificationContent
+  NotificationContent,
+  NotificationID
 } from '@hcengineering/communication-types'
 import type { BaseRequestEvent } from './common'
+import type { UpdateNotificationQuery } from '../db.ts'
 
 export enum NotificationRequestEventType {
   AddCollaborators = 'addCollaborators',
@@ -30,6 +32,7 @@ export enum NotificationRequestEventType {
 
   CreateNotification = 'createNotification',
   RemoveNotifications = 'removeNotifications',
+  UpdateNotification = 'updateNotification',
 
   CreateNotificationContext = 'createNotificationContext',
   RemoveNotificationContext = 'removeNotificationContext',
@@ -40,6 +43,7 @@ export type NotificationRequestEvent =
   | AddCollaboratorsEvent
   | CreateNotificationContextEvent
   | CreateNotificationEvent
+  | UpdateNotificationEvent
   | RemoveCollaboratorsEvent
   | RemoveNotificationContextEvent
   | RemoveNotificationsEvent
@@ -48,18 +52,28 @@ export type NotificationRequestEvent =
 export interface CreateNotificationEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.CreateNotification
   notificationType: NotificationType
+  read?: boolean
   content?: NotificationContent
   context: ContextID
   message: MessageID
+  messageCreated: Date
   created: Date
   account: AccountID
+}
+
+export interface UpdateNotificationEvent extends BaseRequestEvent {
+  type: NotificationRequestEventType.UpdateNotification
+  query: UpdateNotificationQuery
+  updates: {
+    read: boolean
+  }
 }
 
 export interface RemoveNotificationsEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.RemoveNotifications
   context: ContextID
   account: AccountID
-  untilDate: Date
+  ids: NotificationID[]
 }
 
 export interface CreateNotificationContextEvent extends BaseRequestEvent {
@@ -80,8 +94,10 @@ export interface UpdateNotificationContextEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.UpdateNotificationContext
   context: ContextID
   account: AccountID
-  lastView?: Date
-  lastUpdate?: Date
+  updates: {
+    lastView?: Date
+    lastUpdate?: Date
+  }
 }
 
 export interface AddCollaboratorsEvent extends BaseRequestEvent {

@@ -145,8 +145,10 @@ export interface UpdateThreadEvent extends BaseRequestEvent {
   card: CardID
   message: MessageID
   thread: CardID
-  replies: 'increment' | 'decrement'
-  lastReply?: Date
+  updates: {
+    replies: 'increment' | 'decrement'
+    lastReply?: Date
+  }
 }
 
 export interface CreateMessagesGroupEvent extends BaseRequestEvent {

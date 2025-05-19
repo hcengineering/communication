@@ -69,7 +69,6 @@ interface RawNotification extends NotificationDb {
   message_creator?: SocialID
   message_data?: MessageData
   message_external_id?: string
-  message_created?: Date
   message_group_blob_id?: BlobID
   message_group_from_date?: Date
   message_group_to_date?: Date
@@ -202,19 +201,12 @@ export function toNotificationContext(raw: RawContext): NotificationContext {
     lastUpdate: new Date(raw.last_update),
     notifications: (raw.notifications ?? [])
       .filter((it) => it.id != null)
-      .map((it) => toNotificationRaw(raw.id, raw.card_id, lastView, it))
+      .map((it) => toNotificationRaw(raw.id, raw.card_id, it))
   }
 }
 
-function toNotificationRaw(
-  id: ContextID,
-  card: CardID,
-  lastView: Date | undefined,
-  raw: RawNotification
-): Notification {
+function toNotificationRaw(id: ContextID, card: CardID, raw: RawNotification): Notification {
   const created = new Date(raw.created)
-  const read = lastView != null && lastView >= created
-
   let message: Message | undefined
 
   const patches = (raw.message_patches ?? []).map((it) =>
@@ -286,9 +278,10 @@ function toNotificationRaw(
   if (message != null) {
     return {
       id: String(raw.id) as NotificationID,
-      read,
+      read: Boolean(raw.read),
       type: raw.type,
       messageId: String(raw.message_id) as MessageID,
+      messageCreated: new Date(raw.message_created),
       created,
       context: String(id) as ContextID,
       message,
@@ -312,8 +305,9 @@ function toNotificationRaw(
   return {
     id: String(raw.id) as NotificationID,
     type: raw.type,
-    read,
-    messageId: raw.message_id,
+    read: Boolean(raw.read),
+    messageId: String(raw.message_id) as MessageID,
+    messageCreated: new Date(raw.message_created),
     created,
     context: String(id) as ContextID,
     messageGroup,
@@ -321,10 +315,8 @@ function toNotificationRaw(
   }
 }
 
-export function toNotification(raw: RawNotification & { card_id: CardID; last_view?: Date }): Notification {
-  const lastView = raw.last_view != null ? new Date(raw.last_view) : undefined
-
-  return toNotificationRaw(raw.context_id, raw.card_id, lastView, raw)
+export function toNotification(raw: RawNotification & { card_id: CardID }): Notification {
+  return toNotificationRaw(raw.context_id, raw.card_id, raw)
 }
 
 export function toCollaborator(raw: CollaboratorDb): Collaborator {

@@ -20,8 +20,8 @@ import {
   type MessageID,
   type Notification,
   type NotificationContext,
+  NotificationType,
   PatchType,
-  SortingOrder,
   type WorkspaceID
 } from '@hcengineering/communication-types'
 import {
@@ -38,6 +38,7 @@ import {
   type NotificationCreatedEvent,
   NotificationResponseEventType,
   type NotificationsRemovedEvent,
+  type NotificationUpdatedEvent,
   type PagedQueryCallback,
   type PatchCreatedEvent,
   type RequestEvent,
@@ -50,7 +51,16 @@ import { applyPatch } from '@hcengineering/communication-shared'
 import { defaultQueryParams, type PagedQuery, type QueryId } from '../types'
 import { QueryResult } from '../result'
 import { WindowImpl } from '../window'
-import { addFile, createThread, loadMessageFromGroup, removeFile, updateThread } from '../utils'
+import {
+  addFile,
+  createThread,
+  findMessage,
+  loadMessageFromGroup,
+  matchNotification,
+  removeFile,
+  updateThread
+} from '../utils'
+import { SortingOrder } from '@hcengineering/communication-types'
 
 const allowedPatchTypes = [PatchType.update, PatchType.addFile, PatchType.removeFile, PatchType.updateThread]
 export class NotificationContextsQuery implements PagedQuery<NotificationContext, FindNotificationContextParams> {
@@ -124,6 +134,10 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
       }
       case NotificationResponseEventType.NotificationsRemoved: {
         await this.onRemoveNotificationEvent(event)
+        break
+      }
+      case NotificationResponseEventType.NotificationUpdated: {
+        await this.onUpdateNotificationEvent(event)
         break
       }
       case NotificationResponseEventType.NotificationContextCreated: {
@@ -362,7 +376,7 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
 
   private async onThreadUpdated(event: ThreadUpdatedEvent): Promise<void> {
     const isUpdated = await this.updateMessage(event.card, event.message, (message) =>
-      updateThread(message, event.thread, event.replies, event.lastReply)
+      updateThread(message, event.thread, event.updates.replies, event.updates.lastReply)
     )
     if (isUpdated) {
       void this.notify()
@@ -400,18 +414,63 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     if (this.result instanceof Promise) this.result = await this.result
 
     const context = this.result.get(event.context)
-    if (context === undefined) return
+    if (context === undefined || context.notifications === undefined) return
 
-    const filtered = (context.notifications ?? []).filter((it) => it.created > event.untilDate)
-    if (filtered.length === (context.notifications?.length ?? 0)) return
+    const filtered = context.notifications.filter((it) => !event.ids.includes(it.id))
+    if (filtered.length === context.notifications.length) return
+    const limit = this.params.notifications.limit ?? 0
 
-    const contextUpdated = (await this.find({ id: context.id, limit: 1, notifications: this.params.notifications }))[0]
-    if (contextUpdated !== undefined) {
-      this.result.update(contextUpdated)
+    if (filtered.length < limit && context.notifications.length >= limit) {
+      const contextUpdated = (
+        await this.find({ id: context.id, limit: 1, notifications: this.params.notifications })
+      )[0]
+      if (contextUpdated !== undefined) {
+        this.result.update(contextUpdated)
+      } else {
+        this.result.delete(context.id)
+      }
     } else {
       this.result.update({
         ...context,
         notifications: filtered
+      })
+    }
+    void this.notify()
+  }
+
+  private async onUpdateNotificationEvent(event: NotificationUpdatedEvent): Promise<void> {
+    if (this.params.notifications == null) return
+    if (this.forward instanceof Promise) this.forward = await this.forward
+    if (this.backward instanceof Promise) this.backward = await this.backward
+    if (this.result instanceof Promise) this.result = await this.result
+
+    const context = this.result.get(event.query.context)
+    if (context === undefined || context.notifications === undefined) return
+
+    const toUpdate = context.notifications.filter(
+      (it) => matchNotification(it, event.query) && it.read !== event.updates.read
+    )
+    if (toUpdate === undefined || (toUpdate?.length ?? 0) === 0) return
+    const toUpdateMap = new Map(toUpdate.map((it) => [it.id, it]))
+    const currentLength = context.notifications.length ?? 0
+    const newNotifications = context.notifications.map((it) =>
+      toUpdateMap.has(it.id) ? { ...it, ...event.updates } : it
+    )
+    const newLength = newNotifications.length
+
+    if (newLength < currentLength && newLength < this.params.notifications.limit) {
+      const updated: NotificationContext = (
+        await this.find({ id: context.id, limit: 1, notifications: this.params.notifications })
+      )[0]
+      if (updated !== undefined) {
+        this.result.update(updated)
+      } else {
+        this.result.delete(context.id)
+      }
+    } else {
+      this.result.update({
+        ...context,
+        notifications: newNotifications
       })
     }
     void this.notify()
@@ -423,18 +482,27 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     if (this.backward instanceof Promise) this.backward = await this.backward
     if (this.result instanceof Promise) this.result = await this.result
 
-    const match = this.matchNotification(event.notification)
+    const match = matchNotification(event.notification, {
+      type: this.params.notifications.type,
+      read: this.params.notifications.read
+    })
     if (!match) return
+
     const context = this.result.get(event.notification.context)
     if (context !== undefined) {
       const message =
         this.params.notifications.message === true
-          ? (
-              await this.client.findMessages({
-                card: context.card,
-                id: event.notification.messageId
-              })
-            )[0]
+          ? await findMessage(
+              this.client,
+              this.workspace,
+              this.filesUrl,
+              context.card,
+              event.notification.messageId,
+              event.notification.messageCreated,
+              false,
+              true,
+              true
+            )
           : undefined
 
       const notifications = [
@@ -509,54 +577,52 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     if (this.backward instanceof Promise) this.backward = await this.backward
     if (this.result instanceof Promise) this.result = await this.result
 
-    const toUpdate = this.result.get(event.context)
+    const contextToUpdate = this.result.get(event.context)
+    if (contextToUpdate === undefined) return
 
-    if (toUpdate !== undefined) {
-      const notifications = this.filterNotifications(
-        event.lastView != null
-          ? (toUpdate.notifications ?? []).map((it) => ({
+    const currentNotifications = contextToUpdate.notifications ?? []
+    const newNotifications =
+      event.lastView != null
+        ? this.filterNotifications(
+            currentNotifications.map((it) => ({
               ...it,
-              read: event.lastView != null && event.lastView >= it.created
+              read:
+                it.type == NotificationType.Message ? event.lastView != null && event.lastView >= it.created : it.read
             }))
-          : (toUpdate.notifications ?? [])
-      )
+          )
+        : currentNotifications
 
-      if (
-        notifications.length < (toUpdate.notifications?.length ?? 0) &&
-        this.params.notifications?.order !== SortingOrder.Descending
-      ) {
-        const updated: NotificationContext = (
-          await this.find({ id: event.context, limit: 1, notifications: this.params.notifications })
-        )[0]
-        if (updated !== undefined) {
-          this.result.update(updated)
-        } else {
-          const updated: NotificationContext = {
-            ...toUpdate,
-            lastUpdate: event.lastUpdate ?? toUpdate.lastUpdate,
-            lastView: event.lastView ?? toUpdate.lastView,
-            notifications
-          }
-          this.result.update(updated)
-        }
-      } else {
-        const updated: NotificationContext = {
-          ...toUpdate,
-          lastUpdate: event.lastUpdate ?? toUpdate.lastUpdate,
-          lastView: event.lastView ?? toUpdate.lastView,
-          notifications
-        }
+    if (
+      this.params.notifications &&
+      newNotifications.length < currentNotifications.length &&
+      newNotifications.length < this.params.notifications.limit &&
+      this.params.notifications.order !== SortingOrder.Descending
+    ) {
+      const updated: NotificationContext = (
+        await this.find({ id: event.context, limit: 1, notifications: this.params.notifications })
+      )[0]
+      if (updated !== undefined) {
         this.result.update(updated)
+      } else {
+        this.result.delete(contextToUpdate.id)
       }
-      if (event.lastUpdate != null) {
-        this.result.sort((a, b) =>
-          this.params.order === SortingOrder.Descending
-            ? b.lastUpdate.getTime() - a.lastUpdate.getTime()
-            : a.lastUpdate.getTime() - b.lastUpdate.getTime()
-        )
+    } else {
+      const updated: NotificationContext = {
+        ...contextToUpdate,
+        lastUpdate: event.lastUpdate ?? contextToUpdate.lastUpdate,
+        lastView: event.lastView ?? contextToUpdate.lastView,
+        notifications: newNotifications
       }
-      void this.notify()
+      this.result.update(updated)
     }
+    if (event.lastUpdate != null) {
+      this.result.sort((a, b) =>
+        this.params.order === SortingOrder.Descending
+          ? b.lastUpdate.getTime() - a.lastUpdate.getTime()
+          : a.lastUpdate.getTime() - b.lastUpdate.getTime()
+      )
+    }
+    void this.notify()
   }
 
   async onCardRemoved(event: CardRemovedEvent): Promise<void> {
@@ -648,15 +714,6 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
       }
     }
 
-    return true
-  }
-
-  private matchNotification(notification: Notification): boolean {
-    if (this.params.notifications === undefined) return false
-    if (this.params.notifications.type !== undefined && this.params.notifications.type !== notification.type)
-      return false
-    if (this.params.notifications.read !== undefined && this.params.notifications.read !== notification.read)
-      return false
     return true
   }
 

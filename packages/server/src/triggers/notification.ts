@@ -22,7 +22,7 @@ import {
   type RemovedCollaboratorsEvent,
   type RequestEvent
 } from '@hcengineering/communication-sdk-types'
-import { NewMessageLabelID, SubscriptionLabelID } from '@hcengineering/communication-types'
+import { NewMessageLabelID, NotificationType, SubscriptionLabelID } from '@hcengineering/communication-types'
 
 import type { TriggerCtx, TriggerFn, Triggers } from '../types'
 
@@ -53,8 +53,10 @@ async function onAddedCollaborators(ctx: TriggerCtx, event: AddedCollaboratorsEv
         type: NotificationRequestEventType.UpdateNotificationContext,
         context: context.id,
         account: collaborator,
-        lastUpdate: event.date,
-        lastView: event.date
+        updates: {
+          lastUpdate: event.date,
+          lastView: event.date
+        }
       })
     }
   }
@@ -79,7 +81,9 @@ async function onRemovedCollaborators(ctx: TriggerCtx, event: RemovedCollaborato
         type: NotificationRequestEventType.UpdateNotificationContext,
         context: context.id,
         account: collaborator,
-        lastView: context.lastUpdate
+        updates: {
+          lastView: context.lastUpdate
+        }
       })
     }
   }
@@ -95,19 +99,33 @@ async function onNotificationContextUpdated(
 
   const context = (await ctx.db.findNotificationContexts({ id: contextId }))[0]
   if (context == null) return []
+  const result: RequestEvent[] = []
 
   if (context.lastView >= context.lastUpdate) {
-    return [
-      {
-        type: LabelRequestEventType.RemoveLabel,
-        label: NewMessageLabelID,
-        card: context.card,
-        account: context.account
-      }
-    ]
+    result.push({
+      type: LabelRequestEventType.RemoveLabel,
+      label: NewMessageLabelID,
+      card: context.card,
+      account: context.account
+    })
   }
 
-  return []
+  result.push({
+    type: NotificationRequestEventType.UpdateNotification,
+    query: {
+      account: context.account,
+      context: context.id,
+      type: NotificationType.Message,
+      created: {
+        lessOrEqual: context.lastView
+      }
+    },
+    updates: {
+      read: true
+    }
+  })
+
+  return result
 }
 
 const triggers: Triggers = [

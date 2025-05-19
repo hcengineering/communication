@@ -72,7 +72,9 @@ async function onMessagesRemoved(ctx: TriggerCtx, event: MessagesRemovedEvent): 
       card: thread.card,
       message: thread.message,
       thread: thread.thread,
-      replies: 'decrement'
+      updates: {
+        replies: 'decrement'
+      }
     }
 
     return [patchEvent, threadEvent]
@@ -207,8 +209,10 @@ async function addThreadReply(ctx: TriggerCtx, event: MessageCreatedEvent): Prom
       card: thread.card,
       message: thread.message,
       thread: thread.thread,
-      lastReply: event.message.created,
-      replies: 'increment'
+      updates: {
+        lastReply: event.message.created,
+        replies: 'increment'
+      }
     }
   ]
 }

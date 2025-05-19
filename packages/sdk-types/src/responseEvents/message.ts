@@ -89,6 +89,7 @@ export interface ReactionRemovedEvent extends BaseResponseEvent {
   type: MessageResponseEventType.ReactionRemoved
   card: CardID
   message: MessageID
+  messageCreated: Date
   reaction: string
   creator: SocialID
 }
@@ -128,6 +129,8 @@ export interface ThreadUpdatedEvent extends BaseResponseEvent {
   card: CardID
   message: MessageID
   thread: CardID
-  replies: 'increment' | 'decrement'
-  lastReply?: Date
+  updates: {
+    replies: 'increment' | 'decrement'
+    lastReply?: Date
+  }
 }

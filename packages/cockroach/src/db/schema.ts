@@ -126,7 +126,9 @@ export interface ThreadDb {
 export interface NotificationDb {
   id: NotificationID
   type: NotificationType
+  read: boolean
   message_id: MessageID | null
+  message_created: Date
   context_id: ContextID
   created: Date
   content: NotificationContent

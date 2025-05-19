@@ -32,7 +32,8 @@ import {
   type NotificationContext,
   NotificationType,
   type Reaction,
-  type ReactionNotificationContent
+  type ReactionNotificationContent,
+  type SocialID
 } from '@hcengineering/communication-types'
 
 import type { TriggerCtx } from '../types'
@@ -49,11 +50,58 @@ export async function notify(ctx: TriggerCtx, event: ResponseEvent): Promise<Req
     case MessageResponseEventType.ReactionCreated: {
       return await notifyReaction(ctx, event.card, event.reaction.message, event.messageCreated, event.reaction)
     }
+    case MessageResponseEventType.ReactionRemoved: {
+      return await removeReactionNotification(
+        ctx,
+        event.card,
+        event.message,
+        event.messageCreated,
+        event.reaction,
+        event.creator
+      )
+    }
   }
 
   return []
 }
 
+async function removeReactionNotification(
+  ctx: TriggerCtx,
+  card: CardID,
+  message: MessageID,
+  messageCreated: Date,
+  reaction: string,
+  creator: SocialID
+): Promise<RequestEvent[]> {
+  const result: RequestEvent[] = []
+  const msg = await findMessage(ctx, card, message, messageCreated)
+  if (msg === undefined) return result
+
+  const messageAccount = await findAccount(ctx, msg.creator)
+  if (messageAccount == null) return result
+
+  const notifications = await ctx.db.findNotifications({
+    type: NotificationType.Reaction,
+    messageId: message,
+    account: messageAccount
+  })
+
+  const toDelete = notifications.find((n) => {
+    const content = n.content as ReactionNotificationContent
+    return content.emoji === reaction && content.creator === creator
+  })
+
+  if (toDelete === undefined) return result
+
+  result.push({
+    type: NotificationRequestEventType.RemoveNotifications,
+    context: toDelete.context,
+    account: messageAccount,
+    ids: [toDelete.id]
+  })
+
+  return result
+}
 async function notifyReaction(
   ctx: TriggerCtx,
   card: CardID,
@@ -76,7 +124,7 @@ async function notifyReaction(
   let contextId: ContextID | undefined = context?.id
 
   if (context == null) {
-    contextId = await createContext(ctx, messageAccount, card, reaction.created, reaction.created)
+    contextId = await createContext(ctx, messageAccount, card, new Date(), new Date())
   }
 
   if (contextId == null) return result
@@ -91,6 +139,7 @@ async function notifyReaction(
     account: messageAccount,
     context: contextId,
     message: message,
+    messageCreated,
     created: reaction.created,
     content
   })
@@ -160,7 +209,8 @@ async function processCollaborator(
     account: collaborator,
     context: contextId,
     message: message.id,
-    created: message.created
+    created: message.created,
+    messageCreated: message.created
   })
   return result
 }
@@ -201,8 +251,10 @@ async function createOrUpdateContext(
         type: NotificationRequestEventType.UpdateNotificationContext,
         context: context.id,
         account: collaborator,
-        lastView,
-        lastUpdate
+        updates: {
+          lastView,
+          lastUpdate
+        }
       }
     ]
   }
