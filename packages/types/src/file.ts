@@ -44,6 +44,7 @@ export interface FileBlob {
   size: number
   creator: SocialID
   created: Date
+  meta: Record<string, any>
 }
 
 export interface FileReaction {

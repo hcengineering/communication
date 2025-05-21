@@ -37,7 +37,9 @@ export interface Message {
 
 export enum MessageType {
   Message = 'message',
-  Activity = 'activity'
+  Activity = 'activity',
+  Thread = 'thread',
+  ThreadRoot = 'threadRoot'
 }
 
 export type MessageData = ActivityMessageData | Record<string, any>
@@ -147,6 +149,7 @@ export interface UpdateThreadPatchData {
 }
 
 export interface UpdatePatchData {
+  type?: MessageType
   content?: RichText
   data?: MessageData
 }

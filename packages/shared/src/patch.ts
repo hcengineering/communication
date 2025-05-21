@@ -39,6 +39,7 @@ export function applyPatch(message: Message, patch: Patch, allowedPatchTypes: Pa
     case PatchType.update:
       return {
         ...message,
+        type: patch.data.type ?? message.type,
         edited: patch.created,
         content: patch.data.content ?? message.content,
         data: patch.data.data ?? message.data

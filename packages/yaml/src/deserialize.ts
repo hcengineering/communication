@@ -40,7 +40,8 @@ export function deserializeMessage(message: Message): FileMessage {
       filename: file.filename,
       size: file.size,
       created: file.created,
-      creator: file.creator
+      creator: file.creator,
+      meta: file.meta ?? {}
     })),
     reactions: message.reactions.map((reaction) => ({
       reaction: reaction.reaction,

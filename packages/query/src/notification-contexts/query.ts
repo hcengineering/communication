@@ -628,16 +628,29 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
 
   async onCardRemoved(event: CardRemovedEvent): Promise<void> {
     if (this.result instanceof Promise) this.result = await this.result
-    let deleted = false
+    let updated = false
     const result = this.result.getResult()
     for (const context of result) {
       if (context.card == event.card) {
         this.result.delete(context.id)
-        deleted = true
+        updated = true
       }
     }
 
-    if (deleted) {
+    if (this.params.notifications?.message === true) {
+      const result = updated ? this.result.getResult() : []
+      for (const context of result) {
+        const notifications = context.notifications ?? []
+        for (const notification of notifications) {
+          if (notification.message != null && notification.message.thread?.thread === event.card) {
+            updated = true
+            notification.message.thread = undefined
+          }
+        }
+      }
+    }
+
+    if (updated) {
       if (this.params.limit && this.result.length < this.params.limit && result.length >= this.params.limit) {
         const contexts = await this.find(this.params)
         this.result = new QueryResult(contexts, (x) => x.id)

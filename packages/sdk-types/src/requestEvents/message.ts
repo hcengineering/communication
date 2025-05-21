@@ -89,6 +89,7 @@ export interface CreatePatchEvent extends BaseRequestEvent {
   messageCreated: Date
   data: PatchData
   creator: SocialID
+  created?: Date
 }
 
 export interface CreateReactionEvent extends BaseRequestEvent {

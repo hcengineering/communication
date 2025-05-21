@@ -246,14 +246,24 @@ async function onThreadCreated(ctx: TriggerCtx, event: ThreadCreatedEvent): Prom
     }
   }
 
-  if (message === undefined) {
+  if (message === undefined || message.type !== MessageType.Message) {
     return []
   }
+
+  result.push({
+    type: MessageRequestEventType.CreatePatch,
+    patchType: PatchType.update,
+    card: event.thread.card,
+    message: event.thread.message,
+    messageCreated: event.thread.messageCreated,
+    data: { type: MessageType.Thread },
+    creator: message.creator
+  })
 
   const messageId = generateMessageId()
   result.push({
     type: MessageRequestEventType.CreateMessage,
-    messageType: message.type,
+    messageType: MessageType.ThreadRoot,
     card: event.thread.thread,
     cardType: event.thread.threadType,
     content: message.content,

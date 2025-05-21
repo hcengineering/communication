@@ -302,7 +302,8 @@ const CreatePatchEventSchema = BaseRequestEventSchema.extend({
   message: MessageID,
   messageCreated: DateSchema,
   data: PatchData,
-  creator: SocialID
+  creator: SocialID,
+  created: DateSchema.optional()
 }).strict()
 
 const CreateReactionEventSchema = BaseRequestEventSchema.extend({

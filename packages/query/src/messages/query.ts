@@ -193,6 +193,18 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
       void this.notify()
       return
     }
+
+    if (this.params.replies === true) {
+      const result = this.result.getResult()
+      for (const message of result) {
+        if (message.thread != null && message.thread.thread === event.card) {
+          this.result.update({
+            ...message,
+            thread: undefined
+          })
+        }
+      }
+    }
   }
 
   async onRequest(event: RequestEvent, promise: Promise<EventResult>): Promise<void> {
@@ -791,6 +803,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
 
     if (exists !== undefined) return
     if (!this.match(message)) return
+    if (message.content.trim() === '') return
 
     if (this.result.isTail()) {
       const eventId = event._id

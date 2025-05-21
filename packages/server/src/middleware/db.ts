@@ -269,7 +269,7 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async createPatch(event: CreatePatchEvent): Promise<Result> {
-    const created = new Date()
+    const created = event.created ?? new Date()
     await this.db.createPatch(
       event.card,
       event.message,
