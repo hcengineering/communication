@@ -336,13 +336,14 @@ class CockroachClient implements SqlClient {
 
   async execute<T = SqlRow>(query: string, params?: SqlParams): Promise<T[]> {
     const sql = params !== undefined && params.length > 0 ? injectVars(query, params) : query
+    // console.log(sql)
     return await this.sql.unsafe<T[]>(sql)
   }
 
   cursor<T = SqlRow>(query: string, params?: SqlParams, size?: number): AsyncIterable<NonNullable<T[][number]>[]> {
-    // const sql = params !== undefined && params.length > 0 ? injectVars(query, params) : query
+    const sql = params !== undefined && params.length > 0 ? injectVars(query, params) : query
 
-    return this.sql.unsafe<T[]>(query, params).cursor(size)
+    return this.sql.unsafe<T[]>(sql).cursor(size)
   }
 
   close(): void {

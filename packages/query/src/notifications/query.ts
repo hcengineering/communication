@@ -51,7 +51,13 @@ import { QueryResult } from '../result'
 import { WindowImpl } from '../window'
 import { addFile, createThread, loadMessageFromGroup, matchNotification, removeFile, updateThread } from '../utils'
 
-const allowedPatchTypes = [PatchType.update, PatchType.addFile, PatchType.removeFile, PatchType.updateThread]
+const allowedPatchTypes = [
+  PatchType.update,
+  PatchType.remove,
+  PatchType.addFile,
+  PatchType.removeFile,
+  PatchType.updateThread
+]
 
 export class NotificationQuery implements PagedQuery<Notification, FindNotificationsParams> {
   private result: QueryResult<Notification> | Promise<QueryResult<Notification>>

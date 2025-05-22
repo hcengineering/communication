@@ -38,7 +38,6 @@ import {
   type MessageCreatedEvent,
   MessageRequestEventType,
   MessageResponseEventType,
-  type MessagesRemovedEvent,
   type PagedQueryCallback,
   type PatchCreatedEvent,
   type ReactionCreatedEvent,
@@ -150,10 +149,6 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
         await this.onMessageCreatedEvent(event)
         break
       }
-      case MessageResponseEventType.MessagesRemoved: {
-        await this.onMessagesRemovedEvent(event)
-        break
-      }
       case MessageResponseEventType.PatchCreated: {
         await this.onPatchCreatedEvent(event)
         break
@@ -227,6 +222,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
     const tmpMessage: Message = {
       id: tmpId,
       type: MessageType.Message,
+      removed: false,
       card: event.card,
       content: event.content,
       creator: event.creator,
@@ -863,25 +859,6 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
     }
   }
 
-  private async onMessagesRemovedEvent(event: MessagesRemovedEvent): Promise<void> {
-    if (this.params.card !== event.card) return
-    if (this.result instanceof Promise) this.result = await this.result
-
-    let isDeleted = false
-
-    for (const message of event.messages) {
-      const deleted = this.result.delete(message)
-      isDeleted = isDeleted || deleted !== undefined
-    }
-
-    if (isDeleted) {
-      void this.notify()
-    }
-
-    this.next.buffer = this.next.buffer.filter((it) => !event.messages.includes(it.id))
-    this.prev.buffer = this.prev.buffer.filter((it) => !event.messages.includes(it.id))
-  }
-
   private async onReactionCreatedEvent(event: ReactionCreatedEvent): Promise<void> {
     if (this.params.reactions !== true) return
     if (this.result instanceof Promise) this.result = await this.result
@@ -976,7 +953,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
   }
 
   private allowedPatches(): PatchType[] {
-    const result = [PatchType.update]
+    const result = [PatchType.update, PatchType.remove]
 
     if (this.params.reactions === true) {
       result.push(PatchType.addReaction, PatchType.removeReaction)

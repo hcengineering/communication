@@ -554,7 +554,6 @@ export class MessagesDb extends BaseDb {
         ON m.workspace_id = p.workspace_id
         AND m.card_id = p.card_id
         AND m.id = p.message_id
-      WHERE p.type = 'update'
       GROUP BY p.workspace_id, p.card_id, p.message_id
     )
   `

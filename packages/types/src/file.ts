@@ -28,6 +28,7 @@ export interface FileMessage {
   type: MessageType
   content: RichText
   creator: SocialID
+  removed: boolean
   data?: MessageData
   externalId?: string
   created: Date
