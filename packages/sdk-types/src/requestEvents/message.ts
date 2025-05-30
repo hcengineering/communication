@@ -68,15 +68,21 @@ export type MessageRequestEvent =
 
 export interface CreateMessageEvent extends BaseRequestEvent {
   type: MessageRequestEventType.CreateMessage
+
+  id?: MessageID
+  creator: SocialID
+  created?: Date
+
   messageType: MessageType
+
   card: CardID
   cardType: CardType
+
   content: RichText
-  creator: SocialID
+
   data?: MessageData
-  externalId?: string
-  created?: Date
-  id?: MessageID
+
+  //externalId?: string
 }
 
 export interface CreatePatchEvent extends BaseRequestEvent {

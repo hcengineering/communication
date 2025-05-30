@@ -29,31 +29,38 @@ import type { BaseRequestEvent } from './common'
 export enum MessageRequestEventType {
   CreateMessage = 'createMessage',
   UpdateMessage = 'updateMessage',
-  MigrateToCard = 'migrateToCard',
   RemoveMessage = 'removeMessage',
+
+  AttachThread = 'attachThread',
 
   SetReaction = 'setReaction',
   RemoveReaction = 'removeReaction',
 
-  AttachFile = 'attachFile',
-  RemoveFile = 'removeFile',
+  AttachBlob = 'attachBlob',
+  RemoveBlob = 'removeBlob',
 
   CreateLinkPreview = 'createLinkPreview',
   RemoveLinkPreview = 'removeLinkPreview'
 }
 
-type CreateFlags = { createLinkPreviews?: boolean; ignoreDuplicateIds?: boolean }
-type UpdateFlags = { updateLinkPreviews?: boolean; markAsUpdated: boolean }
-type RemoveFlags = {}
+type CreateOptions = { createLinkPreviews?: boolean; ignoreDuplicateIds?: boolean }
+type UpdateOptions = { updateLinkPreviews?: boolean; markAsUpdated: boolean }
+type RemoveOptions = {}
+
+type Markdown = string
+
+type Extra = Record<string, any>
 
 /*
-personId: 
+socialId: 
     general user:  must be null or match caller
     system account: must be set
 
 date: 
     general user: must be null
     system account: if not set - use current time
+
+cardType: may become optional in the future
 */
 
 // Message Operations
@@ -63,16 +70,16 @@ export interface CreateMessageEvent extends BaseRequestEvent {
   messageId: MessageID
   messageType: MessageType
 
-  personId?: SocialID
+  socialId?: SocialID
   date?: Date
 
   cardId: CardID
   cardType: CardType
 
-  content: RichText
-  extra?: any
+  content: Markdown
+  extra?: Extra
 
-  flags?: CreateFlags
+  options?: CreateOptions
 }
 
 export interface UpdateMessageEvent extends BaseRequestEvent {
@@ -81,13 +88,13 @@ export interface UpdateMessageEvent extends BaseRequestEvent {
   cardId: CardID
   messageId: MessageID
 
-  personId: SocialID
+  socialId?: SocialID
   date?: Date
 
-  content?: RichText
-  extra?: any
+  content?: Markdown
+  extra?: Extra
 
-  flags?: UpdateFlags
+  options?: UpdateOptions
 }
 
 export interface RemoveMessageEvent extends BaseRequestEvent {
@@ -96,19 +103,26 @@ export interface RemoveMessageEvent extends BaseRequestEvent {
   cardId: CardID
   messageId: MessageID
 
-  flags?: RemoveFlags
+  socialId?: SocialID
+  date?: Date
+
+  options?: RemoveOptions
 }
 
-export interface MigrateToCardEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.MigrateToCard
+export interface AttachThread extends BaseRequestEvent {
+  type: MessageRequestEventType.AttachThread
 
   cardId: CardID
   messageId: MessageID
+
+  socialId?: SocialID
+  date?: Date
 
   threadCardId: CardID
   threadcardType: CardType
 }
 
+// idempotent
 // to be further defined
 export interface SetReactionEvent extends BaseRequestEvent {
   type: MessageRequestEventType.SetReaction
@@ -116,7 +130,7 @@ export interface SetReactionEvent extends BaseRequestEvent {
   cardId: CardID
   messageId: MessageID
 
-  personId?: SocialID
+  socialId?: SocialID
   date?: Date
 
   reaction: string
@@ -129,7 +143,7 @@ export interface RemoveReactionEvent extends BaseRequestEvent {
   cardId: CardID
   messageId: MessageID
 
-  personId: SocialID
+  socialId?: SocialID
   date?: Date
 
   reaction: string
@@ -138,30 +152,31 @@ export interface RemoveReactionEvent extends BaseRequestEvent {
 export interface Attachment {
   blobId: BlobID
   contentType: string
-  name: string
-  length: number // what for?
-  extra?: any
+  fileName: string
+  length: number
+  extra?: Extra
 }
 
-export interface AttachFileEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.AttachFile
+// idempotent, ignore duplicate blobs
+export interface AttachBlobEvent extends BaseRequestEvent {
+  type: MessageRequestEventType.AttachBlob
 
   cardId: CardID
   messageId: MessageID
 
-  personId?: SocialID
+  socialId?: SocialID
   date?: Date
 
   attachment: Attachment
 }
 
-export interface DetachFileEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.RemoveFile
+export interface DetachBlobEvent extends BaseRequestEvent {
+  type: MessageRequestEventType.RemoveBlob
 
   cardId: CardID
   messageId: MessageID
 
-  personId?: SocialID
+  socialId?: SocialID
   date?: Date
 
   blobId: BlobID
@@ -169,26 +184,34 @@ export interface DetachFileEvent extends BaseRequestEvent {
 
 export interface LinkPreviewImage {
   url: string
-  extra?: any
+
+  width?: number
+  height?: number
 }
 
 interface LinkPreview {
   url: string
-  host: string // ??
+  host?: string // url part, may be removed in the future
+
+  siteName?: string
+
   title?: string
   description?: string
-  icon?: string
-  hostname?: string //?
-  image?: LinkPreviewImage
+
+  // favicon url (fixed size)
+  favicon?: string
+
+  previewImage?: LinkPreviewImage
 }
 
 export interface CreateLinkPreviewEvent extends BaseRequestEvent {
+  previewId?: string
   type: MessageRequestEventType.CreateLinkPreview
 
   cardId: CardID
   messageId: MessageID
 
-  personId?: SocialID
+  socialId?: SocialID
   date?: Date
 
   preview: LinkPreview
@@ -206,9 +229,12 @@ export interface RemoveLinkPreviewEvent extends BaseRequestEvent {
   previewId: LinkPreviewID
 }
 
-export type MessageEventResult = CreateMessageResult
-
 export interface CreateMessageResult {
-  id: MessageID
+  messageId: MessageID
+  created: Date
+}
+
+export interface CreateLinkResult {
+  previewId: MessageID
   created: Date
 }
