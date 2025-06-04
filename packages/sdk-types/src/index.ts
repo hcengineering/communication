@@ -16,5 +16,5 @@
 export type * from './client'
 export type * from './db'
 export type * from './query'
-export type * from './event'
+export * from './event'
 export type * from './serverApi'
