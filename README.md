@@ -29,6 +29,6 @@ Install dependencies:
 ### Lint & format
 
 ```bash
-  rush run lint
+  rush lint
   rush run format
 ```
