@@ -14,12 +14,10 @@
 //
 
 import type {
-  FindLabelsParams,
   FindMessagesGroupsParams,
   FindMessagesParams,
   FindNotificationContextParams,
   FindNotificationsParams,
-  Label,
   Message,
   MessagesGroup,
   Notification,
@@ -29,19 +27,17 @@ import type {
 import type { EventResult, RequestEvent, ResponseEvent } from './event'
 
 export interface FindClient {
-  onEvent(event: ResponseEvent): void
+  onEvent: (event: ResponseEvent) => void
 
-  onRequest(event: RequestEvent, promise: Promise<EventResult>): void
+  findMessages: (params: FindMessagesParams, queryId?: number) => Promise<Message[]>
 
-  findMessages(params: FindMessagesParams, queryId?: number): Promise<Message[]>
+  findMessagesGroups: (params: FindMessagesGroupsParams) => Promise<MessagesGroup[]>
 
-  findMessagesGroups(params: FindMessagesGroupsParams): Promise<MessagesGroup[]>
+  findNotificationContexts: (params: FindNotificationContextParams, queryId?: number) => Promise<NotificationContext[]>
 
-  findNotificationContexts(params: FindNotificationContextParams, queryId?: number): Promise<NotificationContext[]>
+  findNotifications: (params: FindNotificationsParams, queryId?: number) => Promise<Notification[]>
 
-  findNotifications(params: FindNotificationsParams, queryId?: number): Promise<Notification[]>
+  onRequest: (event: RequestEvent, promise: Promise<EventResult>) => void
 
-  findLabels(params: FindLabelsParams, queryId?: number): Promise<Label[]>
-
-  unsubscribeQuery(id: number): Promise<void>
+  unsubscribeQuery: (id: number) => Promise<void>
 }

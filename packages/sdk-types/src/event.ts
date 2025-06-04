@@ -41,6 +41,7 @@ export type RequestEventType =
   | LabelRequestEventType
   | CardRequestEventType
 export type RequestEvent = MessageRequestEvent | NotificationRequestEvent | LabelRequestEvent | CardRequestEvent
+// eslint-disable-next-line  @typescript-eslint/ban-types
 export type EventResult = MessageEventResult | NotificationEventResult | {}
 
 export type ResponseEventType =

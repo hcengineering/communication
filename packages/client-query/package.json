@@ -14,9 +14,9 @@
     "_phase:build": "compile transpile src",
     "_phase:validate": "compile validate",
 
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint --fix src/**/*.ts",
-    "format": "prettier --write src/**/*.ts && eslint --fix src/**/*.ts",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint --fix \"src/**/*.ts\"",
+    "format": "prettier --write src/**/*.ts && eslint --fix \"src/**/*.ts\"",
     "clean": "rm -rf lib && rm -rf types rm -rf node_modules"
   },
   "devDependencies": {

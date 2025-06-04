@@ -15,7 +15,7 @@
 
 export type * from './core'
 export type * from './file'
-export type * from './message'
-export type * from './notification'
+export * from './message'
+export * from './notification'
 export type * from './query'
 export * from './label'
