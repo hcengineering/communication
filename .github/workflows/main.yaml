@@ -49,7 +49,7 @@ jobs:
       - name: Checking for mis-matching dependencies...
         run: node common/scripts/install-run-rush.js check
       - name: Rush Install
-        run: node common/scripts/install-run-rush.js install
+        run: node common/scripts/install-run-rush.js update
       - name: Rush rebuild
         run: node common/scripts/install-run-rush.js build
       - name: Rush validate
