@@ -30,5 +30,5 @@ Install dependencies:
 
 ```bash
   rush lint
-  rush run format
+  rush format
 ```
