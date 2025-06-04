@@ -77,15 +77,18 @@ importers:
         specifier: ^0.1.0
         version: 0.1.195(typescript@5.8.3)
       postgres:
-        specifier: ^3.4.4
+        specifier: ^3.4.7
         version: 3.4.7
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^8.3.2
+        version: 8.3.2
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: ^0.6.490
         version: 0.6.490(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)
+      '@types/uuid':
+        specifier: ^8.3.1
+        version: 8.3.4
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.11.0
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
@@ -138,15 +141,18 @@ importers:
         specifier: ^0.1.0
         version: 0.1.195(typescript@5.8.3)
       fast-equals:
-        specifier: ^5.0.1
+        specifier: ^5.2.2
         version: 5.2.2
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^8.3.2
+        version: 8.3.2
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: ^0.6.490
         version: 0.6.490(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)
+      '@types/uuid':
+        specifier: ^8.3.1
+        version: 8.3.4
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.11.0
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
@@ -317,9 +323,6 @@ importers:
       '@hcengineering/core':
         specifier: ^0.7.88
         version: 0.7.88
-      '@hcengineering/platform':
-        specifier: ^0.7.88
-        version: 0.7.88
       '@hcengineering/server-token':
         specifier: ^0.7.88
         version: 0.7.88
@@ -330,7 +333,7 @@ importers:
         specifier: ^0.7.88
         version: 0.7.88
       zod:
-        specifier: ^3.24.2
+        specifier: ^3.22.4
         version: 3.25.51
     devDependencies:
       '@hcengineering/platform-rig':
@@ -428,9 +431,6 @@ importers:
         specifier: ^0.7.88
         version: 0.7.88
       '@hcengineering/core':
-        specifier: ^0.7.88
-        version: 0.7.88
-      '@hcengineering/tags':
         specifier: ^0.7.88
         version: 0.7.88
     devDependencies:
@@ -1144,6 +1144,9 @@ packages:
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
+  '@types/uuid@8.3.4':
+    resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -2838,6 +2841,10 @@ packages:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
 
+  uuid@8.3.2:
+    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
+
   v8-to-istanbul@9.3.0:
     resolution: {integrity: sha512-kiGUalWN+rgBJ/1OHZsBtU4rXZOfj/7rKQxULKlIzwzQSvMJUUNgPwJEEh7gU6xEVxC0ahoOBvN2YI8GH6FNgA==}
     engines: {node: '>=10.12.0'}
@@ -3644,6 +3651,8 @@ snapshots:
 
   '@types/trusted-types@2.0.7':
     optional: true
+
+  '@types/uuid@8.3.4': {}
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -5774,6 +5783,8 @@ snapshots:
   url-polyfill@1.1.13: {}
 
   uuid@11.1.0: {}
+
+  uuid@8.3.2: {}
 
   v8-to-istanbul@9.3.0:
     dependencies:
