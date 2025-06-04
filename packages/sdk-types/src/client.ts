@@ -39,7 +39,7 @@ export interface FindClient {
 
   findNotifications: (params: FindNotificationsParams, queryId?: number) => Promise<Notification[]>
 
-  findLabel: (params: FindLabelsParams, queryId?: number) => Promise<Label[]>
+  findLabels: (params: FindLabelsParams, queryId?: number) => Promise<Label[]>
 
   onRequest: (event: RequestEvent, promise: Promise<EventResult>) => void
 
