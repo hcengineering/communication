@@ -20,7 +20,7 @@ import type {
   NotificationRequestEvent,
   NotificationRequestEventType
 } from './requestEvents/notification'
-import { type LabelResponseEvent, LabelResponseEventType } from './responseEvents/label'
+import type { LabelResponseEvent, LabelResponseEventType } from './responseEvents/label'
 import type { MessageResponseEvent, MessageResponseEventType } from './responseEvents/message'
 import type { NotificationResponseEvent, NotificationResponseEventType } from './responseEvents/notification'
 import type { CardRequestEvent, CardRequestEventType } from './requestEvents/card'

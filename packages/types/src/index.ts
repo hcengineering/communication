@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-export * from './core'
-export * from './file'
-export * from './message'
-export * from './notification'
-export * from './query'
+export type * from './core'
+export type * from './file'
+export type * from './message'
+export type * from './notification'
+export type * from './query'
 export * from './label'

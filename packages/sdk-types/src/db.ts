@@ -171,16 +171,16 @@ export interface DbAdapter {
   close(): void
 }
 
-export type RemoveFileQuery = {
+export interface RemoveFileQuery {
   message: MessageID
   blobId: BlobID
 }
 export type RemoveThreadQuery = Partial<Pick<Thread, 'card' | 'thread' | 'message'>>
-export type RemoveCollaboratorsQuery = {
+export interface RemoveCollaboratorsQuery {
   accounts?: AccountID[]
 }
 export type RemoveNotificationContextQuery = Partial<Pick<NotificationContext, 'id' | 'account' | 'card'>>
-export type RemoveNotificationsQuery = {
+export interface RemoveNotificationsQuery {
   context: ContextID
   account: AccountID
   ids: NotificationID[]
@@ -188,7 +188,7 @@ export type RemoveNotificationsQuery = {
 export type RemoveLabelQuery = Partial<Pick<Label, 'card' | 'label' | 'account'>>
 
 export type NotificationUpdates = Partial<Pick<Notification, 'read'>>
-export type UpdateNotificationQuery = {
+export interface UpdateNotificationQuery  {
   context: ContextID
   account: AccountID
   type?: NotificationType
@@ -198,7 +198,7 @@ export type UpdateNotificationQuery = {
 
 export type NotificationContextUpdates = Partial<Pick<NotificationContext, 'lastView' | 'lastUpdate' | 'lastNotify'>>
 
-export type ThreadUpdates = {
+export interface ThreadUpdates {
   threadType?: CardType
   lastReply?: Date
   replies?: 'increment' | 'decrement'
