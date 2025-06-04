@@ -14,10 +14,12 @@
 //
 
 import type {
+  FindLabelsParams,
   FindMessagesGroupsParams,
   FindMessagesParams,
   FindNotificationContextParams,
   FindNotificationsParams,
+  Label,
   Message,
   MessagesGroup,
   Notification,
@@ -36,6 +38,8 @@ export interface FindClient {
   findNotificationContexts: (params: FindNotificationContextParams, queryId?: number) => Promise<NotificationContext[]>
 
   findNotifications: (params: FindNotificationsParams, queryId?: number) => Promise<Notification[]>
+
+  findLabel: (params: FindLabelsParams, queryId?: number) => Promise<Label[]>
 
   onRequest: (event: RequestEvent, promise: Promise<EventResult>) => void
 
