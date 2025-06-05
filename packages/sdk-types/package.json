@@ -35,8 +35,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@hcengineering/core": "^0.7.88",
-    "@hcengineering/communication-types": "^0.1.0"
+    "@hcengineering/core": "^0.1.0",
+    "@hcengineering/communication-types": "workspace:*"
   },
   "repository": {
     "type": "git",

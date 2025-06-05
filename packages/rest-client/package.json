@@ -36,10 +36,10 @@
     "@types/snappyjs": "^0.7.1"
   },
   "dependencies": {
-    "@hcengineering/communication-types": "^0.1.0",
-    "@hcengineering/communication-sdk-types": "^0.1.0",
-    "@hcengineering/communication-shared": "^0.1.0",
-    "@hcengineering/core": "^0.7.88",
+    "@hcengineering/communication-types": "workspace:*",
+    "@hcengineering/communication-sdk-types": "workspace:*",
+    "@hcengineering/communication-shared": "workspace:*",
+    "@hcengineering/core": "^0.1.0",
     "snappyjs": "^0.7.0"
   },
   "repository": {
