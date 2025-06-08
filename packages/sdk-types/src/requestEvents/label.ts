@@ -17,23 +17,27 @@ import type { CardID, AccountID, LabelID, CardType } from '@hcengineering/commun
 import type { BaseRequestEvent } from './common'
 
 export enum LabelRequestEventType {
+  // Internal
   CreateLabel = 'createLabel',
   RemoveLabel = 'removeLabel'
 }
 
 export type LabelRequestEvent = CreateLabelEvent | RemoveLabelEvent
 
+// Internal
 export interface CreateLabelEvent extends BaseRequestEvent {
   type: LabelRequestEventType.CreateLabel
-  label: LabelID
-  card: CardID
+  labelId: LabelID
+  cardId: CardID
   cardType: CardType
   account: AccountID
+  date: Date
 }
 
 export interface RemoveLabelEvent extends BaseRequestEvent {
   type: LabelRequestEventType.RemoveLabel
-  label: LabelID
-  card: CardID
+  labelId: LabelID
+  cardId: CardID
   account: AccountID
+  date: Date
 }

@@ -60,33 +60,30 @@ export function parseYaml (data: string): ParsedFile {
   const [metadata, messages] = yaml.loadAll(data) as [FileMetadata, FileMessage[]]
 
   return {
-    metadata,
+    ...metadata,
     messages: messages.map((message) => ({
       id: message.id,
       type: message.type,
-      card: metadata.card,
+      cardId: metadata.cardId,
       content: message.content,
       edited: message.edited,
       creator: message.creator,
       created: message.created,
       removed: message.removed,
-      data: message.data,
-      externalId: message.externalId,
-      thread:
-        message.thread != null
-          ? {
-              card: metadata.card,
-              message: message.id,
-              messageCreated: message.created,
-              thread: message.thread.thread,
-              threadType: message.thread.threadType,
-              repliesCount: message.thread.repliesCount,
-              lastReply: message.thread.lastReply
-            }
-          : undefined,
-      files: message.files,
-      reactions: message.reactions,
-      links: message.links ?? []
+      extra: message.extra,
+      thread: message.thread
+        ? {
+            cardId: metadata.cardId,
+            messageId: message.id,
+            threadId: message.thread.threadId,
+            threadType: message.thread.threadType,
+            repliesCount: message.thread.repliesCount,
+            lastReply: message.thread.lastReply
+          }
+        : undefined,
+      blobs: message.blobs ?? [],
+      reactions: message.reactions ?? [],
+      linkPreviews: message.linkPreviews ?? []
     }))
   }
 }

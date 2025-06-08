@@ -13,7 +13,14 @@
 // limitations under the License.
 //
 
-import type { CreateMessageResult, EventResult, RequestEvent } from '@hcengineering/communication-sdk-types'
+import type {
+  CreateMessageOptions,
+  CreateMessageResult,
+  EventResult,
+  RemoveMessageOptions,
+  RequestEvent,
+  UpdateMessageOptions
+} from '@hcengineering/communication-sdk-types'
 import type {
   FindMessagesGroupsParams,
   FindMessagesParams,
@@ -24,14 +31,14 @@ import type {
   NotificationContext,
   Notification,
   MessageID,
-  RichText,
+  Markdown,
   SocialID,
   MessageType,
-  MessageData,
   BlobID,
   CardID,
   CardType,
-  FileData
+  MessageExtra,
+  BlobData
 } from '@hcengineering/communication-types'
 
 export interface RestClient {
@@ -43,34 +50,32 @@ export interface RestClient {
   event: (event: RequestEvent) => Promise<EventResult>
 
   createMessage: (
-    card: CardID,
+    cardId: CardID,
     cardType: CardType,
-    content: RichText,
-    creator: SocialID,
+    content: Markdown,
     type: MessageType,
-    data?: MessageData
+    extra?: MessageExtra,
+    socialId?: SocialID,
+    date?: Date,
+    messageId?: MessageID,
+    options?: CreateMessageOptions
   ) => Promise<CreateMessageResult>
   updateMessage: (
-    card: CardID,
-    message: MessageID,
-    messageCreated: Date,
-    content: RichText,
-    creator: SocialID
+    cardId: CardID,
+    messageId: MessageID,
+    content?: Markdown,
+    extra?: MessageExtra,
+    socialId?: SocialID,
+    date?: Date,
+    options?: UpdateMessageOptions
   ) => Promise<void>
-  removeMessage: (card: CardID, message: MessageID, messageCreated: Date, creator: SocialID) => Promise<void>
+  removeMessage: (
+    cardId: CardID,
+    messageId: MessageID,
+    socialId?: SocialID,
+    options?: RemoveMessageOptions
+  ) => Promise<void>
 
-  createFile: (
-    card: CardID,
-    message: MessageID,
-    messageCreated: Date,
-    data: FileData,
-    creator: SocialID
-  ) => Promise<void>
-  removeFile: (
-    card: CardID,
-    message: MessageID,
-    messageCreated: Date,
-    blobId: BlobID,
-    creator: SocialID
-  ) => Promise<void>
+  attachBlob: (cardId: CardID, messageId: MessageID, data: BlobData, socialId?: SocialID, date?: Date) => Promise<void>
+  detachBlob: (cardId: CardID, messageId: MessageID, blobId: BlobID, socialId?: SocialID, date?: Date) => Promise<void>
 }

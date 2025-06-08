@@ -18,7 +18,7 @@ import {
   type CardID,
   type Message,
   type MessageID,
-  type RichText,
+  type Markdown,
   type SocialID,
   SortingOrder,
   type WorkspaceID
@@ -35,14 +35,13 @@ export async function findMessage (
   filesUrl: string,
   workspace: WorkspaceID,
   card: CardID,
-  id: MessageID,
-  created: Date
+  id: MessageID
 ): Promise<Message | undefined> {
   const message = (await db.findMessages({ card, id, limit: 1, files: true }))[0]
   if (message !== undefined) {
     return message
   }
-  return await findMessageInFiles(db, filesUrl, workspace, card, id, created)
+  return await findMessageInFiles(db, filesUrl, workspace, card, id)
 }
 
 export async function findMessageInFiles (
@@ -50,13 +49,13 @@ export async function findMessageInFiles (
   filesUrl: string,
   workspace: WorkspaceID,
   card: CardID,
-  id: MessageID,
-  created: Date
+  id: MessageID
 ): Promise<Message | undefined> {
   if (filesUrl === '') {
     return undefined
   }
 
+  const created = new Date() //TODO: fix
   const group = (
     await db.findMessagesGroups({
       card,
@@ -79,7 +78,7 @@ export async function findMessageInFiles (
       return undefined
     }
 
-    const patches = (group.patches ?? []).filter((it) => it.message === id)
+    const patches = (group.patches ?? []).filter((it) => it.messageId === id)
 
     return patches.length > 0 ? applyPatches(messageFromFile, patches) : messageFromFile
   } catch (e) {
@@ -97,8 +96,8 @@ export async function getAddCollaboratorsMessageContent (
   ctx: TriggerCtx,
   sender: AccountID | undefined,
   collaborators: AccountID[]
-): Promise<RichText> {
-  const senderName = sender != null ? ((await ctx.db.getNameByAccount(sender)) ?? 'System') : 'System'
+): Promise<Markdown> {
+  const senderName = sender ? ((await ctx.db.getNameByAccount(sender)) ?? 'System') : 'System'
 
   if (sender != null && collaborators.length === 1 && collaborators.includes(sender)) {
     return `${senderName} joined`
@@ -115,9 +114,8 @@ export async function getRemoveCollaboratorsMessageContent (
   ctx: TriggerCtx,
   sender: AccountID | undefined,
   collaborators: AccountID[]
-): Promise<RichText> {
-  const senderName = sender != null ? ((await ctx.db.getNameByAccount(sender)) ?? 'System') : 'System'
-
+): Promise<Markdown> {
+  const senderName = sender ? ((await ctx.db.getNameByAccount(sender)) ?? 'System') : 'System'
   if (sender != null && collaborators.length === 1 && collaborators.includes(sender)) {
     return `${senderName} left`
   }

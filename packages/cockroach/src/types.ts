@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { type ParameterOrJSON, type Row } from 'postgres'
+import {type ParameterOrJSON, type Row } from 'postgres'
 
 export type SqlRow = Row & Iterable<Row>
 export type SqlParams = ParameterOrJSON<any>[]

@@ -55,11 +55,11 @@ export interface CreateNotificationEvent extends BaseRequestEvent {
   notificationType: NotificationType
   read?: boolean
   content?: NotificationContent
-  context: ContextID
-  message: MessageID
+  contextId: ContextID
+  messageId: MessageID
   messageCreated: Date
-  created: Date
   account: AccountID
+  date: Date
 }
 
 export interface UpdateNotificationEvent extends BaseRequestEvent {
@@ -68,57 +68,63 @@ export interface UpdateNotificationEvent extends BaseRequestEvent {
   updates: {
     read: boolean
   }
+  socialId?: SocialID
+  date?: Date
 }
 
 export interface RemoveNotificationsEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.RemoveNotifications
-  context: ContextID
+  contextId: ContextID
   account: AccountID
   ids: NotificationID[]
+  date?: Date
 }
 
 export interface CreateNotificationContextEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.CreateNotificationContext
-  card: CardID
+  cardId: CardID
   account: AccountID
   lastView: Date
   lastUpdate: Date
   lastNotify?: Date
+  date?: Date
 }
 
 export interface RemoveNotificationContextEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.RemoveNotificationContext
-  context: ContextID
+  contextId: ContextID
   account: AccountID
+  date?: Date
 }
 
 export interface UpdateNotificationContextEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.UpdateNotificationContext
-  context: ContextID
+  contextId: ContextID
   account: AccountID
   updates: {
     lastView?: Date
     lastUpdate?: Date
     lastNotify?: Date
   }
+  date?: Date
 }
 
 export interface AddCollaboratorsEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.AddCollaborators
-  card: CardID
+  cardId: CardID
   cardType: CardType
   collaborators: AccountID[]
-  creator: SocialID
-  created?: Date
+  socialId?: SocialID
+  date?: Date
 }
 
 export interface RemoveCollaboratorsEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.RemoveCollaborators
-  card: CardID
+  cardId: CardID
   cardType: CardType
   collaborators: AccountID[]
-  creator: SocialID
-  created?: Date
+  socialId?: SocialID
+  date?: Date
 }
 
 // eslint-disable-next-line  @typescript-eslint/ban-types

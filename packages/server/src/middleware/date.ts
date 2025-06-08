@@ -14,17 +14,19 @@
 //
 
 import {
-  CardRequestEventType,
   type EventResult,
   MessageRequestEventType,
-  NotificationRequestEventType,
   type RequestEvent,
   type SessionData
 } from '@hcengineering/communication-sdk-types'
 import { systemAccountUuid } from '@hcengineering/core'
 
-import type { Middleware, MiddlewareContext } from '../types'
+import type { Enriched, Middleware, MiddlewareContext } from '../types'
 import { BaseMiddleware } from './base'
+import {MonotonicTimestamp} from "../monotonic.ts";
+import type {MessageID} from "@hcengineering/communication-types";
+import {isExternalMessageId} from "../utils.ts";
+import {ApiError} from "../error.ts";
 
 export class DateMiddleware extends BaseMiddleware implements Middleware {
   constructor (
@@ -34,22 +36,24 @@ export class DateMiddleware extends BaseMiddleware implements Middleware {
     super(context, next)
   }
 
-  async event (session: SessionData, event: RequestEvent, derived: boolean): Promise<EventResult> {
-    if (derived) return await this.provideEvent(session, event, derived)
-    switch (event.type) {
-      case MessageRequestEventType.CreateFile:
-      case MessageRequestEventType.CreatePatch:
-      case NotificationRequestEventType.RemoveCollaborators:
-      case NotificationRequestEventType.AddCollaborators:
-      case CardRequestEventType.UpdateCardType:
-      case MessageRequestEventType.CreateMessage: {
-        if (!this.isSystem(session) || event.created == null) {
-          event.created = new Date()
-        }
-        break
+  async event(session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
+    const canSetDate = derived || this.isSystem(session)
+
+    if (event.type === MessageRequestEventType.CreateMessage) {
+      if(event.messageId != null  && !derived && !event.messageId.startsWith('e')) {
+        throw ApiError.badRequest('External message id must start with "e"')
       }
-      default:
-        break
+      if(event.messageId == null && (event.date == null || !canSetDate)) {
+        const timestamp = MonotonicTimestamp.now()
+        event.messageId = timestamp.toString() as MessageID
+        event.date = new Date(timestamp)
+      }else if(event.messageId != null && event.date == null) {
+        event.date = isExternalMessageId(event.messageId) ? new Date() : new Date(Number(event.messageId))
+      }else if(event.messageId == null && event.date != null) {
+        event.messageId =`e${MonotonicTimestamp.now()}` as MessageID
+      }
+    }else if(!canSetDate || event.date == null) {
+      event.date = new Date()
     }
 
     return await this.provideEvent(session, event, derived)
