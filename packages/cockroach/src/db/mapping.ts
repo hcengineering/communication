@@ -121,7 +121,7 @@ export function toMessage (raw: RawMessage): Message {
             messageId: String(raw.id) as MessageID,
             threadId: raw.thread_id,
             threadType: raw.thread_type,
-            repliesCount: raw.replies_count ? Number(raw.replies_count) : 0,
+            repliesCount: raw.replies_count != null ? Number(raw.replies_count) : 0,
             lastReply: raw.last_reply ?? new Date()
           }
         : undefined,
@@ -145,7 +145,7 @@ export function toReaction (raw: ReactionDb): Reaction {
   }
 }
 
-export function toBlob(raw: Omit<FileDb, 'workspace_id'>): AttachedBlob {
+export function toBlob (raw: Omit<FileDb, 'workspace_id'>): AttachedBlob {
   return {
     blobId: raw.blob_id,
     contentType: raw.type,
@@ -183,7 +183,7 @@ export function toMessagesGroup (raw: MessagesGroupDb): MessagesGroup {
   }
 }
 
-export function toPatch(raw: Omit<PatchDb, 'workspace_id' | 'message_created'>): Patch {
+export function toPatch (raw: Omit<PatchDb, 'workspace_id' | 'message_created'>): Patch {
   return {
     type: raw.type,
     messageId: String(raw.message_id) as MessageID,

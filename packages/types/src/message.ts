@@ -22,11 +22,7 @@ export type LinkPreviewID = string & { __linkPreviewId: true }
 
 export enum MessageType {
   Message = 'message',
-  Activity = 'activity',
-
-  // TODO: remove
-  Thread = 'thread',
-  ThreadRoot = 'threadRoot'
+  Activity = 'activity'
 }
 
 export type MessageExtra = Record<string, any>
@@ -51,7 +47,7 @@ export interface Message {
 
 export interface ActivityMessage extends Message {
   type: MessageType.Activity
-  data: ActivityMessageExtra
+  extra: ActivityMessageExtra
 }
 
 export interface ActivityMessageExtra {

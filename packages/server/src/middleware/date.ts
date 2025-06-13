@@ -20,13 +20,11 @@ import {
   type SessionData
 } from '@hcengineering/communication-sdk-types'
 import { systemAccountUuid } from '@hcengineering/core'
+import { generateMessageId, isExternalMessageId, messageIdToDate } from '@hcengineering/communication-cockroach'
 
-import type { Enriched, Middleware, MiddlewareContext } from '../types'
+import type { Middleware, MiddlewareContext, Enriched } from '../types'
 import { BaseMiddleware } from './base'
-import {MonotonicTimestamp} from "../monotonic.ts";
-import type {MessageID} from "@hcengineering/communication-types";
-import {isExternalMessageId} from "../utils.ts";
-import {ApiError} from "../error.ts";
+import { ApiError } from '../error'
 
 export class DateMiddleware extends BaseMiddleware implements Middleware {
   constructor (
@@ -36,23 +34,24 @@ export class DateMiddleware extends BaseMiddleware implements Middleware {
     super(context, next)
   }
 
-  async event(session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
+  async event (session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
     const canSetDate = derived || this.isSystem(session)
 
     if (event.type === MessageRequestEventType.CreateMessage) {
-      if(event.messageId != null  && !derived && !event.messageId.startsWith('e')) {
-        throw ApiError.badRequest('External message id must start with "e"')
+      if (event.messageId != null && !derived && !isExternalMessageId(event.messageId)) {
+        throw ApiError.badRequest('External message id must be 64 bit signed integer. And has 01 first bit set')
       }
-      if(event.messageId == null && (event.date == null || !canSetDate)) {
-        const timestamp = MonotonicTimestamp.now()
-        event.messageId = timestamp.toString() as MessageID
-        event.date = new Date(timestamp)
-      }else if(event.messageId != null && event.date == null) {
-        event.date = isExternalMessageId(event.messageId) ? new Date() : new Date(Number(event.messageId))
-      }else if(event.messageId == null && event.date != null) {
-        event.messageId =`e${MonotonicTimestamp.now()}` as MessageID
+      if (event.messageId == null && (event.date == null || !canSetDate)) {
+        event.messageId = generateMessageId()
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        event.date = messageIdToDate(event.messageId)!
+      } else if (event.messageId != null && event.date == null) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        event.date = isExternalMessageId(event.messageId) ? new Date() : messageIdToDate(event.messageId)!
+      } else if (event.messageId == null && event.date != null) {
+        event.messageId = generateMessageId(true)
       }
-    }else if(!canSetDate || event.date == null) {
+    } else if (!canSetDate || event.date == null) {
       event.date = new Date()
     }
 

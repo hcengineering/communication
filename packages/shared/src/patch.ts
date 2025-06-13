@@ -42,7 +42,6 @@ export function applyPatch (message: Message, patch: Patch, allowedPatchTypes: P
       }
       return {
         ...message,
-        type: patch.data.type ?? message.type,
         edited: patch.created,
         content: patch.data.content ?? message.content,
         extra: patch.data.extra ?? message.extra
@@ -55,7 +54,6 @@ export function applyPatch (message: Message, patch: Patch, allowedPatchTypes: P
         blobs: [],
         linkPreviews: [],
         reactions: [],
-        thread: undefined,
         removed: true
       }
     case PatchType.setReaction:
@@ -77,7 +75,7 @@ export function applyPatch (message: Message, patch: Patch, allowedPatchTypes: P
   return message
 }
 
-function setReaction(message: Message, reaction: Reaction): Message {
+function setReaction (message: Message, reaction: Reaction): Message {
   const isExist = message.reactions.some((it) => it.reaction === reaction.reaction && it.creator === reaction.creator)
   if (isExist) return message
   message.reactions.push(reaction)
@@ -122,7 +120,7 @@ function updateThread (message: Message, data: UpdateThreadPatchData, created: D
   }
 }
 
-function attachBlob(message: Message, data: AttachBlobPatchData, created: Date, creator: SocialID): Message {
+function attachBlob (message: Message, data: AttachBlobPatchData, created: Date, creator: SocialID): Message {
   const isExists = message.blobs.some((it) => it.blobId === data.blobId)
   if (isExists !== undefined) return message
   message.blobs.push({
@@ -133,7 +131,7 @@ function attachBlob(message: Message, data: AttachBlobPatchData, created: Date, 
   return message
 }
 
-function detachBlob(message: Message, blobId: BlobID): Message {
+function detachBlob (message: Message, blobId: BlobID): Message {
   const blobs = message.blobs.filter((it) => it.blobId !== blobId)
   if (blobs.length === message.blobs.length) return message
 

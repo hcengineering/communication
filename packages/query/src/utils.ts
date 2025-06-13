@@ -113,14 +113,14 @@ export async function loadMessageFromGroup (
   return applyPatches(message, patches)
 }
 
-export function attachBlob(message: Message, blob: AttachedBlob): Message {
+export function attachBlob (message: Message, blob: AttachedBlob): Message {
   if (!message.blobs.some((it) => it.blobId === blob.blobId)) {
     message.blobs.push(blob)
   }
   return message
 }
 
-export function detachBlob(message: Message, blobId: BlobID): Message {
+export function detachBlob (message: Message, blobId: BlobID): Message {
   const blobs = message.blobs.filter((it) => it.blobId !== blobId)
   if (blobs.length === message.blobs.length) return message
 
@@ -130,7 +130,7 @@ export function detachBlob(message: Message, blobId: BlobID): Message {
   }
 }
 
-export function addLinkPreview(message: Message, linkPreview: LinkPreview): Message {
+export function addLinkPreview (message: Message, linkPreview: LinkPreview): Message {
   const current = message.linkPreviews.find((it) => it.id === linkPreview.id)
   if (current === undefined) {
     message.linkPreviews.push(linkPreview)
@@ -138,7 +138,7 @@ export function addLinkPreview(message: Message, linkPreview: LinkPreview): Mess
   return message
 }
 
-export function removeLinkPreview(message: Message, id: LinkPreviewID): Message {
+export function removeLinkPreview (message: Message, id: LinkPreviewID): Message {
   const linkPreviews = message.linkPreviews.filter((it) => it.id !== id)
   if (linkPreviews.length === message.linkPreviews.length) return message
   return {
@@ -165,7 +165,7 @@ export function removeReaction (message: Message, emoji: string, creator: Social
   }
 }
 
-export function attachThread(
+export function attachThread (
   message: Message,
   threadId: CardID,
   threadType: CardType,

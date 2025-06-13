@@ -33,11 +33,12 @@ import {
   type MessagesGroup,
   type Notification,
   type NotificationContext,
+  PatchType,
   SortingOrder
 } from '@hcengineering/communication-types'
 import { z } from 'zod'
 
-import type { Enriched, Middleware, MiddlewareContext, QueryId } from '../types'
+import type { Enriched, Middleware, QueryId } from '../types'
 import { BaseMiddleware } from './base'
 import { ApiError } from '../error'
 
@@ -93,17 +94,14 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
     return await this.provideFindCollaborators(session, params)
   }
 
-  async event(session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
+  async event (session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
     if (derived) return await this.provideEvent(session, event, derived)
     switch (event.type) {
       case MessageRequestEventType.CreateMessage:
         this.validate(event, CreateMessageEventSchema)
         break
-      case MessageRequestEventType.UpdateMessage:
-        this.validate(event, UpdateMessageEventSchema)
-        break
-      case MessageRequestEventType.RemoveMessage:
-        this.validate(event, RemoveMessageEventSchema)
+      case MessageRequestEventType.CreatePatch:
+        this.validate(event, CreatePatchEventSchema)
         break
       case MessageRequestEventType.SetReaction:
         this.validate(event, SetReactionEventSchema)
@@ -164,7 +162,7 @@ const LabelIDSchema = z.string()
 const LinkPreviewIDSchema = z.string()
 const MarkdownSchema = z.string()
 const MessageExtraSchema = z.any()
-const MessageIDSchema = z.string().max(50, "messageId must be at most 50 characters")
+const MessageIDSchema = z.string()
 const MessageTypeSchema = z.string()
 const MessagesGroupSchema = z.any()
 const SocialIDSchema = z.string()
@@ -236,7 +234,7 @@ const FindCollaboratorsParamsSchema = FindParamsSchema.extend({
   account: z.union([AccountIDSchema, z.array(AccountIDSchema)]).optional()
 }).strict()
 
-//Events
+// Events
 
 const BaseRequestEventSchema = z
   .object({
@@ -269,37 +267,22 @@ const CreateMessageEventSchema = BaseRequestEventSchema.extend({
     .optional()
 }).strict()
 
-const UpdateMessageEventSchema = BaseRequestEventSchema.extend({
-  type: z.literal(MessageRequestEventType.UpdateMessage),
+const CreatePatchEventSchema = BaseRequestEventSchema.extend({
+  type: z.literal(MessageRequestEventType.CreatePatch),
 
   cardId: CardIDSchema,
   messageId: MessageIDSchema,
 
-  content: MarkdownSchema.optional(),
-  extra: MessageExtraSchema.optional(),
+  patchType: z.enum([PatchType.update, PatchType.remove]),
+  data: z.any(),
 
   socialId: SocialIDSchema,
   date: DateSchema,
 
   options: z
     .object({
-      skipLinkPreviewsUpdate: z.boolean().optional()
-    })
-    .optional()
-}).strict()
-
-const RemoveMessageEventSchema = BaseRequestEventSchema.extend({
-  type: z.literal(MessageRequestEventType.RemoveMessage),
-
-  cardId: CardIDSchema,
-  messageId: MessageIDSchema,
-
-  socialId: SocialIDSchema,
-  date: DateSchema,
-
-  options: z
-    .object({
-      removeFile: z.boolean().optional()
+      skipLinkPreviewsUpdate: z.boolean().optional(),
+      markAsUpdated: z.boolean().optional()
     })
     .optional()
 }).strict()
@@ -414,7 +397,6 @@ const RemoveMessagesGroupEventSchema = BaseRequestEventSchema.extend({
 }).strict()
 
 // Notification events
-
 const UpdateNotificationsEventSchema = BaseRequestEventSchema.extend({
   type: z.literal(NotificationRequestEventType.UpdateNotification),
   query: z.object({
@@ -435,7 +417,9 @@ const UpdateNotificationsEventSchema = BaseRequestEventSchema.extend({
 const RemoveNotificationContextEventSchema = BaseRequestEventSchema.extend({
   type: z.literal(NotificationRequestEventType.RemoveNotificationContext),
   contextId: ContextIDSchema,
-  account: AccountIDSchema
+  account: AccountIDSchema,
+  socialId: SocialIDSchema,
+  date: DateSchema
 }).strict()
 
 const UpdateNotificationContextEventSchema = BaseRequestEventSchema.extend({
@@ -443,9 +427,7 @@ const UpdateNotificationContextEventSchema = BaseRequestEventSchema.extend({
   contextId: ContextIDSchema,
   account: AccountIDSchema,
   updates: z.object({
-    lastView: DateSchema.optional(),
-    lastUpdate: DateSchema,
-    lastNotify: DateSchema.optional()
+    lastView: DateSchema.optional()
   }),
   socialId: SocialIDSchema,
   date: DateSchema
@@ -469,11 +451,12 @@ const RemoveCollaboratorsEventSchema = BaseRequestEventSchema.extend({
   date: DateSchema
 }).strict()
 
-function deserializeEvent(event: Enriched<RequestEvent>): Enriched<RequestEvent> {
+function deserializeEvent (event: Enriched<RequestEvent>): Enriched<RequestEvent> {
   switch (event.type) {
     case MessageRequestEventType.CreateMessagesGroup:
       return {
         ...event,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         date: deserializeDate(event.date)!,
         group: {
           ...event.group,
@@ -486,6 +469,7 @@ function deserializeEvent(event: Enriched<RequestEvent>): Enriched<RequestEvent>
     case NotificationRequestEventType.UpdateNotificationContext:
       return {
         ...event,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         date: deserializeDate(event.date)!,
         updates: {
           ...event.updates,
@@ -496,7 +480,7 @@ function deserializeEvent(event: Enriched<RequestEvent>): Enriched<RequestEvent>
         }
       }
   }
-
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return { ...event, date: deserializeDate(event.date)! }
 }
 

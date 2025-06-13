@@ -49,7 +49,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
       accountBySocialID: this.context.accountBySocialID,
       derived,
       execute: async (event: RequestEvent) => {
-        //Will be enriched in head
+        // Will be enriched in head
         return (await this.context.head?.event(session, event as Enriched<RequestEvent>, true)) ?? {}
       }
     }
@@ -87,7 +87,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
   private async propagate (session: SessionData, derived: RequestEvent[]): Promise<void> {
     if (derived.length === 0) return
     if (this.context.head === undefined) return
-    //Will be enriched in head
+    // Will be enriched in head
     await Promise.all(derived.map((d) => this.context.head?.event(session, d as Enriched<RequestEvent>, true)))
   }
 }

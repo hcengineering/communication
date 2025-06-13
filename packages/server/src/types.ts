@@ -112,11 +112,6 @@ export interface TriggerCtx {
 export type TriggerFn = (ctx: TriggerCtx, event: ResponseEvent) => Promise<RequestEvent[]>
 export type Triggers = [string, ResponseEventType, TriggerFn][]
 
-// export type RichRequestEvent = RequestEvent & {
-//   socialId: SocialID
-//   date: Date
-// }
-
 export type Enriched<T> = T & {
   socialId: SocialID
   date: Date

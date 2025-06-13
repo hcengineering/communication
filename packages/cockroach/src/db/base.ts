@@ -13,10 +13,11 @@
 // limitations under the License.
 //
 
-import {type ParameterOrJSON, type Row, type TransactionSql} from 'postgres'
+import postgres, { type ParameterOrJSON, type Row } from 'postgres'
 import type { WorkspaceID } from '@hcengineering/communication-types'
 
-import { type Logger, type Options, type SqlClient } from '../types'
+import { type Logger, type Options } from '../types'
+import { SqlClient } from '../client'
 
 export class BaseDb {
   constructor (
@@ -26,8 +27,8 @@ export class BaseDb {
     readonly options?: Options
   ) {}
 
-  async withTransaction<T>(cb: (sql: TransactionSql) => T | Promise<T>, name: string): Promise<any> {
-    return await this.client.withTransaction(cb)
+  getRowClient (): postgres.Sql {
+    return this.client.getRawClient()
   }
 
   async execute<T = Row & Iterable<Row>>(sql: string, params?: ParameterOrJSON<any>[], name?: string): Promise<T[]> {
@@ -44,7 +45,7 @@ export class BaseDb {
     sql: string,
     params?: ParameterOrJSON<any>[]
   ): Promise<T[]> {
-    if (!name) {
+    if (name === undefined) {
       return await this.client.execute<T>(sql, params)
     }
     const start = performance.now()

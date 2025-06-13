@@ -297,7 +297,7 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
     await this.updateNotificationRead(this.result, updated)
   }
 
-  private async onRemoveNotificationsEvent(event: NotificationsRemovedEvent): Promise<void> {
+  private async onRemoveNotificationsEvent (event: NotificationsRemovedEvent): Promise<void> {
     if (this.params.context !== undefined && this.params.context !== event.contextId) return
     if (this.result instanceof Promise) this.result = await this.result
 
@@ -357,7 +357,7 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
     }
   }
 
-  private async onBlobAttached(event: BlobAttachedEvent): Promise<void> {
+  private async onBlobAttached (event: BlobAttachedEvent): Promise<void> {
     if (this.params.message !== true) return
     const isUpdated = await this.updateMessage(
       (it) => this.matchNotificationByMessage(it, event.cardId, event.messageId),
@@ -368,7 +368,7 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
     }
   }
 
-  private async onBlobDetached(event: BlobDetachedEvent): Promise<void> {
+  private async onBlobDetached (event: BlobDetachedEvent): Promise<void> {
     if (this.params.message !== true) return
     const isUpdated = await this.updateMessage(
       (it) => this.matchNotificationByMessage(it, event.cardId, event.messageId),
@@ -379,7 +379,7 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
     }
   }
 
-  private async onThreadAttached(event: ThreadAttachedEvent): Promise<void> {
+  private async onThreadAttached (event: ThreadAttachedEvent): Promise<void> {
     if (this.params.message !== true) return
     const isUpdated = await this.updateMessage(
       (it) => this.matchNotificationByMessage(it, event.thread.cardId, event.thread.messageId),
@@ -452,7 +452,7 @@ export class NotificationQuery implements PagedQuery<Notification, FindNotificat
     })
   }
 
-  private matchNotificationByMessage(notification: Notification, card: CardID, messageId: MessageID): boolean {
+  private matchNotificationByMessage (notification: Notification, card: CardID, messageId: MessageID): boolean {
     return notification.messageId === messageId && notification.message != null && notification.message.cardId === card
   }
 

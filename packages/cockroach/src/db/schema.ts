@@ -63,7 +63,7 @@ export interface MessageDb {
 export const messageSchema: Record<keyof MessageDb, string> = {
   workspace_id: 'uuid',
   card_id: 'varchar',
-  id: 'varchar',
+  id: 'int8',
   created: 'timestamptz',
   content: 'text',
   creator: 'varchar',

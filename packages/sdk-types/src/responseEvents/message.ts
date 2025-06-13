@@ -14,7 +14,6 @@
 //
 
 import type {
-  // AttachedBlob,
   CardID,
   Message,
   MessageID,
@@ -26,17 +25,17 @@ import type {
   BlobID,
   CardType,
   LinkPreview,
-  LinkPreviewID
-  // Markdown,
-  // MessageExtra
+  LinkPreviewID,
+  AttachedBlob
 } from '@hcengineering/communication-types'
 import type { BaseResponseEvent } from './common'
 
 export enum MessageResponseEventType {
   // Public events
   MessageCreated = 'messageCreated',
-  MessageUpdated = 'messageUpdated',
-  MessageRemoved = 'messageRemoved',
+  PatchCreated = 'patchCreated',
+  // MessageUpdated = 'messageUpdated',
+  // MessageRemoved = 'messageRemoved',
 
   ThreadAttached = 'threadAttached',
   ThreadUpdated = 'threadUpdated',
@@ -51,15 +50,12 @@ export enum MessageResponseEventType {
   LinkPreviewRemoved = 'linkPreviewRemoved',
 
   // Internal events
-  PatchCreated = 'patchCreated', // Do we need this here?
   MessagesGroupCreated = 'messagesGroupCreated',
   MessagesGroupRemoved = 'messagesGroupRemoved'
 }
 
 export type MessageResponseEvent =
   | MessageCreatedEvent
-  | MessageUpdatedEvent
-  | MessageRemovedEvent
   | ReactionSetEvent
   | ReactionRemovedEvent
   | BlobAttachedEvent
@@ -72,27 +68,54 @@ export type MessageResponseEvent =
   | MessagesGroupCreatedEvent
   | MessagesGroupRemovedEvent
 
+interface CreateMessageOptions {
+  // Available for regular users (Not implemented yet)
+  skipLinkPreviews?: boolean
+  // Available only for system
+  noNotify?: boolean
+}
+interface PatchMessageOptions {
+  // Available for regular users (Not implemented yet)
+  skipLinkPreviewsUpdate?: boolean
+  // Available only for system (Not implemented yet)
+  markAsUpdated?: boolean
+}
+
 // Public
 export interface MessageCreatedEvent extends BaseResponseEvent {
   type: MessageResponseEventType.MessageCreated
   cardId: CardID
   cardType: CardType
   message: Message
+  options?: CreateMessageOptions
 }
 
-export interface MessageUpdatedEvent extends BaseResponseEvent {
-  type: MessageResponseEventType.MessageUpdated
+export interface PatchCreatedEvent extends BaseResponseEvent {
+  type: MessageResponseEventType.PatchCreated
   cardId: CardID
   messageId: MessageID
-  // content?: Markdown
-  // extra?: MessageExtra
+  messageCreated: Date
+  patch: Patch
+  options?: PatchMessageOptions
 }
 
-export interface MessageRemovedEvent extends BaseResponseEvent {
-  type: MessageResponseEventType.MessageRemoved
-  cardId: CardID
-  messageId: MessageID
-}
+// export interface MessageUpdatedEvent extends BaseResponseEvent {
+//   type: MessageResponseEventType.MessageUpdated
+//   cardId: CardID
+//   messageId: MessageID
+//   content?: Markdown
+//   extra?: MessageExtra
+//   date: Date
+//   socialId: SocialID
+// }
+//
+// export interface MessageRemovedEvent extends BaseResponseEvent {
+//   type: MessageResponseEventType.MessageRemoved
+//   cardId: CardID
+//   messageId: MessageID
+//   date: Date
+//   socialId: SocialID
+// }
 
 export interface ReactionSetEvent extends BaseResponseEvent {
   type: MessageResponseEventType.ReactionSet
@@ -106,14 +129,15 @@ export interface ReactionRemovedEvent extends BaseResponseEvent {
   cardId: CardID
   messageId: MessageID
   reaction: string
-  creator: SocialID
+  socialId: SocialID
+  date: Date
 }
 
 export interface BlobAttachedEvent extends BaseResponseEvent {
   type: MessageResponseEventType.BlobAttached
   cardId: CardID
   messageId: MessageID
-  // blob: AttachedBlob
+  blob: AttachedBlob
 }
 
 export interface BlobDetachedEvent extends BaseResponseEvent {
@@ -121,6 +145,8 @@ export interface BlobDetachedEvent extends BaseResponseEvent {
   cardId: CardID
   messageId: MessageID
   blobId: BlobID
+  socialId: SocialID
+  date: Date
 }
 
 export interface LinkPreviewCreatedEvent extends BaseResponseEvent {
@@ -156,13 +182,6 @@ export interface ThreadUpdatedEvent extends BaseResponseEvent {
 }
 
 // Internal
-export interface PatchCreatedEvent extends BaseResponseEvent {
-  type: MessageResponseEventType.PatchCreated
-  cardId: CardID
-  messageId: MessageID
-  patch: Patch
-}
-
 export interface MessagesGroupCreatedEvent extends BaseResponseEvent {
   type: MessageResponseEventType.MessagesGroupCreated
   group: MessagesGroup

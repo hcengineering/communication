@@ -106,7 +106,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
     return await this.provideFindLabels(session, params, queryId)
   }
 
-  async event(session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
+  async event (session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
     this.createSession(session)
     return await this.provideEvent(session, event, derived)
   }
@@ -185,16 +185,12 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
           Array.from(info.messageQueries.values()),
           new Set(Array.from(info.contextQueries.values()).flatMap((it) => Array.from(it)))
         )
-      case MessageResponseEventType.MessageRemoved:
-      case MessageResponseEventType.MessageUpdated:
+      case MessageResponseEventType.PatchCreated:
         return this.matchMessagesQuery(
           { card: event.cardId, ids: [event.messageId] },
           Array.from(info.messageQueries.values()),
           new Set(Array.from(info.contextQueries.values()).flatMap((it) => Array.from(it)))
         )
-      case MessageResponseEventType.PatchCreated:
-        //TODO:?????
-        return false
       case MessageResponseEventType.ReactionSet:
       case MessageResponseEventType.ReactionRemoved:
       case MessageResponseEventType.LinkPreviewCreated:

@@ -27,33 +27,35 @@ import type {
 
 import type { Enriched, Middleware, MiddlewareContext, QueryId } from '../types'
 import { BaseMiddleware } from './base'
-import { ApiError } from '../error.ts'
+
+import { ApiError } from '../error'
 
 export class IdentityMiddleware extends BaseMiddleware implements Middleware {
-  constructor(
+  constructor (
     readonly context: MiddlewareContext,
     next?: Middleware
   ) {
     super(context, next)
   }
 
-  async event(session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
+  async event (session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
     if (event.socialId == null) {
       if (this.isSystem(session)) {
+        console.error('Missing social id. System accounts cannot be anonymous.', event)
         throw ApiError.badRequest('Missing social id. System accounts cannot be anonymous.')
       }
       event.socialId = session.account.primarySocialId
     }
 
-    return this.provideEvent(session, event, derived)
+    return await this.provideEvent(session, event, derived)
   }
 
-  private isSystem(session: SessionData): boolean {
+  private isSystem (session: SessionData): boolean {
     const account = session.account
     return systemAccountUuid === account.uuid
   }
 
-  async findNotificationContexts(
+  async findNotificationContexts (
     session: SessionData,
     params: FindNotificationContextParams,
     queryId?: QueryId
@@ -62,7 +64,7 @@ export class IdentityMiddleware extends BaseMiddleware implements Middleware {
     return await this.provideFindNotificationContexts(session, paramsWithAccount, queryId)
   }
 
-  async findNotifications(
+  async findNotifications (
     session: SessionData,
     params: FindNotificationsParams,
     queryId?: QueryId
@@ -71,7 +73,7 @@ export class IdentityMiddleware extends BaseMiddleware implements Middleware {
     return await this.provideFindNotifications(session, paramsWithAccount, queryId)
   }
 
-  async findLabels(session: SessionData, params: FindLabelsParams, queryId?: QueryId): Promise<Label[]> {
+  async findLabels (session: SessionData, params: FindLabelsParams, queryId?: QueryId): Promise<Label[]> {
     const paramsWithAccount = this.expandParamsWithAccount(session, params)
     return await this.provideFindLabels(session, paramsWithAccount, queryId)
   }

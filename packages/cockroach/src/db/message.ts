@@ -14,29 +14,29 @@
 //
 
 import {
+  type BlobData,
   type BlobID,
   type CardID,
   type CardType,
   type FindMessagesGroupsParams,
   type FindMessagesParams,
+  type LinkPreviewData,
+  type LinkPreviewID,
+  type Markdown,
   type Message,
+  type MessageExtra,
   type MessageID,
   type MessagesGroup,
   type MessageType,
   type PatchData,
   PatchType,
-  type Markdown,
   type SocialID,
   SortingOrder,
-  type Thread,
-  type LinkPreviewData,
-  type LinkPreviewID,
-  type MessageExtra,
-  type BlobData
+  type Thread
 } from '@hcengineering/communication-types'
-import type {RemoveThreadQuery, ThreadUpdates} from '@hcengineering/communication-sdk-types'
+import type { RemoveThreadQuery, ThreadUpdates } from '@hcengineering/communication-sdk-types'
 
-import {BaseDb} from './base'
+import { BaseDb } from './base'
 import {
   type FileDb,
   type LinkPreviewDb,
@@ -48,40 +48,30 @@ import {
   TableName,
   type ThreadDb
 } from './schema'
-import {getCondition} from './utils'
-import {toMessage, toMessagesGroup, toThread} from './mapping'
+import { getCondition } from './utils'
+import { toMessage, toMessagesGroup, toThread } from './mapping'
+import { isExternalMessageId, messageIdToDate } from '../messageId'
 
 export class MessagesDb extends BaseDb {
   // Message
-  async createMessage(
+  async createMessage (
+    id: MessageID,
     cardId: CardID,
     type: MessageType,
     content: Markdown,
     extra: MessageExtra | undefined,
     creator: SocialID,
-    created: Date,
-    id: MessageID
-  ): Promise<{id: MessageID, created: Date}> {
-    if(id.startsWith('e')) {
-       const select = `SELECT mc.created
-                      FROM ${TableName.MessageCreated} mc
-                      WHERE mc.workspace_id = $1::uuid
-                        AND mc.card_id = $2::varchar
-                        AND mc.id = $3::varchar`
-      const result = await this.execute(select, [this.workspace, cardId, id])
-      const created = result[0].created
-      if(created != null) return {id, created: new Date(created)}
-    }
-
-    const db: Omit<MessageDb, 'id'> & { id: MessageID } = {
+    created: Date
+  ): Promise<boolean> {
+    const db: MessageDb = {
+      type,
       workspace_id: this.workspace,
       card_id: cardId,
-      id,
-      created,
-      type,
       content,
       creator,
+      created,
       data: extra,
+      id
     }
 
     const values: any[] = []
@@ -96,35 +86,38 @@ export class MessagesDb extends BaseDb {
 
     const placeholders = keys.map((key, i) => `$${i + 1}::${(messageSchema as any)[key]}`)
 
-    // const sql = `INSERT INTO ${TableName.Message} (${keys.join(', ')})
-    //              VALUES (${placeholders.join(', ')})
-    //              RETURNING id::text`
+    const insertSql = `INSERT INTO ${TableName.Message} (${keys.join(', ')})
+                   VALUES (${placeholders.join(', ')})
+                   RETURNING id::text, created`
 
+    if (isExternalMessageId(db.id)) {
+      return await this.getRowClient().begin(async (s) => {
+        const sql = `INSERT INTO ${TableName.MessageCreated} (workspace_id, card_id, message_id, created)
+                     VALUES ($1::uuid, $2::varchar, $3::int8, $4::timestamptz)
+                     ON CONFLICT (workspace_id, card_id, message_id) DO NOTHING`
+        const result = await s.unsafe(sql, [this.workspace, cardId, db.id, created])
+        if (result.count === 0) {
+          return false
+        }
 
-    const sql = `WITH new_created AS (
-        INSERT INTO ${TableName.MessageCreated} (workspace_id, card_id,   message_id,  created)
-            VALUES ($1::uuid, $2::varchar, $3::varchar, $4::timestamptz)
-            ON CONFLICT (workspace_id, card_id, message_id) DO NOTHING
-            RETURNING message_id, created
-                   INSERT INTO ${TableName.Message} (${keys.join(', ')})
-               VALUES (${placeholders.join(', ')})
-                ;`
-
-    const result = await this.execute(sql, values, 'insert message')
-
-    return result[0].id as MessageID
+        await s.unsafe(insertSql, values)
+        return true
+      })
+    } else {
+      await this.execute(insertSql, values, 'insert message')
+      return true
+    }
   }
 
-  async createPatch(
+  async createPatch (
     cardId: CardID,
     messageId: MessageID,
+    messageCreated: Date,
     type: PatchType,
     data: PatchData,
     creator: SocialID,
     created: Date
   ): Promise<void> {
-    const messageCreated = await this.getMessageCreated(cardId, messageId)
-    if (messageCreated == null) return
     const db: PatchDb = {
       workspace_id: this.workspace,
       card_id: cardId,
@@ -136,10 +129,8 @@ export class MessagesDb extends BaseDb {
       message_created: messageCreated
     }
 
-    const sql = `INSERT INTO ${TableName.Patch} (workspace_id, card_id, message_id, type, data, creator, created,
-                                                 message_created)
-                 VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::jsonb, $6::varchar, $7::timestamptz,
-                         $8::timestamptz)`
+    const sql = `INSERT INTO ${TableName.Patch} (workspace_id, card_id, message_id, type, data, creator, created, message_created)
+                 VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::jsonb, $6::varchar, $7::timestamptz, $8::timestamptz)`
 
     await this.execute(
       sql,
@@ -149,14 +140,13 @@ export class MessagesDb extends BaseDb {
   }
 
   // Blob
-  async attachBlob(
+  async attachBlob (
     cardId: CardID,
     messageId: MessageID,
     data: BlobData,
     socialId: SocialID,
     date: Date
   ): Promise<void> {
-    //TODO: or create patch
     const db: FileDb = {
       workspace_id: this.workspace,
       card_id: cardId,
@@ -192,8 +182,13 @@ export class MessagesDb extends BaseDb {
     )
   }
 
-  async detachBlob(cardId: CardID, messageId: MessageID, blobId: BlobID): Promise<void> {
-    //TODO: or create patch
+  async detachBlob (
+    cardId: CardID,
+    messageId: MessageID,
+    blobId: BlobID,
+    socialId: SocialID,
+    date: Date
+  ): Promise<void> {
     const sql = `DELETE
                  FROM ${TableName.File}
                  WHERE workspace_id = $1::uuid
@@ -204,7 +199,7 @@ export class MessagesDb extends BaseDb {
     await this.execute(sql, [this.workspace, cardId, messageId, blobId], 'remove files')
   }
 
-  async createLinkPreview(
+  async createLinkPreview (
     cardId: CardID,
     messageId: MessageID,
     data: LinkPreviewData,
@@ -252,7 +247,7 @@ export class MessagesDb extends BaseDb {
     return result[0].id as LinkPreviewID
   }
 
-  async removeLinkPreview(cardId: CardID, messageId: MessageID, previewId: LinkPreviewID): Promise<void> {
+  async removeLinkPreview (cardId: CardID, messageId: MessageID, previewId: LinkPreviewID): Promise<void> {
     const sql = `DELETE
                  FROM ${TableName.LinkPreview}
                  WHERE workspace_id = $1::uuid
@@ -263,62 +258,51 @@ export class MessagesDb extends BaseDb {
   }
 
   // Reaction
-  async setReaction(
+  async setReaction (
     cardId: CardID,
     messageId: MessageID,
     reaction: string,
     creator: SocialID,
     created: Date
   ): Promise<void> {
-    const isMessageInDb = await this.isMessageInDb(cardId, messageId)
-
-    if (isMessageInDb) {
-      const db: ReactionDb = {
-        workspace_id: this.workspace,
-        card_id: cardId,
-        message_id: messageId,
-        reaction,
-        creator,
-        created
-      }
-      const sql = `INSERT INTO ${TableName.Reaction} (workspace_id, card_id, message_id, reaction, creator, created)
-                   VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::varchar, $6::timestamptz)`
-
-      await this.execute(
-        sql,
-        [db.workspace_id, db.card_id, db.message_id, db.reaction, db.creator, db.created],
-        'insert reaction'
-      )
-    } else {
-      await this.createPatch(cardId, messageId, PatchType.setReaction, {reaction}, creator, created)
+    const db: ReactionDb = {
+      workspace_id: this.workspace,
+      card_id: cardId,
+      message_id: messageId,
+      reaction,
+      creator,
+      created
     }
+    const sql = `INSERT INTO ${TableName.Reaction} (workspace_id, card_id, message_id, reaction, creator, created)
+                   VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::varchar, $6::timestamptz)
+                   ON CONFLICT DO NOTHING`
+
+    await this.execute(
+      sql,
+      [db.workspace_id, db.card_id, db.message_id, db.reaction, db.creator, db.created],
+      'insert reaction'
+    )
   }
 
-  async removeReaction(
+  async removeReaction (
     cardId: CardID,
     messageId: MessageID,
     reaction: string,
     socialId: SocialID,
     date: Date
   ): Promise<void> {
-    const isMessageInDb = await this.isMessageInDb(cardId, messageId)
-
-    if (isMessageInDb) {
-      const sql = `DELETE
+    const sql = `DELETE
                    FROM ${TableName.Reaction}
                    WHERE workspace_id = $1::uuid
                      AND card_id = $2::varchar
                      AND message_id = $3::int8
                      AND reaction = $4::varchar
                      AND creator = $5::varchar`
-      await this.execute(sql, [this.workspace, cardId, messageId, reaction, socialId], 'remove reaction')
-    } else {
-      await this.createPatch(cardId, messageId, PatchType.removeReaction, {reaction}, socialId, date)
-    }
+    await this.execute(sql, [this.workspace, cardId, messageId, reaction, socialId], 'remove reaction')
   }
 
   // Thread
-  async attachThread(
+  async attachThread (
     cardId: CardID,
     messageId: MessageID,
     threadId: CardID,
@@ -368,7 +352,7 @@ export class MessagesDb extends BaseDb {
     await this.execute(sql, whereValues, 'remove threads')
   }
 
-  async updateThread(threadId: CardID, update: ThreadUpdates): Promise<void> {
+  async updateThread (threadId: CardID, update: ThreadUpdates): Promise<void> {
     const set: string[] = []
     const values: any[] = []
 
@@ -427,8 +411,8 @@ export class MessagesDb extends BaseDb {
     await this.execute(sql, [this.workspace, card, blobId], 'remove messages group')
   }
 
-  async find(params: FindMessagesParams): Promise<Message[]> {
-    const {where, values} = this.buildMessageWhere(params)
+  async find (params: FindMessagesParams): Promise<Message[]> {
+    const { where, values } = this.buildMessageWhere(params)
     const orderBy = this.buildOrderBy(params)
     const limit = this.buildLimit(params)
 
@@ -667,7 +651,7 @@ export class MessagesDb extends BaseDb {
       index = createdCondition.index
     }
 
-    return {where: `WHERE ${where.join(' AND ')}`, values}
+    return { where: `WHERE ${where.join(' AND ')}`, values }
   }
 
   // Find thread
@@ -711,7 +695,7 @@ export class MessagesDb extends BaseDb {
               AND p.message_created BETWEEN mg.from_date AND mg.to_date
             ) sub`
 
-    const {where, values} = this.buildMessagesGroupWhere(params)
+    const { where, values } = this.buildMessagesGroupWhere(params)
     const orderBy =
       params.orderBy === 'toDate'
         ? `ORDER BY mg.to_date ${params.order === SortingOrder.Ascending ? 'ASC' : 'DESC'}`
@@ -759,38 +743,33 @@ export class MessagesDb extends BaseDb {
       where.push('sub.patches IS NOT NULL')
     }
 
-    return {where: `WHERE ${where.join(' AND ')}`, values}
+    return { where: `WHERE ${where.join(' AND ')}`, values }
   }
 
-  private async isMessageInDb(cardId: CardID, messageId: MessageID): Promise<boolean> {
+  public async isMessageInDb (cardId: CardID, messageId: MessageID): Promise<boolean> {
     const select = `SELECT m.id
                     FROM ${TableName.Message} m
                     WHERE m.workspace_id = $1::uuid
                       AND m.card_id = $2::varchar
-                      AND m.id = $3::varchar`
+                      AND m.id = $3::int8
+                    LIMIT 1`
 
     return (await this.execute(select, [this.workspace, cardId, messageId])).length > 0
   }
 
-  private async saveMessageCreated(cardId: CardID, messageId: MessageID, created: Date): Promise<void> {
-    const sql = `INSERT INTO ${TableName.MessageCreated} (workspace_id, card_id, message_id, created)
-                 VALUES ($1::uuid, $2::varchar, $3::varchar, $4::timestamptz)
-                 ON CONFLICT (workspace_id, card_id, message_id)
-                     DO NOTHING`
-    await this.execute(sql, [this.workspace, cardId, messageId, created])
-  }
-
-  private async getMessageCreated(cardId: CardID, messageId: MessageID): Promise<Date | undefined | null> {
-    if (messageId.startsWith('e')) {
+  public async getMessageCreated (cardId: CardID, messageId: MessageID): Promise<Date | undefined> {
+    if (isExternalMessageId(messageId)) {
       const select = `SELECT mc.created
                       FROM ${TableName.MessageCreated} mc
                       WHERE mc.workspace_id = $1::uuid
                         AND mc.card_id = $2::varchar
-                        AND mc.id = $3::varchar`
+                        AND mc.id = $3::int8
+                      LIMIT 1`
       const result = await this.execute(select, [this.workspace, cardId, messageId])
       const created = result[0].created
-      return created ? new Date(created) : undefined
+      return created != null ? new Date(created) : undefined
     }
-    return new Date(messageId)
+
+    return messageIdToDate(messageId) ?? undefined
   }
 }

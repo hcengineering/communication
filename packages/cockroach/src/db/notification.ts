@@ -65,7 +65,7 @@ export class NotificationsDb extends BaseDb {
     return result.map((it: any) => it.account)
   }
 
-  async removeCollaborators(card: CardID, accounts: AccountID[], unsafe = false): Promise<void> {
+  async removeCollaborators (card: CardID, accounts: AccountID[], unsafe = false): Promise<void> {
     if (accounts === undefined && unsafe) {
       const sql = `DELETE FROM ${TableName.Collaborators} WHERE workspace_id = $1::uuid AND card_id = $2::varchar`
       await this.execute(sql, [this.workspace, card], 'remove collaborators')
@@ -171,7 +171,7 @@ export class NotificationsDb extends BaseDb {
     await this.execute(sql, [...values, updates.read], 'update notification')
   }
 
-  async removeNotifications(
+  async removeNotifications (
     contextId: ContextID,
     account: AccountID,
     ids: NotificationID[]
@@ -230,7 +230,7 @@ export class NotificationsDb extends BaseDb {
     return result[0].id as ContextID
   }
 
-  async removeContext(contextId: ContextID, account: AccountID): Promise<void> {
+  async removeContext (contextId: ContextID, account: AccountID): Promise<void> {
     const sql = `DELETE
                  FROM ${TableName.NotificationContext}
                  WHERE workspace_id = $1::uuid

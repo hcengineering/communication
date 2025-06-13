@@ -31,7 +31,7 @@ import {
 import { QueryResult } from '../result'
 import { type Query, type QueryId } from '../types'
 
-function getId(label: Label): string {
+function getId (label: Label): string {
   return `${label.labelId}:${label.cardId}:${label.account}`
 }
 
@@ -123,7 +123,7 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
     }
 
     for (const label of result) {
-      if (label.cardId == event.cardId) {
+      if (label.cardId === event.cardId) {
         const updatedLabel: Label = { ...label, cardType: event.cardType }
         const matched = this.match(updatedLabel)
         if (matched) {
@@ -160,7 +160,7 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
     const prevLength = this.result.length
     let deleted = false
     for (const label of result) {
-      if (label.cardId == event.cardId) {
+      if (label.cardId === event.cardId) {
         this.result.delete(label.labelId)
         deleted = true
       }

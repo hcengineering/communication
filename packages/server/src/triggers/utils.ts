@@ -48,17 +48,19 @@ export async function findMessageInFiles (
   db: DbAdapter,
   filesUrl: string,
   workspace: WorkspaceID,
-  card: CardID,
-  id: MessageID
+  cardId: CardID,
+  messageId: MessageID
 ): Promise<Message | undefined> {
   if (filesUrl === '') {
     return undefined
   }
 
-  const created = new Date() //TODO: fix
+  const created = await db.getMessageCreated(cardId, messageId)
+
+  if (created == null) return undefined
   const group = (
     await db.findMessagesGroups({
-      card,
+      card: cardId,
       fromDate: { lessOrEqual: created },
       toDate: { greaterOrEqual: created },
       limit: 1,
@@ -73,23 +75,23 @@ export async function findMessageInFiles (
 
   try {
     const parsedFile = await loadGroupFile(workspace, filesUrl, group, { retries: 3 })
-    const messageFromFile = parsedFile.messages.find((it) => it.id === id)
+    const messageFromFile = parsedFile.messages.find((it) => it.id === messageId)
     if (messageFromFile === undefined) {
       return undefined
     }
 
-    const patches = (group.patches ?? []).filter((it) => it.messageId === id)
+    const patches = (group.patches ?? []).filter((it) => it.messageId === messageId)
 
     return patches.length > 0 ? applyPatches(messageFromFile, patches) : messageFromFile
   } catch (e) {
-    console.error('Failed to find message in files', { card, id, created })
+    console.error('Failed to find message in files', { card: cardId, id: messageId, created })
     console.error('Error:', { error: e })
   }
 }
 
 export async function getNameBySocialID (ctx: TriggerCtx, id: SocialID): Promise<string> {
   const account = await findAccount(ctx, id)
-  return account != null ? ((await ctx.db.getNameByAccount(account)) ?? 'System') : 'System'
+  return account != null ? (await ctx.db.getNameByAccount(account)) ?? 'System' : 'System'
 }
 
 export async function getAddCollaboratorsMessageContent (
@@ -97,7 +99,7 @@ export async function getAddCollaboratorsMessageContent (
   sender: AccountID | undefined,
   collaborators: AccountID[]
 ): Promise<Markdown> {
-  const senderName = sender ? ((await ctx.db.getNameByAccount(sender)) ?? 'System') : 'System'
+  const senderName = sender != null ? (await ctx.db.getNameByAccount(sender)) ?? 'System' : 'System'
 
   if (sender != null && collaborators.length === 1 && collaborators.includes(sender)) {
     return `${senderName} joined`
@@ -115,7 +117,7 @@ export async function getRemoveCollaboratorsMessageContent (
   sender: AccountID | undefined,
   collaborators: AccountID[]
 ): Promise<Markdown> {
-  const senderName = sender ? ((await ctx.db.getNameByAccount(sender)) ?? 'System') : 'System'
+  const senderName = sender != null ? (await ctx.db.getNameByAccount(sender)) ?? 'System' : 'System'
   if (sender != null && collaborators.length === 1 && collaborators.includes(sender)) {
     return `${senderName} left`
   }

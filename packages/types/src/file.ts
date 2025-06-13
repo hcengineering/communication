@@ -17,7 +17,7 @@ import type { CardID, CardType, Markdown, SocialID } from './core'
 import type { Message, MessageID, MessageType, MessageExtra, LinkPreview, Reaction, AttachedBlob } from './message'
 
 export interface FileMetadata {
-  cardId: CardID // TODO: update files
+  cardId: CardID
   title: string
   fromDate: Date
   toDate: Date
@@ -27,7 +27,7 @@ export interface FileMessage {
   id: MessageID
   type: MessageType
   content: Markdown
-  extra?: MessageExtra // TODO: update files
+  extra?: MessageExtra
 
   creator: SocialID
   created: Date
@@ -36,24 +36,13 @@ export interface FileMessage {
   edited?: Date
 
   reactions: Reaction[]
-  blobs: AttachedBlob[] // TODO: update files
-  linkPreviews: LinkPreview[] // TODO: update files
+  blobs: AttachedBlob[]
+  linkPreviews: LinkPreview[]
   thread?: FileThread
 }
 
-// TODO: update files
-// export interface FileBlob {
-//   blobId: BlobID
-//   type: string
-//   filename: string
-//   size: number
-//   creator: SocialID
-//   created: Date
-//   meta: Record<string, any>
-// }
-
 export interface FileThread {
-  threadId: CardID // TODO: update files
+  threadId: CardID
   threadType: CardType
   repliesCount: number
   lastReply: Date

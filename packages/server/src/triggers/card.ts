@@ -21,7 +21,7 @@ import {
   NotificationRequestEventType,
   type RequestEvent
 } from '@hcengineering/communication-sdk-types'
-import { type ActivityTypeUpdate, ActivityUpdateType, MessageType } from '@hcengineering/communication-types'
+import { type ActivityTypeUpdate, ActivityUpdateType, MessageType, SocialID } from '@hcengineering/communication-types'
 
 import type { TriggerCtx, TriggerFn, Triggers } from '../types'
 import { getNameBySocialID } from './utils'
@@ -51,24 +51,24 @@ async function createActivityOnCardTypeUpdate (ctx: TriggerCtx, event: CardTypeU
   ]
 }
 
-async function onCardTypeUpdates(ctx: TriggerCtx, event: CardTypeUpdatedEvent): Promise<RequestEvent[]> {
+async function onCardTypeUpdates (ctx: TriggerCtx, event: CardTypeUpdatedEvent): Promise<RequestEvent[]> {
   await ctx.db.updateCollaborators({ card: event.cardId }, { cardType: event.cardType })
   await ctx.db.updateLabels(event.cardId, { cardType: event.cardType })
   await ctx.db.updateThread(event.cardId, { threadType: event.cardType })
   return []
 }
 
-async function removeCardCollaborators(ctx: TriggerCtx, event: CardRemovedEvent): Promise<RequestEvent[]> {
+async function removeCardCollaborators (ctx: TriggerCtx, event: CardRemovedEvent): Promise<RequestEvent[]> {
   await ctx.db.removeCollaborators(event.cardId, [], true)
   return []
 }
 
-async function removeCardLabels(ctx: TriggerCtx, event: CardRemovedEvent): Promise<RequestEvent[]> {
+async function removeCardLabels (ctx: TriggerCtx, event: CardRemovedEvent): Promise<RequestEvent[]> {
   await ctx.db.removeLabels({ cardId: event.cardId })
   return []
 }
 
-async function removeCardThreads(ctx: TriggerCtx, event: CardRemovedEvent): Promise<RequestEvent[]> {
+async function removeCardThreads (ctx: TriggerCtx, event: CardRemovedEvent): Promise<RequestEvent[]> {
   await ctx.db.removeThreads({ cardId: event.cardId })
   await ctx.db.removeThreads({ threadId: event.cardId })
   return []
@@ -81,7 +81,9 @@ async function removeNotificationContexts (ctx: TriggerCtx, event: CardRemovedEv
     result.push({
       type: NotificationRequestEventType.RemoveNotificationContext,
       contextId: context.id,
-      account: context.account
+      account: context.account,
+      socialId: 'core:account:System' as SocialID,
+      date: new Date()
     })
   }
   return result

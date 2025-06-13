@@ -46,13 +46,14 @@ const BATCH_SIZE = 500
 export async function notify (ctx: TriggerCtx, event: ResponseEvent): Promise<RequestEvent[]> {
   switch (event.type) {
     case MessageResponseEventType.MessageCreated: {
+      if (event.options?.noNotify === true) return []
       return await notifyMessage(ctx, event.message, event.cardType)
     }
     case MessageResponseEventType.ReactionSet: {
       return await notifyReaction(ctx, event.cardId, event.messageId, event.reaction)
     }
     case MessageResponseEventType.ReactionRemoved: {
-      return await removeReactionNotification(ctx, event.cardId, event.messageId, event.reaction, event.creator)
+      return await removeReactionNotification(ctx, event.cardId, event.messageId, event.reaction, event.socialId)
     }
   }
 
@@ -75,7 +76,7 @@ async function removeReactionNotification (
 
   const notifications = await ctx.db.findNotifications({
     type: NotificationType.Reaction,
-    messageId: messageId,
+    messageId,
     account: messageAccount
   })
 
@@ -107,7 +108,9 @@ async function removeReactionNotification (
         account: messageAccount,
         updates: {
           lastNotify: lastNotification.created
-        }
+        },
+        socialId,
+        date: new Date()
       })
     }
   }
@@ -155,25 +158,29 @@ async function notifyReaction (
     type: NotificationRequestEventType.CreateNotification,
     notificationType: NotificationType.Reaction,
     account: messageAccount,
-    contextId: contextId,
-    messageId: messageId,
+
+    contextId,
+    messageId,
     messageCreated: message.created,
     date: reaction.created,
-    content
+    content,
+    socialId: message.creator
   })
 
   result.push({
     type: NotificationRequestEventType.UpdateNotificationContext,
-    contextId: contextId,
+    contextId,
     account: messageAccount,
     updates: {
       lastNotify: reaction.created
-    }
+    },
+    socialId: message.creator,
+    date: reaction.created
   })
   return result
 }
 
-async function notifyMessage(ctx: TriggerCtx, message: Message, cardType: CardType): Promise<RequestEvent[]> {
+async function notifyMessage (ctx: TriggerCtx, message: Message, cardType: CardType): Promise<RequestEvent[]> {
   const cursor = ctx.db.getCollaboratorsCursor(message.cardId, message.created, BATCH_SIZE)
   const creatorAccount = await findAccount(ctx, message.creator)
   const result: RequestEvent[] = []
@@ -222,7 +229,8 @@ async function processCollaborator (
       labelId: NewMessageLabelID,
       cardId: message.cardId,
       cardType,
-      date: message.created
+      date: message.created,
+      socialId: message.creator
     })
   }
 
@@ -234,10 +242,11 @@ async function processCollaborator (
     type: NotificationRequestEventType.CreateNotification,
     notificationType: NotificationType.Message,
     account: collaborator,
-    contextId: contextId,
+    contextId,
     messageId: message.id,
     messageCreated: message.created,
-    date: message.created
+    date: message.created,
+    socialId: message.creator
   })
   return result
 }
@@ -283,7 +292,9 @@ async function createOrUpdateContext (
           lastView,
           lastUpdate,
           lastNotify: isOwn ? undefined : message.created
-        }
+        },
+        socialId: message.creator,
+        date: new Date()
       }
     ]
   }
@@ -304,7 +315,9 @@ async function createContext (
       cardId,
       lastUpdate,
       lastView: lastView ?? new Date(lastUpdate.getTime() - 1),
-      lastNotify
+      lastNotify,
+      socialId: 'core:account:System' as SocialID,
+      date: new Date()
     })) as CreateNotificationContextResult
 
     return result.id

@@ -372,6 +372,7 @@ function migrationV4_1 (): [string, string] {
 
 function migrationV5_1 (): [string, string] {
   const sql = `
+      DROP INDEX IF EXISTS communication.idx_messages_unique_workspace_card_external_id;
       ALTER TABLE communication.messages
           DROP COLUMN IF EXISTS external_id;
       ALTER TABLE communication.files

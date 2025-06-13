@@ -22,7 +22,7 @@ import {
   type NotificationContextUpdatedEvent,
   NotificationRequestEventType,
   NotificationResponseEventType,
-  type PatchCreatedEvent,
+  PatchCreatedEvent,
   type RemovedCollaboratorsEvent,
   type RequestEvent
 } from '@hcengineering/communication-sdk-types'
@@ -33,6 +33,7 @@ import {
   NewMessageLabelID,
   NotificationType,
   PatchType,
+  SocialID,
   SubscriptionLabelID
 } from '@hcengineering/communication-types'
 import { groupByArray } from '@hcengineering/core'
@@ -41,8 +42,7 @@ import type { TriggerCtx, TriggerFn, Triggers } from '../types'
 import { findAccount } from '../utils'
 import { getAddCollaboratorsMessageContent, getRemoveCollaboratorsMessageContent } from './utils'
 
-
-async function onAddedCollaborators(ctx: TriggerCtx, event: AddedCollaboratorsEvent): Promise<RequestEvent[]> {
+async function onAddedCollaborators (ctx: TriggerCtx, event: AddedCollaboratorsEvent): Promise<RequestEvent[]> {
   const { cardId, cardType, collaborators } = event
 
   if (collaborators.length === 0) return []
@@ -55,7 +55,8 @@ async function onAddedCollaborators(ctx: TriggerCtx, event: AddedCollaboratorsEv
       cardType,
       account: collaborator,
       labelId: SubscriptionLabelID,
-      date: event.date
+      date: event.date,
+      socialId: event.socialId
     })
   }
 
@@ -82,7 +83,7 @@ async function onAddedCollaborators(ctx: TriggerCtx, event: AddedCollaboratorsEv
   return result
 }
 
-async function onRemovedCollaborators(ctx: TriggerCtx, event: RemovedCollaboratorsEvent): Promise<RequestEvent[]> {
+async function onRemovedCollaborators (ctx: TriggerCtx, event: RemovedCollaboratorsEvent): Promise<RequestEvent[]> {
   const { cardId, collaborators } = event
   if (collaborators.length === 0) return []
   const result: RequestEvent[] = []
@@ -94,7 +95,8 @@ async function onRemovedCollaborators(ctx: TriggerCtx, event: RemovedCollaborato
       cardId,
       account: collaborator,
       labelId: SubscriptionLabelID,
-      date: event.date
+      date: event.date,
+      socialId: event.socialId
     })
 
     if (context !== undefined && context.lastUpdate.getTime() > context.lastView.getTime()) {
@@ -104,7 +106,9 @@ async function onRemovedCollaborators(ctx: TriggerCtx, event: RemovedCollaborato
         account: collaborator,
         updates: {
           lastView: context.lastUpdate
-        }
+        },
+        socialId: event.socialId,
+        date: new Date()
       })
     }
   }
@@ -149,7 +153,8 @@ async function onNotificationContextUpdated (
       labelId: NewMessageLabelID,
       cardId: context.cardId,
       account: context.account,
-      date: new Date()
+      date: new Date(),
+      socialId: 'core:account:System' as SocialID
     })
   }
 
@@ -165,7 +170,8 @@ async function onNotificationContextUpdated (
     },
     updates: {
       read: true
-    }
+    },
+    socialId: 'core:account:System' as SocialID
   })
 
   return result
@@ -184,7 +190,8 @@ async function onNotificationContextRemoved (
     labelId: NewMessageLabelID,
     cardId: context.cardId,
     account: context.account,
-    date: new Date()
+    date: new Date(),
+    socialId: 'core:account:System' as SocialID
   })
 
   return result
@@ -192,10 +199,9 @@ async function onNotificationContextRemoved (
 
 async function onMessagesRemoved (ctx: TriggerCtx, event: PatchCreatedEvent): Promise<RequestEvent[]> {
   if (event.patch.type !== PatchType.remove) return []
-
   const notifications = await ctx.db.findNotifications({
     card: event.cardId,
-    messageId: event.patch.messageId
+    messageId: event.messageId
   })
 
   if (notifications.length === 0) return []

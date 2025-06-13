@@ -59,6 +59,8 @@ export interface CreateNotificationEvent extends BaseRequestEvent {
   messageId: MessageID
   messageCreated: Date
   account: AccountID
+
+  socialId: SocialID
   date: Date
 }
 
@@ -77,6 +79,8 @@ export interface RemoveNotificationsEvent extends BaseRequestEvent {
   contextId: ContextID
   account: AccountID
   ids: NotificationID[]
+
+  socialId?: SocialID
   date?: Date
 }
 
@@ -87,13 +91,17 @@ export interface CreateNotificationContextEvent extends BaseRequestEvent {
   lastView: Date
   lastUpdate: Date
   lastNotify?: Date
-  date?: Date
+
+  socialId: SocialID
+  date: Date
 }
 
 export interface RemoveNotificationContextEvent extends BaseRequestEvent {
   type: NotificationRequestEventType.RemoveNotificationContext
   contextId: ContextID
   account: AccountID
+
+  socialId?: SocialID
   date?: Date
 }
 
@@ -106,6 +114,7 @@ export interface UpdateNotificationContextEvent extends BaseRequestEvent {
     lastUpdate?: Date
     lastNotify?: Date
   }
+  socialId?: SocialID
   date?: Date
 }
 

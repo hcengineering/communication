@@ -22,7 +22,7 @@ import {
   Message,
   MessageID,
   NotificationContext,
-  // Markdown,
+  Markdown,
   SocialID,
   Notification,
   BlobID,
@@ -35,7 +35,7 @@ import {
   MessageType,
   FindCollaboratorsParams,
   NotificationID,
-  // MessageExtra,
+  MessageExtra,
   Label,
   FindLabelsParams,
   LabelID,
@@ -44,25 +44,26 @@ import {
   NotificationContent,
   NotificationType,
   ComparisonOperator,
-  // BlobData,
+  BlobData,
   LinkPreviewData,
   LinkPreviewID
 } from '@hcengineering/communication-types'
 
 export interface DbAdapter {
   createMessage: (
+    id: MessageID,
     cardId: CardID,
     type: MessageType,
-    // content: Markdown,
-    // extra: MessageExtra | undefined,
+    content: Markdown,
+    extra: MessageExtra | undefined,
     creator: SocialID,
-    created: Date,
-    id?: MessageID
-  ) => Promise<MessageID>
+    created: Date
+  ) => Promise<boolean>
 
   createPatch: (
     cardId: CardID,
     messageId: MessageID,
+    messageCreated: Date,
     type: PatchType,
     data: PatchData,
     creator: SocialID,
@@ -75,20 +76,20 @@ export interface DbAdapter {
   setReaction: (cardId: CardID, messageId: MessageID, reaction: string, socialId: SocialID, date: Date) => Promise<void>
   removeReaction: (cardId: CardID, message: MessageID, reaction: string, socialId: SocialID, date: Date) => Promise<void>
 
-  // attachBlob: (cardId: CardID, messageId: MessageID, data: BlobData, creator: SocialID, created: Date) => Promise<void>
-  detachBlob: (card: CardID, messageId: MessageID, blobId: BlobID) => Promise<void>
+  attachBlob: (cardId: CardID, messageId: MessageID, data: BlobData, socialId: SocialID, date: Date) => Promise<void>
+  detachBlob: (card: CardID, messageId: MessageID, blobId: BlobID, socialId: SocialID, date: Date) => Promise<void>
 
   createLinkPreview: (
     cardId: CardID,
     messageId: MessageID,
     data: LinkPreviewData,
-    creator: SocialID,
-    created: Date
+    socialId: SocialID,
+    date: Date
   ) => Promise<LinkPreviewID>
   removeLinkPreview: (cardId: CardID, messageId: MessageID, id: LinkPreviewID) => Promise<void>
 
   attachThread: (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType, date: Date) => Promise<void>
-  // removeThreads: (query: RemoveThreadQuery) => Promise<void>
+  removeThreads: (query: RemoveThreadQuery) => Promise<void>
   updateThread: (thread: CardID, update: ThreadUpdates) => Promise<void>
 
   findMessages: (params: FindMessagesParams) => Promise<Message[]>
@@ -128,18 +129,20 @@ export interface DbAdapter {
   findNotifications: (params: FindNotificationsParams) => Promise<Notification[]>
 
   createLabel: (labelId: LabelID, cardId: CardID, cardType: CardType, account: AccountID, created: Date) => Promise<void>
-  // removeLabels: (query: RemoveLabelQuery) => Promise<void>
+  removeLabels: (query: RemoveLabelQuery) => Promise<void>
   findLabels: (params: FindLabelsParams) => Promise<Label[]>
   updateLabels: (cardId: CardID, update: LabelUpdates) => Promise<void>
 
   getAccountsByPersonIds: (ids: string[]) => Promise<AccountID[]>
   getNameByAccount: (id: AccountID) => Promise<string | undefined>
+  getMessageCreated: (cardId: CardID, messageId: MessageID) => Promise<Date | undefined>
+  isMessageInDb: (cardId: CardID, messageId: MessageID) => Promise<boolean>
 
   close: () => void
 }
 
-// export type RemoveThreadQuery = Partial<Pick<Thread, 'cardId' | 'threadId' | 'messageId'>>
-// export type RemoveLabelQuery = Partial<Pick<Label, 'cardId' | 'labelId' | 'account'>>
+export type RemoveThreadQuery = Partial<Pick<Thread, 'cardId' | 'threadId' | 'messageId'>>
+export type RemoveLabelQuery = Partial<Pick<Label, 'cardId' | 'labelId' | 'account'>>
 
 export interface UpdateNotificationQuery {
   context: ContextID

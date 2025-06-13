@@ -64,24 +64,34 @@ export function parseYaml (data: string): ParsedFile {
     messages: messages.map((message) => ({
       id: message.id,
       type: message.type,
-      cardId: metadata.cardId,
+      cardId: metadata.cardId ?? (metadata as any).card,
       content: message.content,
       edited: message.edited,
       creator: message.creator,
       created: message.created,
       removed: message.removed,
-      extra: message.extra,
-      thread: message.thread
-        ? {
-            cardId: metadata.cardId,
-            messageId: message.id,
-            threadId: message.thread.threadId,
-            threadType: message.thread.threadType,
-            repliesCount: message.thread.repliesCount,
-            lastReply: message.thread.lastReply
-          }
-        : undefined,
-      blobs: message.blobs ?? [],
+      extra: message.extra ?? (message as any).data,
+      thread:
+        message.thread != null
+          ? {
+              cardId: metadata.cardId,
+              messageId: message.id,
+              threadId: message.thread.threadId ?? (message.thread as any).thread,
+              threadType: message.thread.threadType,
+              repliesCount: message.thread.repliesCount,
+              lastReply: message.thread.lastReply
+            }
+          : undefined,
+      blobs:
+        message.blobs ??
+        (message as any).files?.map((it: any) => ({
+          blobId: it.blobId,
+          contentType: it.type,
+          fileName: it.filename,
+          size: it.size,
+          metadata: it.meta
+        })) ??
+        [],
       reactions: message.reactions ?? [],
       linkPreviews: message.linkPreviews ?? []
     }))

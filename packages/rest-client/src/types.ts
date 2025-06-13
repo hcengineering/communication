@@ -17,9 +17,8 @@ import type {
   CreateMessageOptions,
   CreateMessageResult,
   EventResult,
-  RemoveMessageOptions,
-  RequestEvent,
-  UpdateMessageOptions
+  PatchMessageOptions,
+  RequestEvent
 } from '@hcengineering/communication-sdk-types'
 import type {
   FindMessagesGroupsParams,
@@ -67,14 +66,9 @@ export interface RestClient {
     extra?: MessageExtra,
     socialId?: SocialID,
     date?: Date,
-    options?: UpdateMessageOptions
+    options?: PatchMessageOptions
   ) => Promise<void>
-  removeMessage: (
-    cardId: CardID,
-    messageId: MessageID,
-    socialId?: SocialID,
-    options?: RemoveMessageOptions
-  ) => Promise<void>
+  removeMessage: (cardId: CardID, messageId: MessageID, socialId?: SocialID) => Promise<void>
 
   attachBlob: (cardId: CardID, messageId: MessageID, data: BlobData, socialId?: SocialID, date?: Date) => Promise<void>
   detachBlob: (cardId: CardID, messageId: MessageID, blobId: BlobID, socialId?: SocialID, date?: Date) => Promise<void>

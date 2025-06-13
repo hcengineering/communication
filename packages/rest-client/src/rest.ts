@@ -20,8 +20,7 @@ import {
   type RequestEvent,
   type CreateMessageResult,
   type CreateMessageOptions,
-  type UpdateMessageOptions,
-  type RemoveMessageOptions
+  PatchMessageOptions
 } from '@hcengineering/communication-sdk-types'
 import {
   type FindMessagesGroupsParams,
@@ -40,7 +39,8 @@ import {
   type MessageType,
   type BlobID,
   type MessageExtra,
-  type BlobData
+  type BlobData,
+  PatchType
 } from '@hcengineering/communication-types'
 import { retry } from '@hcengineering/communication-shared'
 
@@ -96,7 +96,7 @@ class RestClientImpl implements RestClient {
     return (await response.json()) as EventResult
   }
 
-  async createMessage(
+  async createMessage (
     cardId: CardID,
     cardType: CardType,
     content: Markdown,
@@ -122,43 +122,39 @@ class RestClientImpl implements RestClient {
     return result as CreateMessageResult
   }
 
-  async updateMessage(
+  async updateMessage (
     cardId: CardID,
     messageId: MessageID,
     content?: Markdown,
     extra?: MessageExtra,
     socialId?: SocialID,
     date?: Date,
-    options?: UpdateMessageOptions
+    options?: PatchMessageOptions
   ): Promise<void> {
     await this.event({
-      type: MessageRequestEventType.UpdateMessage,
+      type: MessageRequestEventType.CreatePatch,
+      patchType: PatchType.update,
       cardId,
       messageId,
-      content,
-      extra,
+      data: { content, extra },
       socialId,
       date,
       options
     })
   }
 
-  async removeMessage(
-    cardId: CardID,
-    messageId: MessageID,
-    socialId?: SocialID,
-    options?: RemoveMessageOptions
-  ): Promise<void> {
+  async removeMessage (cardId: CardID, messageId: MessageID, socialId?: SocialID): Promise<void> {
     await this.event({
-      type: MessageRequestEventType.RemoveMessage,
+      type: MessageRequestEventType.CreatePatch,
+      patchType: PatchType.remove,
       cardId,
       messageId,
-      socialId,
-      options
+      data: {},
+      socialId
     })
   }
 
-  async attachBlob(
+  async attachBlob (
     cardId: CardID,
     messageId: MessageID,
     blobData: BlobData,
@@ -175,7 +171,7 @@ class RestClientImpl implements RestClient {
     })
   }
 
-  async detachBlob(
+  async detachBlob (
     cardId: CardID,
     messageId: MessageID,
     blobId: BlobID,
