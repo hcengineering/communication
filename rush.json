@@ -33,6 +33,41 @@
       "packageName": "@hcengineering/communication-sdk-types",
       "projectFolder": "packages/sdk-types",
       "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/communication-shared",
+      "projectFolder": "packages/shared",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/communication-yaml",
+      "projectFolder": "packages/yaml",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/communication-rest-client",
+      "projectFolder": "packages/rest-client",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/communication-cockroach",
+      "projectFolder": "packages/cockroach",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/communication-server",
+      "projectFolder": "packages/server",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/communication-query",
+      "projectFolder": "packages/query",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@hcengineering/communication-client-query",
+      "projectFolder": "packages/client-query",
+      "shouldPublish": false
     }
   ]
 }
