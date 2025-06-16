@@ -7,8 +7,6 @@ import type {
   MessageType,
   CardType,
   LinkPreviewID,
-  PatchType,
-  PatchData,
   MessagesGroup,
   MessageExtra,
   BlobData,
@@ -17,23 +15,15 @@ import type {
 
 import type { BaseRequestEvent } from './common'
 
-export enum MessageRequestEventType {
+export enum MessageEventType {
   // Public events
   CreateMessage = 'createMessage',
-  CreatePatch = 'createPatch',
-  // UpdateMessage = 'updateMessage',
-  // RemoveMessage = 'removeMessage',
-
-  AttachThread = 'attachThread',
-
-  SetReaction = 'setReaction',
-  RemoveReaction = 'removeReaction',
-
-  AttachBlob = 'attachBlob',
-  DetachBlob = 'removeBlob',
-
-  CreateLinkPreview = 'createLinkPreview',
-  RemoveLinkPreview = 'removeLinkPreview',
+  CreateUpdatePatch = 'createUpdatePatch',
+  CreateRemovePatch = 'createRemovePatch',
+  CreateReactionPatch = 'createReactionPatch',
+  CreateBlobPatch = 'createBlobPatch',
+  CreateThreadPatch = 'createThreadPatch',
+  CreateLinkPreviewPatch = 'createLinkPreviewPatch',
 
   // Internal events
   UpdateThread = 'updateThread',
@@ -42,19 +32,20 @@ export enum MessageRequestEventType {
   RemoveMessagesGroup = 'removeMessagesGroup'
 }
 
-export type MessageRequestEvent =
+export type MessageEvent =
   | CreateMessageEvent
-  | SetReactionEvent
-  | RemoveReactionEvent
-  | AttachBlobEvent
-  | DetachBlobEvent
-  | CreateLinkPreviewEvent
-  | RemoveLinkPreviewEvent
-  | CreatePatchEvent
-  | UpdateThreadEvent
+  | UpdateMessagePatchEvent
+  | RemoveMessagePatchEvent
+  | AddReactionPatchEvent
+  | RemoveReactionPatchEvent
+  | AttachBlobPatchEvent
+  | DetachBlobPatchEvent
+  | AttachLinkPreviewPatchEvent
+  | DetachLinkPreviewPatchEvent
+  | AttachThreadPatchEvent
+  | UpdateThreadPatchEvent
   | CreateMessagesGroupEvent
   | RemoveMessagesGroupEvent
-  | AttachThreadEvent
 
 export interface CreateMessageOptions {
   // Available for regular users (Not implemented yet)
@@ -62,7 +53,7 @@ export interface CreateMessageOptions {
   // Available only for system
   noNotify?: boolean
 }
-export interface PatchMessageOptions {
+export interface UpdatePatchOptions {
   // Available for regular users (Not implemented yet)
   skipLinkPreviewsUpdate?: boolean
   // Available only for system (Not implemented yet)
@@ -70,7 +61,7 @@ export interface PatchMessageOptions {
 }
 
 export interface CreateMessageEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.CreateMessage
+  type: MessageEventType.CreateMessage
 
   cardId: CardID
   cardType: CardType
@@ -81,55 +72,100 @@ export interface CreateMessageEvent extends BaseRequestEvent {
   content: Markdown
   extra?: MessageExtra
 
-  socialId?: SocialID
-  date?: Date
+  socialId: SocialID
+  date: Date
 
   options?: CreateMessageOptions
 }
 
-export interface CreatePatchEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.CreatePatch
+// Available for author and system
+export interface UpdateMessagePatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateUpdatePatch
+
   cardId: CardID
   messageId: MessageID
 
-  patchType: PatchType
-  data: PatchData
+  content?: Markdown
+  extra?: MessageExtra
 
-  socialId?: SocialID
-  date?: Date
+  socialId: SocialID
+  date: Date
 
-  options?: PatchMessageOptions
+  options?: UpdatePatchOptions
 }
 
-// export interface UpdateMessageEvent extends BaseRequestEvent {
-//   type: MessageRequestEventType.UpdateMessage
-//
-//   cardId: CardID
-//   messageId: MessageID
-//
-//   content?: Markdown
-//   extra?: MessageExtra
-//
-//   socialId?: SocialID
-//   date?: Date
-//
-//   options?: UpdateMessageOptions
-// }
-//
-// export interface RemoveMessageEvent extends BaseRequestEvent {
-//   type: MessageRequestEventType.RemoveMessage
-//
-//   cardId: CardID
-//   messageId: MessageID
-//
-//   socialId?: SocialID
-//   date?: Date
-//
-//   options?: RemoveMessageOptions
-// }
+// Available for author and system
+export interface RemoveMessagePatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateRemovePatch
 
-export interface AttachThreadEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.AttachThread
+  cardId: CardID
+  messageId: MessageID
+
+  socialId: SocialID
+  date: Date
+}
+
+// For  any user
+export interface AddReactionPatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateReactionPatch
+
+  cardId: CardID
+  messageId: MessageID
+
+  reaction: string
+
+  operation: 'add'
+
+  socialId: SocialID
+  date: Date
+}
+
+// for system and reaction author
+export interface RemoveReactionPatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateReactionPatch
+
+  cardId: CardID
+  messageId: MessageID
+
+  reaction: string
+
+  operation: 'remove'
+
+  socialId: SocialID
+  date: Date
+}
+
+// For system and message author
+export interface AttachBlobPatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateBlobPatch
+
+  cardId: CardID
+  messageId: MessageID
+
+  data: BlobData
+  operation: 'attach'
+
+  socialId: SocialID
+  date: Date
+}
+
+// For system and message author
+export interface DetachBlobPatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateBlobPatch
+
+  cardId: CardID
+  messageId: MessageID
+
+  blobId: BlobID
+  operation: 'detach'
+
+  socialId: SocialID
+  date: Date
+}
+
+// For any user
+interface AttachThreadPatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateThreadPatch
 
   cardId: CardID
   messageId: MessageID
@@ -137,81 +173,36 @@ export interface AttachThreadEvent extends BaseRequestEvent {
   threadId: CardID
   threadType: CardType
 
-  socialId?: SocialID
-  date?: Date
+  socialId: SocialID
+  date: Date
 }
 
-export interface SetReactionEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.SetReaction
+// For system and message author
+export interface AttachLinkPreviewPatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateLinkPreviewPatch
+  cardId: CardID
+  messageId: MessageID
+
+  linkPreviewId?: LinkPreviewID
+  linkPreviewData: LinkPreviewData
+  operation: 'attach'
+
+  socialId: SocialID
+  date: Date
+}
+
+// For system and message author
+export interface DetachLinkPreviewPatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateLinkPreviewPatch
 
   cardId: CardID
   messageId: MessageID
 
-  reaction: string
+  linkPreviewId: LinkPreviewID
+  operation: 'detach'
 
-  socialId?: SocialID
-  date?: Date
-}
-
-export interface RemoveReactionEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.RemoveReaction
-
-  cardId: CardID
-  messageId: MessageID
-
-  reaction: string
-
-  socialId?: SocialID
-  date?: Date
-}
-
-export interface AttachBlobEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.AttachBlob
-
-  cardId: CardID
-  messageId: MessageID
-
-  blobData: BlobData
-
-  socialId?: SocialID
-  date?: Date
-}
-
-export interface DetachBlobEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.DetachBlob
-
-  cardId: CardID
-  messageId: MessageID
-
-  blobId: BlobID
-
-  socialId?: SocialID
-  date?: Date
-}
-
-export interface CreateLinkPreviewEvent extends BaseRequestEvent {
-  previewId?: string
-  type: MessageRequestEventType.CreateLinkPreview
-
-  cardId: CardID
-  messageId: MessageID
-
-  previewData: LinkPreviewData
-
-  socialId?: SocialID
-  date?: Date
-}
-
-export interface RemoveLinkPreviewEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.RemoveLinkPreview
-
-  cardId: CardID
-  messageId: MessageID
-
-  previewId: LinkPreviewID
-
-  socialId?: SocialID
-  date?: Date
+  socialId: SocialID
+  date: Date
 }
 
 export interface CreateMessageResult {
@@ -227,28 +218,33 @@ export interface CreateLinkPreviewResult {
 export type MessageEventResult = CreateMessageResult | CreateLinkPreviewResult
 
 // Internal
-export interface UpdateThreadEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.UpdateThread
+
+// Only for system
+export interface UpdateThreadPatchEvent extends BaseRequestEvent {
+  type: MessageEventType.CreateThreadPatch
   cardId: CardID
   messageId: MessageID
+
+  operation: 'update'
   threadId: CardID
   updates: {
     repliesCountOp: 'increment' | 'decrement'
     lastReply?: Date
   }
+
   socialId: SocialID
   date: Date
 }
 
 export interface CreateMessagesGroupEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.CreateMessagesGroup
+  type: MessageEventType.CreateMessagesGroup
   group: MessagesGroup
   socialId: SocialID
   date?: Date
 }
 
 export interface RemoveMessagesGroupEvent extends BaseRequestEvent {
-  type: MessageRequestEventType.RemoveMessagesGroup
+  type: MessageEventType.RemoveMessagesGroup
   cardId: CardID
   blobId: BlobID
   socialId: SocialID
