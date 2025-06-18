@@ -14,10 +14,16 @@
 //
 
 import {
+  AddReactionPatchData,
+  AttachBlobsPatchData,
+  AttachLinkPreviewsPatchData,
+  AttachThreadPatchData,
   type BlobData,
   type BlobID,
   type CardID,
   type CardType,
+  DetachBlobsPatchData,
+  DetachLinkPreviewsPatchData,
   type FindMessagesGroupsParams,
   type FindMessagesParams,
   type LinkPreviewData,
@@ -28,18 +34,18 @@ import {
   type MessageID,
   type MessagesGroup,
   type MessageType,
-  type PatchData,
   PatchType,
+  RemoveReactionPatchData,
+  SetLinkPreviewsPatchData,
   type SocialID,
   SortingOrder,
-  type Thread
+  type Thread,
+  UpdateThreadPatchData
 } from '@hcengineering/communication-types'
 import type { RemoveThreadQuery, ThreadUpdates } from '@hcengineering/communication-sdk-types'
 
 import { BaseDb } from './base'
 import {
-  type FileDb,
-  type LinkPreviewDb,
   type MessageDb,
   messageSchema,
   type MessagesGroupDb,
@@ -51,6 +57,7 @@ import {
 import { getCondition } from './utils'
 import { toMessage, toMessagesGroup, toThread } from './mapping'
 import { isExternalMessageId, messageIdToDate } from '../messageId'
+import postgres from 'postgres'
 
 export class MessagesDb extends BaseDb {
   // Message
@@ -90,198 +97,417 @@ export class MessagesDb extends BaseDb {
                    VALUES (${placeholders.join(', ')})
                    RETURNING id::text, created`
 
-    if (isExternalMessageId(db.id)) {
-      return await this.getRowClient().begin(async (s) => {
-        const sql = `INSERT INTO ${TableName.MessageCreated} (workspace_id, card_id, message_id, created)
+    return await this.getRowClient().begin(async (s) => {
+      const sql = `INSERT INTO ${TableName.MessageCreated} (workspace_id, card_id, message_id, created)
                      VALUES ($1::uuid, $2::varchar, $3::int8, $4::timestamptz)
                      ON CONFLICT (workspace_id, card_id, message_id) DO NOTHING`
-        const result = await s.unsafe(sql, [this.workspace, cardId, db.id, created])
-        if (result.count === 0) {
-          return false
-        }
+      const result = await s.unsafe(sql, [this.workspace, cardId, db.id, created])
+      if (result.count === 0) {
+        return false
+      }
 
-        await s.unsafe(insertSql, values)
-        return true
-      })
-    } else {
-      await this.execute(insertSql, values, 'insert message')
+      await s.unsafe(insertSql, values)
       return true
-    }
+    })
   }
 
   async createPatch (
     cardId: CardID,
     messageId: MessageID,
-    messageCreated: Date,
     type: PatchType,
-    data: PatchData,
+    data: Record<string, any>,
     creator: SocialID,
-    created: Date
+    created: Date,
+    client?: postgres.TransactionSql
   ): Promise<void> {
-    const db: PatchDb = {
+    const db: Omit<PatchDb, 'message_created'> = {
       workspace_id: this.workspace,
       card_id: cardId,
       message_id: messageId,
       type,
       data,
       creator,
-      created,
-      message_created: messageCreated
+      created
     }
 
-    const sql = `INSERT INTO ${TableName.Patch} (workspace_id, card_id, message_id, type, data, creator, created, message_created)
-                 VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::jsonb, $6::varchar, $7::timestamptz, $8::timestamptz)`
+    const sql = `
+        INSERT INTO ${TableName.Patch} (
+            workspace_id, card_id, message_id,
+            type, data, creator, created, message_created
+        )
+        SELECT
+            $1::uuid, $2::varchar, $3::int8,
+            $4::varchar, $5::jsonb, $6::varchar, $7::timestamptz,
+            mc.created
+        FROM ${TableName.MessageCreated} mc
+        WHERE mc.workspace_id = $1::uuid
+          AND mc.card_id = $2::varchar
+          AND mc.message_id = $3::int8
+    `
 
     await this.execute(
       sql,
-      [db.workspace_id, db.card_id, db.message_id, db.type, db.data, db.creator, db.created, db.message_created],
-      'insert patch'
+      [this.workspace, db.card_id, db.message_id, db.type, db.data, db.creator, db.created],
+      'insert patch',
+      client
     )
   }
 
   // Blob
-  async attachBlob (
+  async attachBlobs (
     cardId: CardID,
     messageId: MessageID,
-    data: BlobData,
+    blobs: BlobData[],
     socialId: SocialID,
     date: Date
   ): Promise<void> {
-    const db: FileDb = {
-      workspace_id: this.workspace,
-      card_id: cardId,
-      message_id: messageId,
-      blob_id: data.blobId,
-      type: data.contentType,
-      filename: data.fileName,
-      size: data.size,
-      creator: socialId,
-      created: date,
-      meta: data.metadata
-    }
-    const sql = `INSERT INTO ${TableName.File} (workspace_id, card_id, message_id, blob_id, type, filename, creator,
-                                                created, size, meta)
-                 VALUES ($1::uuid, $2::varchar, $3::int8, $4::uuid, $5::varchar, $6::varchar, $7::varchar,
-                         $8::timestamptz, $9::int8, $10::jsonb)`
+    if (blobs.length === 0) return
 
-    await this.execute(
-      sql,
-      [
-        db.workspace_id,
-        db.card_id,
-        db.message_id,
-        db.blob_id,
-        db.type,
-        db.filename,
-        db.creator,
-        db.created,
-        db.size,
-        db.meta ?? {}
-      ],
-      'insert file'
-    )
+    const values: any[] = []
+    const placeholders: string[] = []
+
+    blobs.forEach((blob, i) => {
+      const baseIndex = i * 10
+      placeholders.push(`($${baseIndex + 1}::uuid, $${baseIndex + 2}::varchar, $${baseIndex + 3}::int8, $${baseIndex + 4}::uuid,
+                        $${baseIndex + 5}::varchar, $${baseIndex + 6}::varchar, $${baseIndex + 7}::varchar,
+                        $${baseIndex + 8}::timestamptz, $${baseIndex + 9}::int8, $${baseIndex + 10}::jsonb)`)
+
+      values.push(
+        this.workspace,
+        cardId,
+        messageId,
+        blob.blobId,
+        blob.mimeType,
+        blob.fileName,
+        socialId,
+        date,
+        blob.size,
+        blob.metadata ?? {}
+      )
+    })
+
+    const insertSql = `
+            INSERT INTO ${TableName.File} (workspace_id, card_id, message_id, blob_id,
+                                           type, filename, creator, created, size, meta)
+            VALUES ${placeholders.join(', ')}`
+
+    const inDb = await this.isMessageInDb(cardId, messageId)
+    if (!inDb) {
+      await this.getRowClient().begin(async (s) => {
+        await this.execute(insertSql, values, 'insert files', s)
+
+        const data: AttachBlobsPatchData = {
+          operation: 'attach',
+          blobs
+        }
+        await this.createPatch(cardId, messageId, PatchType.blob, data, socialId, date, s)
+        return true
+      })
+    } else {
+      await this.execute(insertSql, values, 'insert files')
+    }
   }
 
-  async detachBlob (
+  async detachBlobs (
     cardId: CardID,
     messageId: MessageID,
-    blobId: BlobID,
+    blobIds: BlobID[],
     socialId: SocialID,
     date: Date
   ): Promise<void> {
-    const sql = `DELETE
-                 FROM ${TableName.File}
-                 WHERE workspace_id = $1::uuid
-                   AND card_id = $2::varchar
-                   AND message_id = $3::int8
-                   AND blob_id = $4::uuid`
+    if (blobIds.length === 0) return
 
-    await this.execute(sql, [this.workspace, cardId, messageId, blobId], 'remove files')
+    const sql = `
+        DELETE FROM ${TableName.File}
+        WHERE workspace_id = $1::uuid
+          AND card_id = $2::varchar
+          AND message_id = $3::int8
+          AND blob_id = ANY($4::uuid[])
+    `
+
+    const inDb = await this.isMessageInDb(cardId, messageId)
+    if (!inDb) {
+      await this.getRowClient().begin(async (s) => {
+        await this.execute(sql, [this.workspace, cardId, messageId, blobIds], 'remove files', s)
+
+        const data: DetachBlobsPatchData = {
+          operation: 'detach',
+          blobIds
+        }
+        await this.createPatch(cardId, messageId, PatchType.blob, data, socialId, date, s)
+        return true
+      })
+    } else {
+      await this.execute(sql, [this.workspace, cardId, messageId, blobIds], 'remove files')
+    }
   }
 
-  async createLinkPreview (
+  async setBlobs (
     cardId: CardID,
     messageId: MessageID,
-    data: LinkPreviewData,
+    blobs: BlobData[],
     socialId: SocialID,
     date: Date
-  ): Promise<LinkPreviewID> {
-    const db: Omit<LinkPreviewDb, 'id'> = {
-      workspace_id: this.workspace,
-      card_id: cardId,
-      message_id: messageId,
-      url: data.url,
-      host: data.host,
-      title: data.title ?? null,
-      description: data.description ?? null,
-      favicon: data.iconUrl ?? null,
-      hostname: data.siteName ?? null,
-      image: data.previewImage ?? null,
-      creator: socialId,
-      created: date
-    }
-    const sql = `INSERT INTO ${TableName.LinkPreview} (workspace_id, card_id, message_id, url, host, title, description,
-                                                       favicon, hostname, image, creator, created)
-                 VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::varchar, $6::varchar, $7::varchar,
-                         $8::varchar, $9::varchar, $10::jsonb, $11::varchar, $12::timestamptz)
-                 RETURNING id::text`
-    const result = await this.execute(
-      sql,
-      [
-        db.workspace_id,
-        db.card_id,
-        db.message_id,
-        db.url,
-        db.host,
-        db.title,
-        db.description,
-        db.favicon,
-        db.hostname,
-        db.image,
-        db.creator,
-        db.created
-      ],
-      'insert link preview'
-    )
+  ): Promise<void> {
+    if (blobs.length === 0) return
 
-    return result[0].id as LinkPreviewID
+    const values: any[] = []
+    const placeholders: string[] = []
+
+    blobs.forEach((blob, i) => {
+      const baseIndex = i * 10
+      placeholders.push(`($${baseIndex + 1}::uuid, $${baseIndex + 2}::varchar, $${baseIndex + 3}::int8, $${baseIndex + 4}::uuid,
+                        $${baseIndex + 5}::varchar, $${baseIndex + 6}::varchar, $${baseIndex + 7}::varchar,
+                        $${baseIndex + 8}::timestamptz, $${baseIndex + 9}::int8, $${baseIndex + 10}::jsonb)`)
+
+      values.push(
+        this.workspace,
+        cardId,
+        messageId,
+        blob.blobId,
+        blob.mimeType,
+        blob.fileName,
+        socialId,
+        date,
+        blob.size,
+        blob.metadata ?? {}
+      )
+    })
+
+    const insertSql = `
+            INSERT INTO ${TableName.File} (workspace_id, card_id, message_id, blob_id,
+                                           type, filename, creator, created, size, meta)
+            VALUES ${placeholders.join(', ')}`
+    const deleteSql = `
+        DELETE FROM ${TableName.File}
+        WHERE workspace_id = $1::uuid
+          AND card_id = $2::varchar
+          AND message_id = $3::int8
+    `
+    await this.getRowClient().begin(async (s) => {
+      await this.execute(deleteSql, [this.workspace, cardId, messageId], 'delete blobs', s)
+      await this.execute(insertSql, values, 'insert blobs', s)
+
+      const data: AttachBlobsPatchData = {
+        operation: 'attach',
+        blobs
+      }
+
+      await this.createPatch(cardId, messageId, PatchType.blob, data, socialId, date, s)
+
+      return true
+    })
   }
 
-  async removeLinkPreview (cardId: CardID, messageId: MessageID, previewId: LinkPreviewID): Promise<void> {
-    const sql = `DELETE
-                 FROM ${TableName.LinkPreview}
-                 WHERE workspace_id = $1::uuid
-                   AND card_id = $2::varchar
-                   AND message_id = $3::int8
-                   AND id = $4::int8`
-    await this.execute(sql, [this.workspace, cardId, messageId, previewId], 'remove link preview')
+  async attachLinkPreviews (
+    cardId: CardID,
+    messageId: MessageID,
+    previews: (LinkPreviewData & { previewId: LinkPreviewID })[],
+    socialId: SocialID,
+    date: Date
+  ): Promise<void> {
+    if (previews.length === 0) return
+
+    const values: any[] = []
+    const placeholders: string[] = []
+
+    previews.forEach((preview, i) => {
+      const base = i * 12
+      placeholders.push(`($${base + 1}::uuid, $${base + 2}::varchar, $${base + 3}::int8, $${base + 4}::varchar,
+                        $${base + 5}::varchar, $${base + 6}::varchar, $${base + 7}::varchar,
+                        $${base + 8}::varchar, $${base + 9}::varchar, $${base + 10}::jsonb,
+                        $${base + 11}::varchar, $${base + 12}::timestamptz), $${base + 13}::int8)`)
+
+      values.push(
+        this.workspace,
+        cardId,
+        messageId,
+        preview.url,
+        preview.host,
+        preview.title ?? null,
+        preview.description ?? null,
+        preview.iconUrl ?? null,
+        preview.siteName ?? null,
+        preview.previewImage ?? null,
+        socialId,
+        date,
+        preview.previewId
+      )
+    })
+
+    const insertSql = `
+    INSERT INTO ${TableName.LinkPreview} (
+      workspace_id, card_id, message_id, url, host, title, description,
+      favicon, hostname, image, creator, created, id
+    ) VALUES ${placeholders.join(', ')}`
+
+    const inDb = await this.isMessageInDb(cardId, messageId)
+    if (!inDb) {
+      await this.getRowClient().begin(async (s) => {
+        await this.execute(insertSql, values, 'insert link previews', s)
+
+        const data: AttachLinkPreviewsPatchData = {
+          operation: 'attach',
+          previews
+        }
+        await this.createPatch(cardId, messageId, PatchType.linkPreview, data, socialId, date, s)
+      })
+    } else {
+      await this.execute(insertSql, values, 'insert link previews')
+    }
+  }
+
+  async detachLinkPreviews (
+    cardId: CardID,
+    messageId: MessageID,
+    previewIds: LinkPreviewID[],
+    socialId: SocialID,
+    date: Date
+  ): Promise<void> {
+    if (previewIds.length === 0) return
+
+    const sql =
+      previewIds.length > 1
+        ? `
+        DELETE FROM ${TableName.LinkPreview}
+        WHERE workspace_id = $1::uuid
+          AND card_id = $2::varchar
+          AND message_id = $3::int8
+          AND id = ANY($4::int8[])
+      `
+        : `
+        DELETE FROM ${TableName.LinkPreview}
+        WHERE workspace_id = $1::uuid
+          AND card_id = $2::varchar
+          AND message_id = $3::int8
+          AND id = $4::int8
+    `
+
+    const inDb = await this.isMessageInDb(cardId, messageId)
+
+    if (!inDb) {
+      await this.getRowClient().begin(async (s) => {
+        await this.execute(
+          sql,
+          [this.workspace, cardId, messageId, previewIds.length === 1 ? previewIds[0] : previewIds],
+          'remove link previews',
+          s
+        )
+
+        const data: DetachLinkPreviewsPatchData = {
+          operation: 'detach',
+          previewIds
+        }
+
+        await this.createPatch(cardId, messageId, PatchType.linkPreview, data, socialId, date, s)
+
+        return true
+      })
+    } else {
+      await this.execute(
+        sql,
+        [this.workspace, cardId, messageId, previewIds.length === 1 ? previewIds[0] : previewIds],
+        'remove link previews'
+      )
+    }
+  }
+
+  public async setLinkPreviews (
+    cardId: CardID,
+    messageId: MessageID,
+    previews: (LinkPreviewData & { previewId: LinkPreviewID })[],
+    socialId: SocialID,
+    date: Date
+  ): Promise<void> {
+    if (previews.length === 0) return
+    const deleteSql = `
+    DELETE FROM ${TableName.LinkPreview}
+    WHERE workspace_id = $1::uuid
+      AND card_id = $2::varchar
+      AND message_id = $3::int8
+  `
+
+    const values: any[] = []
+    const placeholders: string[] = []
+
+    previews.forEach((preview, i) => {
+      const base = i * 12
+      placeholders.push(`($${base + 1}::uuid, $${base + 2}::varchar, $${base + 3}::int8, $${base + 4}::varchar,
+                        $${base + 5}::varchar, $${base + 6}::varchar, $${base + 7}::varchar,
+                        $${base + 8}::varchar, $${base + 9}::varchar, $${base + 10}::jsonb,
+                        $${base + 11}::varchar, $${base + 12}::timestamptz), $${base + 13}::int8)`)
+
+      values.push(
+        this.workspace,
+        cardId,
+        messageId,
+        preview.url,
+        preview.host,
+        preview.title ?? null,
+        preview.description ?? null,
+        preview.iconUrl ?? null,
+        preview.siteName ?? null,
+        preview.previewImage ?? null,
+        socialId,
+        date,
+        preview.previewId
+      )
+    })
+
+    const insertSql = `INSERT INTO ${TableName.LinkPreview} (
+      workspace_id, card_id, message_id, url, host, title, description,
+      favicon, hostname, image, creator, created, id
+    ) VALUES ${placeholders.join(', ')} `
+
+    await this.getRowClient().begin(async (s) => {
+      await this.execute(deleteSql, [this.workspace, cardId, messageId], 'delete link previews', s)
+      await this.execute(insertSql, values, 'insert new link previews', s)
+
+      const data: SetLinkPreviewsPatchData = {
+        operation: 'set',
+        previews
+      }
+
+      await this.createPatch(cardId, messageId, PatchType.linkPreview, data, socialId, date, s)
+
+      return true
+    })
   }
 
   // Reaction
-  async setReaction (
+  async addReaction (
     cardId: CardID,
     messageId: MessageID,
     reaction: string,
     creator: SocialID,
     created: Date
   ): Promise<void> {
-    const db: ReactionDb = {
-      workspace_id: this.workspace,
-      card_id: cardId,
-      message_id: messageId,
-      reaction,
-      creator,
-      created
-    }
-    const sql = `INSERT INTO ${TableName.Reaction} (workspace_id, card_id, message_id, reaction, creator, created)
+    const inDb = await this.isMessageInDb(cardId, messageId)
+    if (inDb) {
+      const db: ReactionDb = {
+        workspace_id: this.workspace,
+        card_id: cardId,
+        message_id: messageId,
+        reaction,
+        creator,
+        created
+      }
+      const sql = `INSERT INTO ${TableName.Reaction} (workspace_id, card_id, message_id, reaction, creator, created)
                    VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::varchar, $6::timestamptz)
                    ON CONFLICT DO NOTHING`
 
-    await this.execute(
-      sql,
-      [db.workspace_id, db.card_id, db.message_id, db.reaction, db.creator, db.created],
-      'insert reaction'
-    )
+      await this.execute(
+        sql,
+        [db.workspace_id, db.card_id, db.message_id, db.reaction, db.creator, db.created],
+        'insert reaction'
+      )
+    } else {
+      const data: AddReactionPatchData = {
+        operation: 'add',
+        reaction
+      }
+      await this.createPatch(cardId, messageId, PatchType.reaction, data, creator, created)
+    }
   }
 
   async removeReaction (
@@ -291,14 +517,23 @@ export class MessagesDb extends BaseDb {
     socialId: SocialID,
     date: Date
   ): Promise<void> {
-    const sql = `DELETE
+    const inDb = await this.isMessageInDb(cardId, messageId)
+    if (inDb) {
+      const sql = `DELETE
                    FROM ${TableName.Reaction}
                    WHERE workspace_id = $1::uuid
                      AND card_id = $2::varchar
                      AND message_id = $3::int8
                      AND reaction = $4::varchar
                      AND creator = $5::varchar`
-    await this.execute(sql, [this.workspace, cardId, messageId, reaction, socialId], 'remove reaction')
+      await this.execute(sql, [this.workspace, cardId, messageId, reaction, socialId], 'remove reaction')
+    } else {
+      const data: RemoveReactionPatchData = {
+        operation: 'remove',
+        reaction
+      }
+      await this.createPatch(cardId, messageId, PatchType.reaction, data, socialId, date)
+    }
   }
 
   // Thread
@@ -307,6 +542,7 @@ export class MessagesDb extends BaseDb {
     messageId: MessageID,
     threadId: CardID,
     threadType: CardType,
+    socialId: SocialID,
     date: Date
   ): Promise<void> {
     const db: ThreadDb = {
@@ -322,37 +558,43 @@ export class MessagesDb extends BaseDb {
                                                   replies_count,
                                                   last_reply)
                  VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::varchar, $6::int, $7::timestamptz)`
-    await this.execute(
-      sql,
-      [db.workspace_id, db.card_id, db.message_id, db.thread_id, db.thread_type, db.replies_count, db.last_reply],
-      'insert thread'
-    )
-  }
 
-  async removeThreads (query: RemoveThreadQuery): Promise<void> {
-    const db: Partial<ThreadDb> = {
-      card_id: query.cardId,
-      message_id: query.messageId,
-      thread_id: query.threadId
+    const inDb = await this.isMessageInDb(cardId, messageId)
+    if (!inDb) {
+      await this.getRowClient().begin(async (s) => {
+        await this.execute(
+          sql,
+          [db.workspace_id, db.card_id, db.message_id, db.thread_id, db.thread_type, db.replies_count, db.last_reply],
+          'insert thread',
+          s
+        )
+
+        const data: AttachThreadPatchData = {
+          operation: 'attach',
+          threadId,
+          threadType
+        }
+        await this.createPatch(cardId, messageId, PatchType.thread, data, socialId, date, s)
+
+        return true
+      })
+    } else {
+      await this.execute(
+        sql,
+        [db.workspace_id, db.card_id, db.message_id, db.thread_id, db.thread_type, db.replies_count, db.last_reply],
+        'insert thread'
+      )
     }
-
-    const entries = Object.entries(db).filter(([_, value]) => value !== undefined)
-
-    if (entries.length === 0) return
-
-    entries.unshift(['workspace_id', this.workspace])
-
-    const whereClauses = entries.map(([key], index) => `${key} = $${index + 1}`)
-    const whereValues = entries.map(([_, value]) => value)
-
-    const sql = `DELETE
-                 FROM ${TableName.Thread}
-                 WHERE ${whereClauses.join(' AND ')}`
-
-    await this.execute(sql, whereValues, 'remove threads')
   }
 
-  async updateThread (threadId: CardID, update: ThreadUpdates): Promise<void> {
+  async updateThread (
+    cardId: CardID,
+    messageId: MessageID,
+    threadId: CardID,
+    update: ThreadUpdates,
+    socialId: SocialID,
+    date: Date
+  ): Promise<void> {
     const set: string[] = []
     const values: any[] = []
 
@@ -377,9 +619,50 @@ export class MessagesDb extends BaseDb {
 
     const updateSql = `UPDATE ${TableName.Thread}`
     const setSql = 'SET ' + set.join(', ')
-    const where = `WHERE workspace_id = $${index++}::uuid AND thread_id = $${index++}::varchar`
+    const where = `WHERE workspace_id = $${index++}::uuid AND thread_id = $${index++}::varchar AND card_id = $${index++}::varchar AND message_id = $${index++}::int8`
     const sql = [updateSql, setSql, where].join(' ')
-    await this.execute(sql, [...values, this.workspace, threadId], 'update thread')
+
+    const inDb = await this.isMessageInDb(cardId, messageId)
+
+    if (!inDb) {
+      await this.getRowClient().begin(async (s) => {
+        await this.execute(sql, [...values, this.workspace, threadId, cardId, messageId], 'update thread', s)
+
+        const data: UpdateThreadPatchData = {
+          operation: 'update',
+          threadId,
+          repliesCountOp: update.repliesCountOp
+        }
+        await this.createPatch(cardId, messageId, PatchType.thread, data, socialId, date, s)
+
+        return true
+      })
+    } else {
+      await this.execute(sql, [...values, this.workspace, threadId, cardId, messageId], 'update thread')
+    }
+  }
+
+  async removeThreads (query: RemoveThreadQuery): Promise<void> {
+    const db: Partial<ThreadDb> = {
+      card_id: query.cardId,
+      message_id: query.messageId,
+      thread_id: query.threadId
+    }
+
+    const entries = Object.entries(db).filter(([_, value]) => value !== undefined)
+
+    if (entries.length === 0) return
+
+    entries.unshift(['workspace_id', this.workspace])
+
+    const whereClauses = entries.map(([key], index) => `${key} = $${index + 1}`)
+    const whereValues = entries.map(([_, value]) => value)
+
+    const sql = `DELETE
+                 FROM ${TableName.Thread}
+                 WHERE ${whereClauses.join(' AND ')}`
+
+    await this.execute(sql, whereValues, 'remove threads')
   }
 
   // MessagesGroup

@@ -148,7 +148,7 @@ export function toReaction (raw: ReactionDb): Reaction {
 export function toBlob (raw: Omit<FileDb, 'workspace_id'>): AttachedBlob {
   return {
     blobId: raw.blob_id,
-    contentType: raw.type,
+    mimeType: raw.type,
     fileName: raw.filename,
     size: Number(raw.size),
     metadata: raw.meta,

@@ -133,14 +133,19 @@ export class NotificationsDb extends BaseDb {
     return result[0].id as NotificationID
   }
 
-  async updateNotification (query: UpdateNotificationQuery, updates: NotificationUpdates): Promise<void> {
+  async updateNotification (
+    contextId: ContextID,
+    account: AccountID,
+    query: UpdateNotificationQuery,
+    updates: NotificationUpdates
+  ): Promise<void> {
     const where: string[] = [
       'nc.workspace_id = $1::uuid',
       'nc.id = $2::int8',
       'nc.account = $3::uuid',
       'nc.id = n.context_id'
     ]
-    const values: any[] = [this.workspace, query.context, query.account]
+    const values: any[] = [this.workspace, contextId, account]
     let index = values.length + 1
 
     if (query.id != null) {
@@ -153,12 +158,13 @@ export class NotificationsDb extends BaseDb {
       values.push(query.type)
     }
 
-    const createdCondition = getCondition('n', 'created', index, query.created, 'timestamptz')
-
-    if (createdCondition != null) {
-      where.push(createdCondition.where)
-      values.push(...createdCondition.values)
-      index = createdCondition.index
+    if (query.untilDate != null) {
+      const createdCondition = getCondition('n', 'created', index, { lessOrEqual: query.untilDate }, 'timestamptz')
+      if (createdCondition != null) {
+        where.push(createdCondition.where)
+        values.push(...createdCondition.values)
+        index = createdCondition.index
+      }
     }
 
     const whereClause = `WHERE ${where.join(' AND ')}`
@@ -230,14 +236,17 @@ export class NotificationsDb extends BaseDb {
     return result[0].id as ContextID
   }
 
-  async removeContext (contextId: ContextID, account: AccountID): Promise<void> {
+  async removeContext (contextId: ContextID, account: AccountID): Promise<ContextID | undefined> {
     const sql = `DELETE
                  FROM ${TableName.NotificationContext}
                  WHERE workspace_id = $1::uuid
                    AND id = $2::int8
-                   AND account = $3::uuid`
+                   AND account = $3::uuid
+                 RETURNING id::text`
 
-    await this.execute(sql, [this.workspace, contextId, account], 'remove notification context')
+    const result = await this.execute(sql, [this.workspace, contextId, account], 'remove notification context')
+
+    return result[0].id as ContextID
   }
 
   async updateContext (context: ContextID, account: AccountID, updates: NotificationContextUpdates): Promise<void> {

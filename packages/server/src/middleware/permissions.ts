@@ -15,10 +15,10 @@
 
 import {
   type DbAdapter,
+  type Event,
   type EventResult,
-  MessageRequestEventType,
-  NotificationRequestEventType,
-  type RequestEvent,
+  MessageEventType,
+  NotificationEventType,
   type SessionData
 } from '@hcengineering/communication-sdk-types'
 import { systemAccountUuid } from '@hcengineering/core'
@@ -37,23 +37,30 @@ export class PermissionsMiddleware extends BaseMiddleware implements Middleware 
     super(context, next)
   }
 
-  async event (session: SessionData, event: Enriched<RequestEvent>, derived: boolean): Promise<EventResult> {
+  async event (session: SessionData, event: Enriched<Event>, derived: boolean): Promise<EventResult> {
     if (derived) return await this.provideEvent(session, event, derived)
 
-    this.checkSocialId(session, event.socialId)
-
     switch (event.type) {
-      case NotificationRequestEventType.RemoveNotifications:
-      case NotificationRequestEventType.UpdateNotificationContext:
-      case NotificationRequestEventType.RemoveNotificationContext: {
+      case MessageEventType.CreateMessage:
+      case MessageEventType.RemovePatch:
+      case MessageEventType.UpdatePatch:
+      case MessageEventType.BlobPatch:
+      case MessageEventType.LinkPreviewPatch:
+      case MessageEventType.ReactionPatch:
+      case MessageEventType.ThreadPatch:
+      case NotificationEventType.AddCollaborators:
+      case NotificationEventType.RemoveCollaborators:
+        this.checkSocialId(session, event.socialId)
+        break
+      case NotificationEventType.RemoveNotifications:
+      case NotificationEventType.UpdateNotificationContext:
+      case NotificationEventType.UpdateNotification:
+      case NotificationEventType.RemoveNotificationContext: {
         this.checkAccount(session, event.account)
         break
       }
-      case NotificationRequestEventType.UpdateNotification:
-        this.checkAccount(session, event.query.account)
-        break
-      case MessageRequestEventType.CreateMessagesGroup:
-      case MessageRequestEventType.RemoveMessagesGroup: {
+      case MessageEventType.CreateMessagesGroup:
+      case MessageEventType.RemoveMessagesGroup: {
         this.onlySystemAccount(session)
         break
       }
