@@ -32,7 +32,7 @@ import {
 } from '@hcengineering/communication-types'
 
 import { BaseDb } from './base'
-import { type CollaboratorDb, type ContextDb, type NotificationDb, TableName } from './schema'
+import { type CollaboratorDb, type ContextDb, type NotificationDb, TableName } from '../schema'
 import { getCondition } from './utils'
 import { toCollaborator, toNotification, toNotificationContext } from './mapping'
 import type {
@@ -66,7 +66,7 @@ export class NotificationsDb extends BaseDb {
   }
 
   async removeCollaborators (card: CardID, accounts: AccountID[], unsafe = false): Promise<void> {
-    if (accounts === undefined && unsafe) {
+    if (accounts.length === 0 && unsafe) {
       const sql = `DELETE FROM ${TableName.Collaborators} WHERE workspace_id = $1::uuid AND card_id = $2::varchar`
       await this.execute(sql, [this.workspace, card], 'remove collaborators')
     } else if (accounts.length === 1) {
@@ -123,7 +123,7 @@ export class NotificationsDb extends BaseDb {
       content: content ?? {}
     }
     const sql = `INSERT INTO ${TableName.Notification} (message_id, message_created, context_id, read, created, type, content)
-                     VALUES ($1::int8, $2::timestamptz, $3::int8, $4::boolean, $5::timestamptz, $6::varchar, $7::jsonb)
+                     VALUES ($1::varchar, $2::timestamptz, $3::int8, $4::boolean, $5::timestamptz, $6::varchar, $7::jsonb)
                      RETURNING id::text`
     const result = await this.execute(
       sql,
@@ -656,7 +656,7 @@ export class NotificationsDb extends BaseDb {
     }
 
     if (params.messageId != null) {
-      where.push(`n.message_id = $${index++}::int8`)
+      where.push(`n.message_id = $${index++}::varchar`)
       values.push(params.messageId)
     }
 

@@ -51,7 +51,7 @@ import type {
   DbAdapter,
   LabelUpdates,
   NotificationContextUpdates,
-  NotificationUpdates, RemoveLabelQuery, RemoveThreadQuery,
+  NotificationUpdates, RemoveLabelQuery, ThreadQuery,
   ThreadUpdates,
   UpdateNotificationQuery
 } from '@hcengineering/communication-sdk-types'
@@ -201,7 +201,7 @@ export class CockroachAdapter implements DbAdapter {
     await this.message.updateThread(cardId, messageId, threadId, update, socialId, date)
   }
 
-  async removeThreads (query: RemoveThreadQuery): Promise<void> {
+  async removeThreads (query: ThreadQuery): Promise<void> {
     await this.message.removeThreads(query)
   }
 

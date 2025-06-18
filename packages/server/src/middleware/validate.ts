@@ -169,7 +169,7 @@ const BlobDataSchema = z.object({
 
 const LinkPreviewDataSchema = z
   .object({
-    linkPreviewId: LinkPreviewIDSchema,
+    previewId: LinkPreviewIDSchema,
     url: z.string(),
     host: z.string(),
     title: z.string().optional(),
@@ -268,7 +268,7 @@ const CreateMessageEventSchema = BaseEventSchema.extend({
   cardId: CardIDSchema,
   cardType: CardTypeSchema,
 
-  messageId: MessageIDSchema.optional(),
+  messageId: MessageIDSchema.min(3).max(22).optional(),
   messageType: MessageTypeSchema,
 
   content: MarkdownSchema,
@@ -352,7 +352,7 @@ const ThreadPatchEventSchema = BaseEventSchema.extend({
 
 const LinkPreviewOperationSchema = z.union([
   z.object({ opcode: z.literal('attach'), previews: z.array(LinkPreviewDataSchema).nonempty() }),
-  z.object({ opcode: z.literal('detach'), linkPreviewIds: z.array(LinkPreviewIDSchema).nonempty() }),
+  z.object({ opcode: z.literal('detach'), previewIds: z.array(LinkPreviewIDSchema).nonempty() }),
   z.object({ opcode: z.literal('set'), previews: z.array(LinkPreviewDataSchema).nonempty() })
 ])
 

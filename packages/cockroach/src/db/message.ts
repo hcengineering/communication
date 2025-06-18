@@ -42,7 +42,8 @@ import {
   type Thread,
   UpdateThreadPatchData
 } from '@hcengineering/communication-types'
-import type { RemoveThreadQuery, ThreadUpdates } from '@hcengineering/communication-sdk-types'
+import type { ThreadUpdates, ThreadQuery } from '@hcengineering/communication-sdk-types'
+import postgres from 'postgres'
 
 import { BaseDb } from './base'
 import {
@@ -53,11 +54,9 @@ import {
   type ReactionDb,
   TableName,
   type ThreadDb
-} from './schema'
+} from '../schema'
 import { getCondition } from './utils'
 import { toMessage, toMessagesGroup, toThread } from './mapping'
-import { isExternalMessageId, messageIdToDate } from '../messageId'
-import postgres from 'postgres'
 
 export class MessagesDb extends BaseDb {
   // Message
@@ -99,7 +98,7 @@ export class MessagesDb extends BaseDb {
 
     return await this.getRowClient().begin(async (s) => {
       const sql = `INSERT INTO ${TableName.MessageCreated} (workspace_id, card_id, message_id, created)
-                     VALUES ($1::uuid, $2::varchar, $3::int8, $4::timestamptz)
+                     VALUES ($1::uuid, $2::varchar, $3::varchar, $4::timestamptz)
                      ON CONFLICT (workspace_id, card_id, message_id) DO NOTHING`
       const result = await s.unsafe(sql, [this.workspace, cardId, db.id, created])
       if (result.count === 0) {
@@ -136,13 +135,13 @@ export class MessagesDb extends BaseDb {
             type, data, creator, created, message_created
         )
         SELECT
-            $1::uuid, $2::varchar, $3::int8,
+            $1::uuid, $2::varchar, $3::varchar,
             $4::varchar, $5::jsonb, $6::varchar, $7::timestamptz,
             mc.created
         FROM ${TableName.MessageCreated} mc
         WHERE mc.workspace_id = $1::uuid
           AND mc.card_id = $2::varchar
-          AND mc.message_id = $3::int8
+          AND mc.message_id = $3::varchar
     `
 
     await this.execute(
@@ -168,7 +167,7 @@ export class MessagesDb extends BaseDb {
 
     blobs.forEach((blob, i) => {
       const baseIndex = i * 10
-      placeholders.push(`($${baseIndex + 1}::uuid, $${baseIndex + 2}::varchar, $${baseIndex + 3}::int8, $${baseIndex + 4}::uuid,
+      placeholders.push(`($${baseIndex + 1}::uuid, $${baseIndex + 2}::varchar, $${baseIndex + 3}::varchar, $${baseIndex + 4}::uuid,
                         $${baseIndex + 5}::varchar, $${baseIndex + 6}::varchar, $${baseIndex + 7}::varchar,
                         $${baseIndex + 8}::timestamptz, $${baseIndex + 9}::int8, $${baseIndex + 10}::jsonb)`)
 
@@ -221,7 +220,7 @@ export class MessagesDb extends BaseDb {
         DELETE FROM ${TableName.File}
         WHERE workspace_id = $1::uuid
           AND card_id = $2::varchar
-          AND message_id = $3::int8
+          AND message_id = $3::varchar
           AND blob_id = ANY($4::uuid[])
     `
 
@@ -256,7 +255,7 @@ export class MessagesDb extends BaseDb {
 
     blobs.forEach((blob, i) => {
       const baseIndex = i * 10
-      placeholders.push(`($${baseIndex + 1}::uuid, $${baseIndex + 2}::varchar, $${baseIndex + 3}::int8, $${baseIndex + 4}::uuid,
+      placeholders.push(`($${baseIndex + 1}::uuid, $${baseIndex + 2}::varchar, $${baseIndex + 3}::varchar, $${baseIndex + 4}::uuid,
                         $${baseIndex + 5}::varchar, $${baseIndex + 6}::varchar, $${baseIndex + 7}::varchar,
                         $${baseIndex + 8}::timestamptz, $${baseIndex + 9}::int8, $${baseIndex + 10}::jsonb)`)
 
@@ -282,7 +281,7 @@ export class MessagesDb extends BaseDb {
         DELETE FROM ${TableName.File}
         WHERE workspace_id = $1::uuid
           AND card_id = $2::varchar
-          AND message_id = $3::int8
+          AND message_id = $3::varchar
     `
     await this.getRowClient().begin(async (s) => {
       await this.execute(deleteSql, [this.workspace, cardId, messageId], 'delete blobs', s)
@@ -313,10 +312,10 @@ export class MessagesDb extends BaseDb {
 
     previews.forEach((preview, i) => {
       const base = i * 12
-      placeholders.push(`($${base + 1}::uuid, $${base + 2}::varchar, $${base + 3}::int8, $${base + 4}::varchar,
+      placeholders.push(`($${base + 1}::uuid, $${base + 2}::varchar, $${base + 3}::varchar, $${base + 4}::varchar,
                         $${base + 5}::varchar, $${base + 6}::varchar, $${base + 7}::varchar,
                         $${base + 8}::varchar, $${base + 9}::varchar, $${base + 10}::jsonb,
-                        $${base + 11}::varchar, $${base + 12}::timestamptz), $${base + 13}::int8)`)
+                        $${base + 11}::varchar, $${base + 12}::timestamptz, $${base + 13}::int8)`)
 
       values.push(
         this.workspace,
@@ -372,14 +371,14 @@ export class MessagesDb extends BaseDb {
         DELETE FROM ${TableName.LinkPreview}
         WHERE workspace_id = $1::uuid
           AND card_id = $2::varchar
-          AND message_id = $3::int8
+          AND message_id = $3::varchar
           AND id = ANY($4::int8[])
       `
         : `
         DELETE FROM ${TableName.LinkPreview}
         WHERE workspace_id = $1::uuid
           AND card_id = $2::varchar
-          AND message_id = $3::int8
+          AND message_id = $3::varchar
           AND id = $4::int8
     `
 
@@ -424,7 +423,7 @@ export class MessagesDb extends BaseDb {
     DELETE FROM ${TableName.LinkPreview}
     WHERE workspace_id = $1::uuid
       AND card_id = $2::varchar
-      AND message_id = $3::int8
+      AND message_id = $3::varchar
   `
 
     const values: any[] = []
@@ -432,10 +431,10 @@ export class MessagesDb extends BaseDb {
 
     previews.forEach((preview, i) => {
       const base = i * 12
-      placeholders.push(`($${base + 1}::uuid, $${base + 2}::varchar, $${base + 3}::int8, $${base + 4}::varchar,
+      placeholders.push(`($${base + 1}::uuid, $${base + 2}::varchar, $${base + 3}::varchar, $${base + 4}::varchar,
                         $${base + 5}::varchar, $${base + 6}::varchar, $${base + 7}::varchar,
                         $${base + 8}::varchar, $${base + 9}::varchar, $${base + 10}::jsonb,
-                        $${base + 11}::varchar, $${base + 12}::timestamptz), $${base + 13}::int8)`)
+                        $${base + 11}::varchar, $${base + 12}::timestamptz, $${base + 13}::int8)`)
 
       values.push(
         this.workspace,
@@ -493,7 +492,7 @@ export class MessagesDb extends BaseDb {
         created
       }
       const sql = `INSERT INTO ${TableName.Reaction} (workspace_id, card_id, message_id, reaction, creator, created)
-                   VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::varchar, $6::timestamptz)
+                   VALUES ($1::uuid, $2::varchar, $3::varchar, $4::varchar, $5::varchar, $6::timestamptz)
                    ON CONFLICT DO NOTHING`
 
       await this.execute(
@@ -523,7 +522,7 @@ export class MessagesDb extends BaseDb {
                    FROM ${TableName.Reaction}
                    WHERE workspace_id = $1::uuid
                      AND card_id = $2::varchar
-                     AND message_id = $3::int8
+                     AND message_id = $3::varchar
                      AND reaction = $4::varchar
                      AND creator = $5::varchar`
       await this.execute(sql, [this.workspace, cardId, messageId, reaction, socialId], 'remove reaction')
@@ -557,7 +556,7 @@ export class MessagesDb extends BaseDb {
     const sql = `INSERT INTO ${TableName.Thread} (workspace_id, card_id, message_id, thread_id, thread_type,
                                                   replies_count,
                                                   last_reply)
-                 VALUES ($1::uuid, $2::varchar, $3::int8, $4::varchar, $5::varchar, $6::int, $7::timestamptz)`
+                 VALUES ($1::uuid, $2::varchar, $3::varchar, $4::varchar, $5::varchar, $6::int, $7::timestamptz)`
 
     const inDb = await this.isMessageInDb(cardId, messageId)
     if (!inDb) {
@@ -619,7 +618,7 @@ export class MessagesDb extends BaseDb {
 
     const updateSql = `UPDATE ${TableName.Thread}`
     const setSql = 'SET ' + set.join(', ')
-    const where = `WHERE workspace_id = $${index++}::uuid AND thread_id = $${index++}::varchar AND card_id = $${index++}::varchar AND message_id = $${index++}::int8`
+    const where = `WHERE workspace_id = $${index++}::uuid AND thread_id = $${index++}::varchar AND card_id = $${index++}::varchar AND message_id = $${index++}::varchar`
     const sql = [updateSql, setSql, where].join(' ')
 
     const inDb = await this.isMessageInDb(cardId, messageId)
@@ -631,7 +630,9 @@ export class MessagesDb extends BaseDb {
         const data: UpdateThreadPatchData = {
           operation: 'update',
           threadId,
-          repliesCountOp: update.repliesCountOp
+          threadType: update.threadType,
+          repliesCountOp: update.repliesCountOp,
+          lastReply: update.lastReply
         }
         await this.createPatch(cardId, messageId, PatchType.thread, data, socialId, date, s)
 
@@ -642,7 +643,7 @@ export class MessagesDb extends BaseDb {
     }
   }
 
-  async removeThreads (query: RemoveThreadQuery): Promise<void> {
+  async removeThreads (query: ThreadQuery): Promise<void> {
     const db: Partial<ThreadDb> = {
       card_id: query.cardId,
       message_id: query.messageId,
@@ -917,7 +918,7 @@ export class MessagesDb extends BaseDb {
     let index = 2
 
     if (params.id != null) {
-      where.push(`m.id = $${index++}::int8`)
+      where.push(`m.id = $${index++}::varchar`)
       values.push(params.id)
     }
 
@@ -1030,29 +1031,28 @@ export class MessagesDb extends BaseDb {
   }
 
   public async isMessageInDb (cardId: CardID, messageId: MessageID): Promise<boolean> {
-    const select = `SELECT m.id
-                    FROM ${TableName.Message} m
-                    WHERE m.workspace_id = $1::uuid
-                      AND m.card_id = $2::varchar
-                      AND m.id = $3::int8
-                    LIMIT 1`
+    const sql = `
+        SELECT 1
+        FROM ${TableName.Message} m
+        WHERE m.workspace_id = $1::uuid
+          AND m.card_id = $2::varchar
+          AND m.id = $3::varchar
+        LIMIT 1
+    `
 
-    return (await this.execute(select, [this.workspace, cardId, messageId])).length > 0
+    const result = await this.execute(sql, [this.workspace, cardId, messageId])
+    return result.length > 0
   }
 
   public async getMessageCreated (cardId: CardID, messageId: MessageID): Promise<Date | undefined> {
-    if (isExternalMessageId(messageId)) {
-      const select = `SELECT mc.created
+    const select = `SELECT mc.created
                       FROM ${TableName.MessageCreated} mc
                       WHERE mc.workspace_id = $1::uuid
                         AND mc.card_id = $2::varchar
-                        AND mc.id = $3::int8
+                        AND mc.message_id = $3::varchar
                       LIMIT 1`
-      const result = await this.execute(select, [this.workspace, cardId, messageId])
-      const created = result[0].created
-      return created != null ? new Date(created) : undefined
-    }
-
-    return messageIdToDate(messageId) ?? undefined
+    const result = await this.execute(select, [this.workspace, cardId, messageId])
+    const created = result[0].created
+    return created != null ? new Date(created) : undefined
   }
 }

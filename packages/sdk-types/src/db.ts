@@ -88,7 +88,7 @@ export interface DbAdapter {
   setLinkPreviews: (cardId: CardID, messageId: MessageID, data: (LinkPreviewData & { previewId: LinkPreviewID })[], socialId: SocialID, date: Date) => Promise<void>
 
   attachThread: (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType, socialId: SocialID, date: Date) => Promise<void>
-  removeThreads: (query: RemoveThreadQuery) => Promise<void>
+  removeThreads: (query: ThreadQuery) => Promise<void>
   updateThread: (cardId: CardID, messageId: MessageID, thread: CardID, update: ThreadUpdates, socialId: SocialID, date: Date) => Promise<void>
 
   findMessages: (params: FindMessagesParams) => Promise<Message[]>
@@ -140,7 +140,7 @@ export interface DbAdapter {
   close: () => void
 }
 
-export type RemoveThreadQuery = Partial<Pick<Thread, 'cardId' | 'threadId' | 'messageId'>>
+export type ThreadQuery = Partial<Pick<Thread, 'cardId' | 'threadId' | 'messageId'>>
 export type RemoveLabelQuery = Partial<Pick<Label, 'cardId' | 'labelId' | 'account'>>
 
 export interface UpdateNotificationQuery {
@@ -153,6 +153,7 @@ export type NotificationUpdates = Partial<Pick<Notification, 'read'>>
 export type NotificationContextUpdates = Partial<Pick<NotificationContext, 'lastView' | 'lastUpdate' | 'lastNotify'>>
 
 export interface ThreadUpdates {
+  messageId?: MessageID
   threadType?: CardType
   lastReply?: Date
   repliesCountOp?: 'increment' | 'decrement'

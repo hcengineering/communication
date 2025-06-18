@@ -23,7 +23,7 @@ import {
 } from '@hcengineering/communication-sdk-types'
 import { type ActivityTypeUpdate, ActivityUpdateType, MessageType } from '@hcengineering/communication-types'
 
-import type { TriggerCtx, TriggerFn, Triggers } from '../types'
+import type { Enriched, TriggerCtx, TriggerFn, Triggers } from '../types'
 import { getNameBySocialID } from './utils'
 
 async function createActivityOnCardTypeUpdate (ctx: TriggerCtx, event: UpdateCardTypeEvent): Promise<Event[]> {
@@ -51,12 +51,29 @@ async function createActivityOnCardTypeUpdate (ctx: TriggerCtx, event: UpdateCar
   ]
 }
 
-async function onCardTypeUpdates (ctx: TriggerCtx, event: UpdateCardTypeEvent): Promise<Event[]> {
+async function onCardTypeUpdates (ctx: TriggerCtx, event: Enriched<UpdateCardTypeEvent>): Promise<Event[]> {
   await ctx.db.updateCollaborators({ card: event.cardId }, { cardType: event.cardType })
   await ctx.db.updateLabels(event.cardId, { cardType: event.cardType })
-  // TODO: update threads
-  // await ctx.db.updateThread(event.cardId, { threadType: event.cardType })
-  return []
+
+  const thread = await ctx.db.findThread(event.cardId)
+  if (thread === undefined) return []
+
+  return [
+    {
+      type: MessageEventType.ThreadPatch,
+      cardId: thread.cardId,
+      messageId: thread.messageId,
+      operation: {
+        opcode: 'update',
+        threadId: thread.threadId,
+        updates: {
+          threadType: event.cardType
+        }
+      },
+      socialId: event.socialId,
+      date: event.date
+    }
+  ]
 }
 
 async function removeCardCollaborators (ctx: TriggerCtx, event: UpdateCardTypeEvent): Promise<Event[]> {

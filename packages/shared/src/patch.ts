@@ -14,20 +14,20 @@
 //
 
 import {
-  PatchType,
-  type Message,
-  type Patch,
-  ReactionPatch,
-  SocialID,
-  BlobPatch,
   BlobData,
   BlobID,
-  LinkPreviewPatch,
-  LinkPreviewData,
-  LinkPreview,
-  LinkPreviewID,
+  BlobPatch,
   CardID,
   CardType,
+  LinkPreview,
+  LinkPreviewData,
+  LinkPreviewID,
+  LinkPreviewPatch,
+  type Message,
+  type Patch,
+  PatchType,
+  ReactionPatch,
+  SocialID,
   ThreadPatch
 } from '@hcengineering/communication-types'
 
@@ -58,7 +58,7 @@ export function applyPatch (message: Message, patch: Patch, allowedPatchTypes: P
       }
     }
     case PatchType.remove: {
-      const removed = {
+      return {
         ...message,
         content: '',
         blobs: [],
@@ -66,8 +66,6 @@ export function applyPatch (message: Message, patch: Patch, allowedPatchTypes: P
         reactions: [],
         removed: true
       }
-
-      return removed
     }
     case PatchType.reaction:
       return patchReactions(message, patch)
@@ -235,7 +233,13 @@ function patchThread (message: Message, patch: ThreadPatch): Message {
   if (patch.data.operation === 'attach') {
     return attachThread(message, patch.data.threadId, patch.data.threadType)
   } else if (patch.data.operation === 'update') {
-    return updateThread(message, patch.data.threadId, patch.data.repliesCountOp, patch.data.lastReply)
+    return updateThread(
+      message,
+      patch.data.threadId,
+      patch.data.threadType,
+      patch.data.repliesCountOp,
+      patch.data.lastReply
+    )
   }
   return message
 }
@@ -258,6 +262,7 @@ function attachThread (message: Message, threadId: CardID, threadType: CardType)
 function updateThread (
   message: Message,
   threadId: CardID,
+  threadType?: CardType,
   repliesCountOp?: 'increment' | 'decrement',
   lastReply?: Date
 ): Message {
@@ -279,6 +284,7 @@ function updateThread (
     thread: {
       ...message.thread,
       repliesCount: count,
+      threadType: threadType ?? message.thread.threadType,
       lastReply: lastReply ?? message.thread.lastReply
     }
   }

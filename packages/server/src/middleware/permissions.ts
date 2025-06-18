@@ -42,6 +42,11 @@ export class PermissionsMiddleware extends BaseMiddleware implements Middleware 
 
     switch (event.type) {
       case MessageEventType.CreateMessage:
+        this.checkSocialId(session, event.socialId)
+        if (!this.isSystemAccount(session) && event?.options?.noNotify === true) {
+          event.options.noNotify = false
+        }
+        break
       case MessageEventType.RemovePatch:
       case MessageEventType.UpdatePatch:
       case MessageEventType.BlobPatch:
@@ -86,9 +91,13 @@ export class PermissionsMiddleware extends BaseMiddleware implements Middleware 
   }
 
   private onlySystemAccount (session: SessionData): void {
-    const account = session.account
-    if (systemAccountUuid !== account.uuid) {
+    if (!this.isSystemAccount(session)) {
       throw ApiError.forbidden('only system account is allowed')
     }
+  }
+
+  private isSystemAccount (session: SessionData): boolean {
+    const account = session.account
+    return systemAccountUuid === account.uuid
   }
 }

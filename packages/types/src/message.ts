@@ -203,6 +203,7 @@ export interface AttachThreadPatchData {
 export interface UpdateThreadPatchData {
   operation: 'update'
   threadId: CardID
+  threadType?: CardType
   repliesCountOp?: 'increment' | 'decrement'
   lastReply?: Date
 }

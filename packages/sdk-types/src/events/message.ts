@@ -159,7 +159,8 @@ export interface UpdateThreadOperation {
   opcode: 'update'
   threadId: CardID
   updates: {
-    repliesCountOp: 'increment' | 'decrement'
+    threadType?: CardType
+    repliesCountOp?: 'increment' | 'decrement'
     lastReply?: Date
   }
 }

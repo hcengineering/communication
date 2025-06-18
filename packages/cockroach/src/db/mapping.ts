@@ -54,7 +54,7 @@ import {
   type ThreadDb,
   type LabelDb,
   type LinkPreviewDb
-} from './schema'
+} from '../schema'
 
 interface RawMessage extends MessageDb {
   thread_id?: CardID

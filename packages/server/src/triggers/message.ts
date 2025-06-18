@@ -28,11 +28,11 @@ import { generateToken } from '@hcengineering/server-token'
 import { type AccountUuid, concatLink, systemAccountUuid } from '@hcengineering/core'
 import { extractReferences } from '@hcengineering/text-core'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
-import { generateMessageId } from '@hcengineering/communication-cockroach'
 
 import type { Enriched, TriggerCtx, TriggerFn, Triggers } from '../types'
 import { findAccount } from '../utils'
 import { findMessage } from './utils'
+import { generateMessageId } from '../messageId'
 
 async function onMessagesGroupCreated (ctx: TriggerCtx, event: CreateMessagesGroupEvent): Promise<Event[]> {
   ctx.registeredCards.delete(event.group.cardId)
@@ -170,7 +170,7 @@ async function onThreadAttached (ctx: TriggerCtx, event: Enriched<ThreadPatchEve
     return []
   }
 
-  const messageId = generateMessageId(true)
+  const messageId = generateMessageId()
 
   result.push({
     messageId,

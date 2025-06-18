@@ -203,6 +203,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
 
     promise
       .then(async (result) => {
+        if (tmpId === result.messageId) return
         this.tmpMessages.delete(eventId)
         resultId = result.messageId
         if (this.result instanceof Promise) this.result = await this.result

@@ -19,8 +19,8 @@ import {
   type Event,
   type SessionData
 } from '@hcengineering/communication-sdk-types'
-import { generateMessageId } from '@hcengineering/communication-cockroach'
 
+import { generateMessageId } from '../messageId'
 import type { Middleware, MiddlewareContext, Enriched } from '../types'
 import { BaseMiddleware } from './base'
 
@@ -35,7 +35,6 @@ export class IdMiddleware extends BaseMiddleware implements Middleware {
   async event (session: SessionData, event: Enriched<Event>, derived: boolean): Promise<EventResult> {
     if (event.type === MessageEventType.CreateMessage) {
       if (event.messageId == null) {
-        // TODO: new generate id fn + check 128 bit
         event.messageId = generateMessageId()
       }
     }
