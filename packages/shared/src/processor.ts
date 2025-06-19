@@ -202,6 +202,7 @@ export class NotificationProcessor {
     }
     return {
       id: notificationId,
+      cardId: event.cardId,
       contextId: event.contextId,
       account: event.account,
       type: event.notificationType,

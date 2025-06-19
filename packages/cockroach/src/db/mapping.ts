@@ -284,6 +284,7 @@ function toNotificationRaw (id: ContextID, card: CardID, raw: RawNotification): 
   if (message != null) {
     return {
       id: String(raw.id) as NotificationID,
+      cardId: card,
       account: raw.account,
       read: Boolean(raw.read),
       type: raw.type,
@@ -311,6 +312,7 @@ function toNotificationRaw (id: ContextID, card: CardID, raw: RawNotification): 
 
   return {
     id: String(raw.id) as NotificationID,
+    cardId: card,
     account: raw.account,
     type: raw.type,
     read: Boolean(raw.read),
