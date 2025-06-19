@@ -246,7 +246,7 @@ export class NotificationsDb extends BaseDb {
 
     const result = await this.execute(sql, [this.workspace, contextId, account], 'remove notification context')
 
-    return result[0].id as ContextID
+    return result[0]?.id as ContextID | undefined
   }
 
   async updateContext (context: ContextID, account: AccountID, updates: NotificationContextUpdates): Promise<void> {
