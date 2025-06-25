@@ -132,14 +132,14 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
 
     if (sessionIds.length > 0) {
       try {
-        this.broadcastFn.broadcast(ctx, sessionIds, event)
+        this.broadcastFn.broadcast(ctx, sessionIds, event, derived)
       } catch (e) {
         this.context.ctx.error('Failed to broadcast event', { error: e })
       }
     }
 
     try {
-      this.broadcastFn.enqueue(ctx, event)
+      this.broadcastFn.enqueue(ctx, event, derived)
     } catch (e) {
       this.context.ctx.error('Failed to broadcast event', { error: e })
     }

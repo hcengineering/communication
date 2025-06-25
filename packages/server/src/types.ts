@@ -95,8 +95,8 @@ export interface MiddlewareContext {
 export type MiddlewareCreateFn = (context: MiddlewareContext, next?: Middleware) => Promise<Middleware>
 
 export interface BroadcastSessionsFunc {
-  broadcast: (ctx: MeasureContext, sessionIds: string[], result: Enriched<Event>) => void
-  enqueue: (ctx: MeasureContext, result: Enriched<Event>) => void
+  broadcast: (ctx: MeasureContext, sessionIds: string[], result: Enriched<Event>, isAsync: boolean) => void
+  enqueue: (ctx: MeasureContext, result: Enriched<Event>, isAsync: boolean) => void
 }
 
 export interface TriggerCtx {
