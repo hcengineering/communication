@@ -16,7 +16,7 @@
 import type { DbAdapter, Event, EventResult, SessionData } from '@hcengineering/communication-sdk-types'
 import type { MeasureContext } from '@hcengineering/core'
 
-import type { Enriched, Middleware, MiddlewareContext, TriggerCtx } from '../types'
+import type { CommunicationCallbacks, Enriched, Middleware, MiddlewareContext, TriggerCtx } from '../types'
 import { BaseMiddleware } from './base'
 import triggers from '../triggers/all'
 import { notify } from '../notification/notification'
@@ -25,6 +25,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
   private ctx: MeasureContext
 
   constructor (
+    private readonly callbacks: CommunicationCallbacks,
     private readonly db: DbAdapter,
     context: MiddlewareContext,
     next?: Middleware
@@ -51,7 +52,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
   }
 
   async processDerived (session: SessionData, events: Enriched<Event>[], derived: boolean): Promise<void> {
-    const ctx: Omit<TriggerCtx, 'ctx'> = {
+    const triggerCtx: Omit<TriggerCtx, 'ctx'> = {
       metadata: this.context.metadata,
       db: this.db,
       workspace: this.context.workspace,
@@ -68,21 +69,21 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
 
     if (!derived && session.isAsyncContext !== true && session.contextData !== undefined) {
       session.isAsyncContext = true
-      session.contextData.asyncRequests = [
-        ...(session.contextData.asyncRequests ?? []),
-        async (_ctx) => {
-          this.ctx = _ctx
-          await this.callAsyncTriggers({ ...ctx, ctx: this.ctx }, session, events)
-          this.handleBroadcast(
-            session,
-            (session.asyncData as Enriched<Event>[]).sort((a, b) => a.date.getTime() - b.date.getTime()),
-            true
-          )
-          session.asyncData = []
-        }
-      ]
+      const ctx = this.context.ctx.newChild('async-triggers', {})
+      ctx.contextData = session.contextData
+
+      this.callbacks.registerAsyncRequest(ctx, async (_ctx) => {
+        this.ctx = _ctx
+        await this.callAsyncTriggers({ ...triggerCtx, ctx: this.ctx }, session, events)
+        this.handleBroadcast(
+          session,
+          (session.asyncData as Enriched<Event>[]).sort((a, b) => a.date.getTime() - b.date.getTime()),
+          true
+        )
+        session.asyncData = []
+      })
     } else {
-      await this.callAsyncTriggers({ ...ctx, ctx: this.ctx }, session, events)
+      await this.callAsyncTriggers({ ...triggerCtx, ctx: this.ctx }, session, events)
 
       // Workaround for async events from triggers of core pipeline
       if (session.isAsyncContext !== true) {

@@ -51,7 +51,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
   private readonly dataBySessionId = new Map<string, SessionInfo>()
 
   constructor (
-    private readonly broadcastFn: CommunicationCallbacks,
+    private readonly callbacks: CommunicationCallbacks,
     readonly context: MiddlewareContext,
     next?: Middleware
   ) {
@@ -132,21 +132,21 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
 
     if (isAsync) {
       try {
-        this.broadcastFn.asyncBroadcast(ctx, sessionIds, events)
+        this.callbacks.asyncBroadcast(ctx, sessionIds, events)
       } catch (e) {
         this.context.ctx.error('Failed to broadcast event', { error: e })
       }
     } else {
       if (Object.keys(sessionIds).length > 0) {
         try {
-          this.broadcastFn.broadcast(ctx, sessionIds)
+          this.callbacks.broadcast(ctx, sessionIds)
         } catch (e) {
           this.context.ctx.error('Failed to broadcast event', { error: e })
         }
       }
 
       try {
-        this.broadcastFn.enqueue(ctx, events)
+        this.callbacks.enqueue(ctx, events)
       } catch (e) {
         this.context.ctx.error('Failed to broadcast event', { error: e })
       }

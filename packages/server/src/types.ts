@@ -95,6 +95,7 @@ export interface MiddlewareContext {
 export type MiddlewareCreateFn = (context: MiddlewareContext, next?: Middleware) => Promise<Middleware>
 
 export interface CommunicationCallbacks {
+  registerAsyncRequest: (ctx: MeasureContext, promise: (ctx: MeasureContext) => Promise<void>) => void
   asyncBroadcast: (ctx: MeasureContext, toSessions: Record<string, Enriched<Event>[]>, toQueue: Enriched<Event>[]) => void
   broadcast: (ctx: MeasureContext, result: Record<string, Enriched<Event>[]>) => void
   enqueue: (ctx: MeasureContext, result: Enriched<Event>[]) => void
