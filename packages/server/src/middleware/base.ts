@@ -77,8 +77,8 @@ export class BaseMiddleware implements Middleware {
     return await this.provideEvent(session, event, derived)
   }
 
-  handleBroadcast (session: SessionData, events: Enriched<Event>[], isAsync: boolean): void {
-    this.provideHandleBroadcast(session, events, isAsync)
+  handleBroadcast (session: SessionData, events: Enriched<Event>[]): void {
+    this.provideHandleBroadcast(session, events)
   }
 
   unsubscribeQuery (session: SessionData, queryId: number): void {
@@ -162,9 +162,9 @@ export class BaseMiddleware implements Middleware {
     return []
   }
 
-  protected provideHandleBroadcast (session: SessionData, events: Enriched<Event>[], isAsync: boolean): void {
+  protected provideHandleBroadcast (session: SessionData, events: Enriched<Event>[]): void {
     if (this.next !== undefined) {
-      this.next.handleBroadcast(session, events, isAsync)
+      this.next.handleBroadcast(session, events)
     }
   }
 }

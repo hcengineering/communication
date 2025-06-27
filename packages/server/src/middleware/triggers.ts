@@ -77,20 +77,17 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
         await this.callAsyncTriggers({ ...triggerCtx, ctx: this.ctx }, session, events)
         this.handleBroadcast(
           session,
-          (session.asyncData as Enriched<Event>[]).sort((a, b) => a.date.getTime() - b.date.getTime()),
-          true
+          (session.asyncData as Enriched<Event>[]).sort((a, b) => a.date.getTime() - b.date.getTime())
         )
         session.asyncData = []
       })
     } else {
       await this.callAsyncTriggers({ ...triggerCtx, ctx: this.ctx }, session, events)
 
-      // Workaround for async events from triggers of core pipeline
       if (session.isAsyncContext !== true) {
         this.handleBroadcast(
           session,
-          (session.asyncData as Enriched<Event>[]).sort((a, b) => a.date.getTime() - b.date.getTime()),
-          true
+          (session.asyncData as Enriched<Event>[]).sort((a, b) => a.date.getTime() - b.date.getTime())
         )
         session.asyncData = []
       }

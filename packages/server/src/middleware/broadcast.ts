@@ -119,7 +119,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
     data.contextQueries.delete(queryId)
   }
 
-  handleBroadcast (session: SessionData, events: Enriched<Event>[], isAsync: boolean): void {
+  handleBroadcast (session: SessionData, events: Enriched<Event>[]): void {
     if (events.length === 0) return
     const sessionIds: Record<string, Enriched<Event>[]> = {}
 
@@ -130,26 +130,18 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
     const ctx = this.context.ctx.newChild('enqueue', {})
     ctx.contextData = session.contextData
 
-    if (isAsync) {
+    if (Object.keys(sessionIds).length > 0) {
       try {
-        this.callbacks.asyncBroadcast(ctx, sessionIds, events)
+        this.callbacks.broadcast(ctx, sessionIds)
       } catch (e) {
         this.context.ctx.error('Failed to broadcast event', { error: e })
       }
-    } else {
-      if (Object.keys(sessionIds).length > 0) {
-        try {
-          this.callbacks.broadcast(ctx, sessionIds)
-        } catch (e) {
-          this.context.ctx.error('Failed to broadcast event', { error: e })
-        }
-      }
+    }
 
-      try {
-        this.callbacks.enqueue(ctx, events)
-      } catch (e) {
-        this.context.ctx.error('Failed to broadcast event', { error: e })
-      }
+    try {
+      this.callbacks.enqueue(ctx, events)
+    } catch (e) {
+      this.context.ctx.error('Failed to broadcast event', { error: e })
     }
   }
 

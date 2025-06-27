@@ -178,7 +178,7 @@ export class Middlewares {
     if (this.head === undefined) return {}
     const result = (await this.head?.event(session, event as Enriched<Event>, session.derived ?? false)) ?? {}
 
-    this.head?.handleBroadcast(session, [event] as Enriched<Event>[], session.derived ?? false)
+    this.head?.handleBroadcast(session, [event] as Enriched<Event>[])
 
     return result
   }
