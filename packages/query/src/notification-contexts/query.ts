@@ -422,7 +422,7 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
             notification.messageCreated,
             false,
             true,
-            true
+            false
           )
           : undefined
 

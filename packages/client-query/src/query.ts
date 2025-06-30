@@ -13,12 +13,11 @@
 // limitations under the License.
 //
 
-import { MessageQueryParams } from '@hcengineering/communication-query'
+import { MessageQueryParams, NotificationQueryParams } from '@hcengineering/communication-query'
 import type { PagedQueryCallback, QueryCallback } from '@hcengineering/communication-sdk-types'
 import {
   type FindLabelsParams,
   type FindNotificationContextParams,
-  type FindNotificationsParams,
   type Label,
   type Message,
   type NotificationContext,
@@ -86,9 +85,9 @@ export class MessagesQuery extends BaseQuery<MessageQueryParams, PagedQueryCallb
   }
 }
 
-export class NotificationsQuery extends BaseQuery<FindNotificationsParams, PagedQueryCallback<Notification>> {
+export class NotificationsQuery extends BaseQuery<NotificationQueryParams, PagedQueryCallback<Notification>> {
   override createQuery (
-    params: FindNotificationsParams,
+    params: NotificationQueryParams,
     callback: PagedQueryCallback<Notification>
   ): {
       unsubscribe: () => void
