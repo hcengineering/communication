@@ -36,12 +36,12 @@ class BaseQuery<P extends Record<string, any>, C extends (r: any) => void> {
     if (dontDestroy !== true) {
       const destroyFn = getOnDestroy()
       destroyFn(() => {
-        this.unsubscribe()
+        this.unsubscribe(false)
       })
     }
   }
 
-  unsubscribe: () => void = () => {}
+  unsubscribe: (isUpdate: boolean) => void = () => {}
 
   query (params: P, callback: C): boolean {
     if (!this.needUpdate(params, callback)) {
@@ -52,13 +52,14 @@ class BaseQuery<P extends Record<string, any>, C extends (r: any) => void> {
   }
 
   private doQuery (query: P, callback: C): void {
-    this.unsubscribe()
+    const isUpdate = this.oldQuery !== undefined
+    this.unsubscribe(isUpdate)
     this.oldCallback = callback
     this.oldQuery = query
 
     const { unsubscribe } = this.createQuery(query, callback)
-    this.unsubscribe = () => {
-      unsubscribe()
+    this.unsubscribe = (isUpdate) => {
+      unsubscribe(isUpdate)
       this.oldCallback = undefined
       this.oldQuery = undefined
       this.unsubscribe = () => {}
@@ -66,7 +67,7 @@ class BaseQuery<P extends Record<string, any>, C extends (r: any) => void> {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  createQuery (params: P, callback: C): { unsubscribe: () => void } {
+  createQuery (params: P, callback: C): { unsubscribe: (isUpdate: boolean) => void } {
     return {
       unsubscribe: () => {}
     }
@@ -80,7 +81,7 @@ class BaseQuery<P extends Record<string, any>, C extends (r: any) => void> {
 }
 
 export class MessagesQuery extends BaseQuery<MessageQueryParams, PagedQueryCallback<Message>> {
-  override createQuery (params: MessageQueryParams, callback: PagedQueryCallback<Message>): { unsubscribe: () => void } {
+  override createQuery (params: MessageQueryParams, callback: PagedQueryCallback<Message>): { unsubscribe: (isUpdate: boolean) => void } {
     return getLiveQueries().queryMessages(params, callback)
   }
 }
@@ -90,7 +91,7 @@ export class NotificationsQuery extends BaseQuery<NotificationQueryParams, Paged
     params: NotificationQueryParams,
     callback: PagedQueryCallback<Notification>
   ): {
-      unsubscribe: () => void
+      unsubscribe: (isUpdate: boolean) => void
     } {
     return getLiveQueries().queryNotifications(params, callback)
   }
@@ -104,7 +105,7 @@ PagedQueryCallback<NotificationContext>
     params: FindNotificationContextParams,
     callback: PagedQueryCallback<NotificationContext>
   ): {
-      unsubscribe: () => void
+      unsubscribe: (isUpdate: boolean) => void
     } {
     return getLiveQueries().queryNotificationContexts(params, callback)
   }
@@ -115,7 +116,7 @@ export class LabelsQuery extends BaseQuery<FindLabelsParams, QueryCallback<Label
     params: FindLabelsParams,
     callback: QueryCallback<Label>
   ): {
-      unsubscribe: () => void
+      unsubscribe: (isUpdate: boolean) => void
     } {
     return getLiveQueries().queryLabels(params, callback)
   }
@@ -126,7 +127,7 @@ export class CollaboratorsQuery extends BaseQuery<FindCollaboratorsParams, Query
     params: FindCollaboratorsParams,
     callback: QueryCallback<Collaborator>
   ): {
-      unsubscribe: () => void
+      unsubscribe: (isUpdate: boolean) => void
     } {
     return getLiveQueries().queryCollaborators(params, callback)
   }
