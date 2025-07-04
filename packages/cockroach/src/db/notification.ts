@@ -215,7 +215,7 @@ export class NotificationsDb extends BaseDb {
     card: CardID,
     lastUpdate: Date,
     lastView: Date,
-    lastNotify?: Date
+    lastNotify: Date
   ): Promise<ContextID> {
     const db: ContextDb = {
       workspace_id: this.workspace,
@@ -294,6 +294,7 @@ export class NotificationsDb extends BaseDb {
       'created', n.created,
       'type', n.type,
       'content', n.content,
+      'blob_id', n.blob_id,
       'message_id', n.message_id::text,
       'message_created', n.message_created
     )`
@@ -303,11 +304,7 @@ export class NotificationsDb extends BaseDb {
       LEFT JOIN ${TableName.Message} m 
         ON nc.workspace_id = m.workspace_id 
         AND nc.card_id = m.card_id
-        AND n.message_id = m.id 
-      LEFT JOIN ${TableName.MessagesGroup} mg 
-        ON nc.workspace_id = mg.workspace_id 
-        AND nc.card_id = mg.card_id 
-        AND n.message_created BETWEEN mg.from_date AND mg.to_date`
+        AND n.message_id = m.id`
 
       buildNotificationObject = `
       JSONB_BUILD_OBJECT(
@@ -316,16 +313,13 @@ export class NotificationsDb extends BaseDb {
         'type', n.type,
         'content', n.content,
         'created', n.created,
+        'blob_id', n.blob_id,
         'message_created', n.message_created,
         'message_id', n.message_id::text,
         'message_type', m.type,
         'message_content', m.content,
         'message_data', m.data,
         'message_creator', m.creator,
-        'message_group_blob_id', mg.blob_id,
-        'message_group_from_date', mg.from_date,
-        'message_group_to_date', mg.to_date,
-        'message_group_count', mg.count,
         'message_patches', (
           SELECT COALESCE(
             JSON_AGG(
@@ -435,10 +429,6 @@ export class NotificationsDb extends BaseDb {
       m.content AS message_content,
       m.creator AS message_creator,
       m.data AS message_data,
-      mg.blob_id AS message_group_blob_id,
-      mg.from_date AS message_group_from_date,
-      mg.to_date AS message_group_to_date,
-      mg.count AS message_group_count,
       (SELECT json_agg(
         jsonb_build_object(
           'type', p.type,
@@ -467,11 +457,7 @@ export class NotificationsDb extends BaseDb {
       LEFT JOIN ${TableName.Message} m 
         ON nc.workspace_id = m.workspace_id
         AND nc.card_id = m.card_id
-        AND n.message_id = m.id
-      LEFT JOIN ${TableName.MessagesGroup} mg
-        ON nc.workspace_id = mg.workspace_id
-        AND nc.card_id = mg.card_id
-        AND n.message_created BETWEEN mg.from_date AND mg.to_date `
+        AND n.message_id = m.id `
     }
 
     select += ` FROM ${TableName.Notification} n
@@ -593,7 +579,7 @@ export class NotificationsDb extends BaseDb {
       }
     }
 
-    const lastUpdateCondition = getCondition('nc', 'last_update', index, params.lastUpdate, 'timestamptz')
+    const lastUpdateCondition = getCondition('nc', 'last_notify', index, params.lastNotify, 'timestamptz')
 
     if (lastUpdateCondition != null) {
       where.push(lastUpdateCondition.where)
@@ -663,5 +649,34 @@ export class NotificationsDb extends BaseDb {
     }
 
     return { where: where.length > 0 ? `WHERE ${where.join(' AND ')}` : '', values }
+  }
+
+  public async updateNotificationsBlobId (cardId: CardID, blobId: string, from: Date, to: Date): Promise<void> {
+    const sql = `
+        UPDATE ${TableName.Notification} AS n
+        SET blob_id = $3::uuid
+        FROM ${TableName.NotificationContext} AS nc
+        WHERE
+            n.context_id = nc.id
+          AND nc.workspace_id = $1::uuid
+          AND nc.card_id      = $2::uuid
+          AND n.message_created BETWEEN $4::timestamptz AND $5::timestamptz
+          AND n.blob_id IS NULL
+    `
+    await this.execute(sql, [this.workspace, cardId, blobId, from, to])
+  }
+
+  public async removeNotificationsBlobId (cardId: CardID, blobId: string): Promise<void> {
+    const sql = `
+        UPDATE ${TableName.Notification} AS n
+        SET blob_id = NULL
+        FROM ${TableName.NotificationContext} AS nc
+        WHERE
+            n.context_id    = nc.id
+          AND nc.workspace_id = $1::uuid
+          AND nc.card_id      = $2::uuid
+          AND n.blob_id       = $3::uuid;
+    `
+    await this.execute(sql, [this.workspace, cardId, blobId])
   }
 }
