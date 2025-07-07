@@ -266,7 +266,9 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
 
         context.notifications = await Promise.all(
           notifications.map(async (notification) => {
-            if (notification.message != null || notification.messageId == null || notification.blobId == null) { return notification }
+            if (notification.message != null || notification.messageId == null || notification.blobId == null) {
+              return notification
+            }
             const { blobId } = notification
             const message = await loadMessageFromGroup(
               notification.messageId,

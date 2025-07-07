@@ -286,77 +286,7 @@ export class NotificationsDb extends BaseDb {
     const orderBy =
       params.order != null ? `ORDER BY nc.last_notify ${params.order === SortingOrder.Ascending ? 'ASC' : 'DESC'}` : ''
 
-    let joinMessages = ''
-    let buildNotificationObject = `
-    JSONB_BUILD_OBJECT(
-      'id', n.id::text,
-      'read', n.read,
-      'created', n.created,
-      'type', n.type,
-      'content', n.content,
-      'blob_id', n.blob_id,
-      'message_id', n.message_id::text,
-      'message_created', n.message_created
-    )`
-
-    if (withMessages) {
-      joinMessages = `
-      LEFT JOIN ${TableName.Message} m 
-        ON nc.workspace_id = m.workspace_id 
-        AND nc.card_id = m.card_id
-        AND n.message_id = m.id`
-
-      buildNotificationObject = `
-      JSONB_BUILD_OBJECT(
-        'id', n.id::text,
-        'read', n.read,
-        'type', n.type,
-        'content', n.content,
-        'created', n.created,
-        'blob_id', n.blob_id,
-        'message_created', n.message_created,
-        'message_id', n.message_id::text,
-        'message_type', m.type,
-        'message_content', m.content,
-        'message_data', m.data,
-        'message_creator', m.creator,
-        'message_patches', (
-          SELECT COALESCE(
-            JSON_AGG(
-              JSONB_BUILD_OBJECT(
-                'type', p.type,
-                'data', p.data,
-                'creator', p.creator,
-                'created', p.created
-              ) ORDER BY p.created DESC
-            ), 
-            '[]'::JSONB
-          ) 
-          FROM ${TableName.Patch} p
-          WHERE p.workspace_id = nc.workspace_id AND p.card_id = nc.card_id AND p.message_id = n.message_id
-        ),
-        'message_files', (
-          SELECT COALESCE(
-            JSON_AGG(
-              JSONB_BUILD_OBJECT(
-                      'blob_id', f.blob_id,
-                      'type', f.type,
-                      'size', f.size,
-                      'filename', f.filename,
-                      'meta', f.meta,
-                      'creator', f.creator,
-                      'created', f.created
-              ) ORDER BY f.created ASC
-            ), 
-            '[]'::JSONB
-          ) 
-          FROM ${TableName.File} f
-          WHERE f.workspace_id = nc.workspace_id AND f.card_id = nc.card_id AND f.message_id = n.message_id
-        )
-      )`
-    }
-
-    let joinNotifications = ''
+    let notificationsJoin = ''
     let notificationsSelect = ''
     let groupBy = ''
 
@@ -366,52 +296,115 @@ export class NotificationsDb extends BaseDb {
         values.length,
         true
       )
-
       values.push(...valuesNotifications)
 
-      joinNotifications = `
+      const notificationLimit = params.notifications?.limit ?? 10
+      const notificationOrder = params.notifications?.order === SortingOrder.Ascending ? 'ASC' : 'DESC'
+
+      notificationsJoin = `
       LEFT JOIN LATERAL (
-        SELECT 
-          n.*, 
-          ROW_NUMBER() OVER (
-            PARTITION BY n.context_id 
-            ORDER BY n.created ${params.notifications?.order === SortingOrder.Ascending ? 'ASC' : 'DESC'}
-          ) AS rn
+        SELECT *
         FROM ${TableName.Notification} n
-        ${whereNotifications} ${whereNotifications.length > 1 ? 'AND n.context_id = nc.id' : 'WHERE n.context_id = nc.id'}
-      ) n ON n.rn <= ${params.notifications?.limit ?? 1}`
+        ${whereNotifications} ${whereNotifications.length > 1 ? 'AND' : 'WHERE'} n.context_id = nc.id
+        ORDER BY n.created ${notificationOrder}
+        LIMIT ${notificationLimit}
+      ) n ON TRUE
+
+      ${
+        withMessages
+          ? `
+      LEFT JOIN ${TableName.Message} m 
+        ON m.workspace_id = nc.workspace_id 
+        AND m.card_id = nc.card_id
+        AND m.id = n.message_id
+        AND n.message_id IS NOT NULL
+        AND n.blob_id IS NULL`
+          : ''
+      }
+
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(
+          JSON_AGG(
+            JSONB_BUILD_OBJECT(
+              'type', p.type,
+              'data', p.data,
+              'creator', p.creator,
+              'created', p.created
+            ) ORDER BY p.created DESC
+          ), '[]'::JSONB
+        ) AS patches
+        FROM ${TableName.Patch} p
+        WHERE p.workspace_id = nc.workspace_id AND p.card_id = nc.card_id AND p.message_id = n.message_id
+      ) p ON TRUE
+
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(
+          JSON_AGG(
+            JSONB_BUILD_OBJECT(
+              'blob_id', f.blob_id,
+              'type', f.type,
+              'size', f.size,
+              'filename', f.filename,
+              'meta', f.meta,
+              'creator', f.creator,
+              'created', f.created
+            ) ORDER BY f.created ASC
+          ), '[]'::JSONB
+        ) AS files
+        FROM ${TableName.File} f
+        WHERE f.workspace_id = nc.workspace_id AND f.card_id = nc.card_id AND f.message_id = n.message_id
+      ) f ON TRUE
+    `
 
       notificationsSelect = `,
       COALESCE(
         JSON_AGG(
-          ${buildNotificationObject}
-          ORDER BY n.created ${params.notifications?.order === SortingOrder.Ascending ? 'ASC' : 'DESC'}
-        ), 
-        '[]'::JSONB
+          JSONB_BUILD_OBJECT(
+            'id', n.id::text,
+            'read', n.read,
+            'type', n.type,
+            'content', n.content,
+            'created', n.created,
+            'message_created', n.message_created,
+            'message_id', n.message_id::text,
+            ${
+              withMessages
+                ? `
+            'message_type', m.type,
+            'message_content', m.content,
+            'message_data', m.data,
+            'message_creator', m.creator,`
+                : ''
+            }
+            'blob_id', n.blob_id,
+            'patches', p.patches,
+            'files', f.files
+          )
+          ORDER BY n.created ${notificationOrder}
+        ), '[]'::JSONB
       ) AS notifications`
 
-      groupBy = 'GROUP BY nc.id'
+      groupBy = `
+      GROUP BY nc.id, nc.card_id, nc.account, nc.last_view, nc.last_update, nc.last_notify
+    `
     }
 
     const sql = `
-      SELECT nc.id::text,
-             nc.card_id,
-             nc.account,
-             nc.last_view,
-             nc.last_update,
-             nc.last_notify
-               ${notificationsSelect}
-      FROM ${TableName.NotificationContext} nc
-        ${joinNotifications}
-        ${joinMessages}
-        ${where}
-        ${groupBy}
-        ${orderBy}
-        ${limit};
+        SELECT nc.id::text,
+               nc.card_id,
+               nc.account,
+               nc.last_view,
+               nc.last_update,
+               nc.last_notify
+                   ${notificationsSelect}
+        FROM ${TableName.NotificationContext} nc
+            ${notificationsJoin} ${where}
+            ${groupBy}
+            ${orderBy}
+            ${limit};
     `
 
     const result = await this.execute(sql, values, 'find contexts')
-
     return result.map((it: any) => toNotificationContext(it))
   }
 
