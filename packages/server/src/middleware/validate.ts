@@ -196,7 +196,7 @@ const LinkPreviewDataSchema = z
   .strict()
 
 // Find params
-const dateOrRecordSchema = z.union([DateSchema, z.record(DateSchema)])
+const DateOrRecordSchema = z.union([DateSchema, z.record(DateSchema)])
 
 const FindParamsSchema = z
   .object({
@@ -212,22 +212,22 @@ const FindMessagesParamsSchema = FindParamsSchema.extend({
   reactions: z.boolean().optional(),
   replies: z.boolean().optional(),
   links: z.boolean().optional(),
-  created: dateOrRecordSchema.optional()
+  created: DateOrRecordSchema.optional()
 }).strict()
 
 const FindMessagesGroupsParamsSchema = FindParamsSchema.extend({
   card: CardIDSchema.optional(),
   blobId: BlobIDSchema.optional(),
   patches: z.boolean().optional(),
-  fromDate: dateOrRecordSchema.optional(),
-  toDate: dateOrRecordSchema.optional(),
+  fromDate: DateOrRecordSchema.optional(),
+  toDate: DateOrRecordSchema.optional(),
   orderBy: z.enum(['fromDate', 'toDate']).optional()
 }).strict()
 
 const FindNotificationContextParamsSchema = FindParamsSchema.extend({
   id: ContextIDSchema.optional(),
   card: z.union([CardIDSchema, z.array(CardIDSchema)]).optional(),
-  lastNotify: dateOrRecordSchema.optional(),
+  lastNotify: DateOrRecordSchema.optional(),
   account: z.union([AccountIDSchema, z.array(AccountIDSchema)]).optional(),
   notifications: z
     .object({
@@ -244,7 +244,7 @@ const FindNotificationsParamsSchema = FindParamsSchema.extend({
   context: ContextIDSchema.optional(),
   type: z.string().optional(),
   read: z.boolean().optional(),
-  created: dateOrRecordSchema.optional(),
+  created: DateOrRecordSchema.optional(),
   account: z.union([AccountIDSchema, z.array(AccountIDSchema)]).optional(),
   message: z.boolean().optional(),
   card: CardIDSchema.optional()
@@ -450,10 +450,10 @@ function deserializeEvent (event: Enriched<Event>): Enriched<Event> {
       event.group.toDate = deserializeDate(event.group.toDate)!
       break
     case NotificationEventType.UpdateNotificationContext:
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      event.updates.lastView = deserializeDate(event.updates.lastView)!
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      event.updates.lastUpdate = deserializeDate(event.updates.lastUpdate)!
+      event.updates.lastView = deserializeDate(event.updates.lastView)
+      break
+    case NotificationEventType.UpdateNotification:
+      event.query.untilDate = deserializeDate(event.query.untilDate)
       break
   }
 
