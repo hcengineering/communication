@@ -153,7 +153,7 @@ export interface BlobAttachment extends BaseAttachment<BlobParams> {}
 export type AppletParams = Record<string, any>
 export type AppletType = `application/applet.${string}`
 
-export interface AppletAttachment extends BaseAttachment<AppletParams> {
+export interface AppletAttachment<T extends AppletParams = AppletParams> extends BaseAttachment<T> {
   type: AppletType
 }
 
