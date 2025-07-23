@@ -50,7 +50,7 @@ export function generateMessageId (): MessageID {
 }
 
 export function isAppletAttachment (attachment: Attachment): attachment is AppletAttachment {
-  return attachment.type.startsWith('application/applet.')
+  return attachment.type.startsWith('application/vnd.huly.applet.')
 }
 
 export function isLinkPreviewAttachmentType (type: string): boolean {
@@ -58,7 +58,7 @@ export function isLinkPreviewAttachmentType (type: string): boolean {
 }
 
 export function isAppletAttachmentType (type: string): boolean {
-  return type.startsWith('application/applet.')
+  return type.startsWith('application/vnd.huly.applet.')
 }
 
 export function isBlobAttachmentType (type: string): boolean {
