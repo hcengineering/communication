@@ -23,9 +23,8 @@ import {
   RemovePatchEvent,
   ThreadPatchEvent
 } from '@hcengineering/communication-sdk-types'
-import { type CardID, CardPeer, MessageType, Peer } from '@hcengineering/communication-types'
-import { generateToken } from '@hcengineering/server-token'
-import { type AccountUuid, concatLink, generateId, systemAccountUuid } from '@hcengineering/core'
+import { CardPeer, MessageType, Peer } from '@hcengineering/communication-types'
+import { type AccountUuid, generateId } from '@hcengineering/core'
 import { extractReferences } from '@hcengineering/text-core'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
 
@@ -60,29 +59,6 @@ async function onMessageRemoved (ctx: TriggerCtx, event: Enriched<RemovePatchEve
       socialId: event.socialId
     }
   ]
-}
-
-async function registerCard (ctx: TriggerCtx, event: PatchEvent): Promise<Event[]> {
-  const { workspace, metadata } = ctx
-  const card: CardID = event.cardId
-
-  if (ctx.registeredCards.has(card) || metadata.msg2fileUrl === '') return []
-
-  try {
-    const token = generateToken(systemAccountUuid, workspace, undefined, ctx.metadata.secret)
-    await fetch(concatLink(metadata.msg2fileUrl, '/register/:card').replaceAll(':card', card), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + token
-      }
-    })
-    ctx.registeredCards.add(card)
-  } catch (e) {
-    ctx.ctx.error('Failed to register card', { error: e })
-  }
-
-  return []
 }
 
 async function addCollaborators (ctx: TriggerCtx, event: Enriched<CreateMessageEvent>): Promise<Event[]> {
@@ -241,13 +217,6 @@ async function checkPeers (ctx: TriggerCtx, event: Enriched<CreateMessageEvent |
 const triggers: Triggers = [
   ['add_collaborators_on_message_created', MessageEventType.CreateMessage, addCollaborators as TriggerFn],
   ['add_thread_reply_on_message_created', MessageEventType.CreateMessage, addThreadReply as TriggerFn],
-  ['register_card_on_message_created', MessageEventType.CreateMessage, registerCard as TriggerFn],
-  ['register_card_on_update_patch', MessageEventType.UpdatePatch, registerCard as TriggerFn],
-  ['register_card_on_remove_patch', MessageEventType.RemovePatch, registerCard as TriggerFn],
-  ['register_card_on_reaction_patch', MessageEventType.ReactionPatch, registerCard as TriggerFn],
-  ['register_card_on_blob_patch', MessageEventType.BlobPatch, registerCard as TriggerFn],
-  ['register_card_on_attachment_patch', MessageEventType.AttachmentPatch, registerCard as TriggerFn],
-  ['register_card_on_thread_patch', MessageEventType.ThreadPatch, registerCard as TriggerFn],
 
   ['on_messages_group_created', MessageEventType.CreateMessagesGroup, onMessagesGroupCreated as TriggerFn],
   ['remove_reply_on_messages_removed', MessageEventType.RemovePatch, onMessageRemoved as TriggerFn],

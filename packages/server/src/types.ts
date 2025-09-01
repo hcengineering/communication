@@ -44,7 +44,6 @@ import type {
 } from '@hcengineering/communication-types'
 
 export interface Metadata {
-  msg2fileUrl: string
   accountsUrl: string
   filesUrl: string
   secret?: string
