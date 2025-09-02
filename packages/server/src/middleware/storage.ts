@@ -80,7 +80,7 @@ interface Result {
   result?: EventResult
 }
 
-export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
+export class StorageMiddleware extends BaseMiddleware implements Middleware {
   constructor (
     private readonly db: DbAdapter,
     readonly context: MiddlewareContext,
@@ -89,8 +89,10 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
     super(context, next)
   }
 
+  // TODO: remove
   async findMessages (_: SessionData, params: FindMessagesParams): Promise<Message[]> {
-    return await this.db.findMessages(params)
+    // return await this.db.findMessages(params)
+    return []
   }
 
   async findMessagesGroups (_: SessionData, params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
@@ -209,42 +211,43 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
 
   private async removeCollaborators (event: Enriched<RemoveCollaboratorsEvent>): Promise<Result> {
     if (event.collaborators.length === 0) return { skipPropagate: true }
-    await this.db.removeCollaborators(event.cardId, event.collaborators)
+    await this.db.removeCollaborators({ cardId: event.cardId, account: event.collaborators })
 
     return {}
   }
 
   private async createMessage (event: Enriched<CreateMessageEvent>): Promise<Result> {
-    if (event.messageId == null) {
-      throw new Error('Message id is required')
-    }
-
-    const created = await this.db.createMessage(
-      event.cardId,
-      event.messageId,
-      event.messageType,
-      event.content,
-      event.extra,
-      event.socialId,
-      event.date
-    )
-
-    if (!created) {
-      return {
-        skipPropagate: true,
-        result: {
-          messageId: event.messageId,
-          created: event.date
-        }
-      }
-    }
-
-    return {
-      result: {
-        messageId: event.messageId,
-        created: event.date
-      }
-    }
+    // if (event.messageId == null) {
+    //   throw new Error('Message id is required')
+    // }
+    //
+    // const created = await this.db.createMessageMeta(
+    //   event.cardId,
+    //   event.messageId,
+    //   event.messageType,
+    //   event.content,
+    //   event.extra,
+    //   event.socialId,
+    //   event.date
+    // )
+    //
+    // if (!created) {
+    //   return {
+    //     skipPropagate: true,
+    //     result: {
+    //       messageId: event.messageId,
+    //       created: event.date
+    //     }
+    //   }
+    // }
+    //
+    // return {
+    //   result: {
+    //     messageId: event.messageId,
+    //     created: event.date
+    //   }
+    // }
+    return {}
   }
 
   private async createPatch (
@@ -255,7 +258,7 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
     socialId: SocialID,
     date: Date
   ): Promise<void> {
-    await this.db.createPatch(cardId, messageId, type, data, socialId, date)
+    // await this.db.createPatch(cardId, messageId, type, data, socialId, date)
   }
 
   private async updatePatch (event: Enriched<UpdatePatchEvent>): Promise<Result> {
@@ -274,13 +277,13 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async reactionPatch (event: Enriched<ReactionPatchEvent>): Promise<Result> {
-    const { operation } = event
-
-    if (operation.opcode === 'add') {
-      await this.db.addReaction(event.cardId, event.messageId, operation.reaction, event.socialId, event.date)
-    } else if (operation.opcode === 'remove') {
-      await this.db.removeReaction(event.cardId, event.messageId, operation.reaction, event.socialId, event.date)
-    }
+    // const { operation } = event
+    //
+    // if (operation.opcode === 'add') {
+    //   await this.db.addReaction(event.cardId, event.messageId, operation.reaction, event.socialId, event.date)
+    // } else if (operation.opcode === 'remove') {
+    //   await this.db.removeReaction(event.cardId, event.messageId, operation.reaction, event.socialId, event.date)
+    // }
 
     return {}
   }
@@ -302,13 +305,7 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
           event.date
         )
       } else if (operation.opcode === 'detach') {
-        await this.db.removeAttachments(
-          event.cardId,
-          event.messageId,
-          operation.blobIds as any as AttachmentID[],
-          event.socialId,
-          event.date
-        )
+        await this.db.removeAttachments(event.cardId, event.messageId, operation.blobIds as any as AttachmentID[])
       } else if (operation.opcode === 'set') {
         await this.db.setAttachments(
           event.cardId,
@@ -331,7 +328,6 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
               ...b
             }
           })),
-          event.socialId,
           event.date
         )
       }
@@ -347,17 +343,11 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
       if (operation.opcode === 'add') {
         await this.db.addAttachments(event.cardId, event.messageId, operation.attachments, event.socialId, event.date)
       } else if (operation.opcode === 'remove') {
-        await this.db.removeAttachments(event.cardId, event.messageId, operation.ids, event.socialId, event.date)
+        await this.db.removeAttachments(event.cardId, event.messageId, operation.ids)
       } else if (operation.opcode === 'set') {
         await this.db.setAttachments(event.cardId, event.messageId, operation.attachments, event.socialId, event.date)
       } else if (operation.opcode === 'update') {
-        await this.db.updateAttachments(
-          event.cardId,
-          event.messageId,
-          operation.attachments,
-          event.socialId,
-          event.date
-        )
+        await this.db.updateAttachments(event.cardId, event.messageId, operation.attachments, event.date)
       }
     }
 
@@ -376,12 +366,12 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
       )
     } else if (event.operation.opcode === 'update') {
       await this.db.updateThread(
-        event.cardId,
-        event.messageId,
-        event.operation.threadId,
-        event.operation.updates,
-        event.socialId,
-        event.date
+        {
+          cardId: event.cardId,
+          messageId: event.messageId,
+          threadId: event.operation.threadId
+        },
+        event.operation.updates
       )
     }
 
@@ -405,7 +395,14 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async updateNotification (event: Enriched<UpdateNotificationEvent>): Promise<Result> {
-    const updated = await this.db.updateNotification(event.contextId, event.account, event.query, event.updates)
+    const updated = await this.db.updateNotification(
+      {
+        contextId: event.contextId,
+        account: event.account,
+        ...event.query
+      },
+      event.updates
+    )
     if (updated === 0) return { skipPropagate: true }
     event.updated = updated
     return {}
@@ -413,7 +410,11 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
 
   private async removeNotifications (event: Enriched<RemoveNotificationsEvent>): Promise<Result> {
     if (event.ids.length === 0) return { skipPropagate: true }
-    const ids = await this.db.removeNotifications(event.contextId, event.account, event.ids)
+    const ids = await this.db.removeNotifications({
+      contextId: event.contextId,
+      account: event.account,
+      id: event.ids
+    })
     event.ids = ids
     return {
       result: {
@@ -423,7 +424,7 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async createNotificationContext (event: Enriched<CreateNotificationContextEvent>): Promise<Result> {
-    const id = await this.db.createContext(
+    const id = await this.db.createNotificationContext(
       event.account,
       event.cardId,
       event.lastUpdate,
@@ -443,13 +444,22 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
 
     this.context.removedContexts.set(context.id, context)
 
-    const id = await this.db.removeContext(context.id, context.account)
+    const id = await this.db.removeContext({
+      id: context.id,
+      account: context.account
+    })
     if (id == null) return { skipPropagate: true }
     return {}
   }
 
   async updateNotificationContext (event: Enriched<UpdateNotificationContextEvent>): Promise<Result> {
-    await this.db.updateContext(event.contextId, event.account, event.updates)
+    await this.db.updateContext(
+      {
+        id: event.contextId,
+        account: event.account
+      },
+      event.updates
+    )
 
     return {}
   }
@@ -468,7 +478,7 @@ export class DatabaseMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private async createLabel (event: Enriched<CreateLabelEvent>): Promise<Result> {
-    await this.db.createLabel(event.labelId, event.cardId, event.cardType, event.account, event.date)
+    await this.db.createLabel(event.cardId, event.cardType, event.labelId, event.account, event.date)
 
     return {}
   }

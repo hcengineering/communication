@@ -111,13 +111,13 @@ async function removeReactionNotification (
 
   if (toDelete === undefined) return result
 
-  const context = (await ctx.db.findNotificationContexts({ card: cardId, account: messageAccount, limit: 1 }))[0]
+  const context = (await ctx.db.findNotificationContexts({ cardId, account: messageAccount, limit: 1 }))[0]
   if (context == null) return result
   if (context.lastNotify != null && context.lastNotify.getTime() === toDelete.created.getTime()) {
     const lastNotification = (
       await ctx.db.findNotifications({
         account: messageAccount,
-        context: context.id,
+        contextId: context.id,
         created: {
           less: context.lastNotify
         },
@@ -169,7 +169,7 @@ async function notifyReaction (
   const reactionAccount = await findAccount(ctx, socialId)
   if (reactionAccount === messageAccount) return result
 
-  const context = (await ctx.db.findNotificationContexts({ card: cardId, account: messageAccount }))[0]
+  const context = (await ctx.db.findNotificationContexts({ cardId, account: messageAccount }))[0]
   let contextId: ContextID | undefined = context?.id
 
   if (context == null) {
@@ -234,7 +234,7 @@ async function notifyMessage (
   for await (const dbCollaborators of cursor) {
     const collaborators: AccountID[] = dbCollaborators.map((it) => it.account)
     const contexts: NotificationContext[] = await ctx.db.findNotificationContexts({
-      card: cardId,
+      cardId,
       account: isFirstBatch && collaborators.length < BATCH_SIZE ? undefined : collaborators
     })
 
@@ -388,7 +388,7 @@ async function createContext (
     return (
       await ctx.db.findNotificationContexts({
         account,
-        card: cardId
+        cardId
       })
     )[0]?.id
   }

@@ -158,7 +158,7 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
   async onCardRemoved (event: RemoveCardEvent): Promise<void> {
     if (this.result instanceof Promise) this.result = await this.result
 
-    if (this.params.card === event.cardId) {
+    if (this.params.cardId === event.cardId) {
       this.isCardRemoved = true
       this.result.deleteAll()
       void this.notify()
@@ -233,12 +233,12 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
     if (this.params.account != null && this.params.account !== label.account) {
       return false
     }
-    if (this.params.card != null && this.params.card !== label.cardId) {
+    if (this.params.cardId != null && this.params.cardId !== label.cardId) {
       return false
     }
 
-    if (this.params.label != null) {
-      const labels = Array.isArray(this.params.label) ? this.params.label : [this.params.label]
+    if (this.params.labelId != null) {
+      const labels = Array.isArray(this.params.labelId) ? this.params.labelId : [this.params.labelId]
       if (!labels.includes(label.labelId)) {
         return false
       }

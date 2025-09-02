@@ -26,7 +26,7 @@ import { loadGroupFile } from './parse'
 
 export async function findMessage (
   id: MessageID,
-  card: CardID,
+  cardId: CardID,
   created: Date,
   client: FindClient,
   workspace: WorkspaceID,
@@ -34,7 +34,7 @@ export async function findMessage (
 ): Promise<Message | undefined> {
   const message = (
     await client.findMessages({
-      card,
+      cardId,
       id,
       limit: 1
     })
@@ -44,16 +44,16 @@ export async function findMessage (
     return message
   }
 
-  const group = await findGroupByDate(client, card, created)
+  const group = await findGroupByDate(client, cardId, created)
   if (group === undefined) return undefined
   const parsedFile = await loadGroupFile(workspace, filesUrl, group.blobId, { retries: 5 })
 
   return parsedFile.messages.find((it) => it.id === id)
 }
 
-async function findGroupByDate (client: FindClient, card: CardID, created: Date): Promise<MessagesGroup | undefined> {
+async function findGroupByDate (client: FindClient, cardId: CardID, created: Date): Promise<MessagesGroup | undefined> {
   const groups = await client.findMessagesGroups({
-    card,
+    cardId,
     fromDate: { lessOrEqual: created },
     toDate: { greaterOrEqual: created },
     limit: 1,

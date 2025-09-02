@@ -176,7 +176,6 @@ const MarkdownSchema = z.string()
 const MessageExtraSchema = z.any()
 const MessageIDSchema = z.string()
 const MessageTypeSchema = z.string()
-const MessagesGroupSchema = z.any()
 const SocialIDSchema = z.string()
 const SortingOrderSchema = z.union([z.literal(SortingOrder.Ascending), z.literal(SortingOrder.Descending)])
 
@@ -237,18 +236,14 @@ const FindParamsSchema = z
 
 const FindMessagesParamsSchema = FindParamsSchema.extend({
   id: MessageIDSchema.optional(),
-  card: CardIDSchema.optional(),
-  attachments: z.boolean().optional(),
-  reactions: z.boolean().optional(),
-  replies: z.boolean().optional(),
+  cardId: CardIDSchema.optional(),
   created: DateOrRecordSchema.optional()
 }).strict()
 
 const FindMessagesGroupsParamsSchema = FindParamsSchema.extend({
   messageId: MessageIDSchema.optional(),
-  card: CardIDSchema.optional(),
+  cardId: CardIDSchema.optional(),
   blobId: BlobIDSchema.optional(),
-  patches: z.boolean().optional(),
   fromDate: DateOrRecordSchema.optional(),
   toDate: DateOrRecordSchema.optional(),
   orderBy: z.enum(['fromDate', 'toDate']).optional()
@@ -256,13 +251,13 @@ const FindMessagesGroupsParamsSchema = FindParamsSchema.extend({
 
 const FindNotificationContextParamsSchema = FindParamsSchema.extend({
   id: ContextIDSchema.optional(),
-  card: z.union([CardIDSchema, z.array(CardIDSchema)]).optional(),
+  cardId: z.union([CardIDSchema, z.array(CardIDSchema)]).optional(),
   lastNotify: DateOrRecordSchema.optional(),
   account: z.union([AccountIDSchema, z.array(AccountIDSchema)]).optional(),
   notifications: z
     .object({
       type: z.string().optional(),
-      message: z.boolean().optional(),
+      message: z.boolean().optional(), // TODO: remove ??
       limit: z.number(),
       order: SortingOrderSchema,
       read: z.boolean().optional(),
@@ -272,25 +267,25 @@ const FindNotificationContextParamsSchema = FindParamsSchema.extend({
 }).strict()
 
 const FindNotificationsParamsSchema = FindParamsSchema.extend({
-  context: ContextIDSchema.optional(),
+  contextId: ContextIDSchema.optional(),
   type: z.string().optional(),
   read: z.boolean().optional(),
   created: DateOrRecordSchema.optional(),
   account: z.union([AccountIDSchema, z.array(AccountIDSchema)]).optional(),
-  message: z.boolean().optional(),
-  card: CardIDSchema.optional(),
+  message: z.boolean().optional(), // TODO: remove ??
+  cardId: CardIDSchema.optional(),
   total: z.boolean().optional()
 }).strict()
 
 const FindLabelsParamsSchema = FindParamsSchema.extend({
-  label: z.union([LabelIDSchema, z.array(LabelIDSchema)]).optional(),
-  card: CardIDSchema.optional(),
+  labelId: z.union([LabelIDSchema, z.array(LabelIDSchema)]).optional(),
+  cardId: CardIDSchema.optional(),
   cardType: z.union([CardTypeSchema, z.array(CardTypeSchema)]).optional(),
   account: AccountIDSchema.optional()
 }).strict()
 
 const FindCollaboratorsParamsSchema = FindParamsSchema.extend({
-  card: CardIDSchema.optional(),
+  cardId: CardIDSchema.optional(),
   account: z.union([AccountIDSchema, z.array(AccountIDSchema)]).optional()
 }).strict()
 
@@ -417,7 +412,7 @@ const ThreadPatchEventSchema = BaseEventSchema.extend({
 
 const CreateMessagesGroupEventSchema = BaseEventSchema.extend({
   type: z.literal(MessageEventType.CreateMessagesGroup),
-  group: MessagesGroupSchema,
+  group: z.any(), // TODO: MessagesGroupSchema
   socialId: SocialIDSchema,
   date: DateSchema
 }).strict()

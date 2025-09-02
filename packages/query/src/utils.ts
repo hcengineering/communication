@@ -33,25 +33,25 @@ export async function findMessage (
   client: FindClient,
   workspace: WorkspaceID,
   filesUrl: string,
-  card: CardID,
+  cardId: CardID,
   id: MessageID,
   created: Date,
   reactions?: boolean,
   attachments?: boolean,
   replies?: boolean
 ): Promise<Message | undefined> {
-  const message = (await client.findMessages({ card, id, limit: 1, attachments, reactions, replies }))[0]
+  const message = (await client.findMessages({ cardId, id, limit: 1 }))[0]
   if (message !== undefined) {
     return message
   }
-  return await findMessageInFiles(client, workspace, filesUrl, card, id, created)
+  return await findMessageInFiles(client, workspace, filesUrl, cardId, id, created)
 }
 
 export async function findMessageInFiles (
   client: FindClient,
   workspace: WorkspaceID,
   filesUrl: string,
-  card: CardID,
+  cardId: CardID,
   id: MessageID,
   created: Date
 ): Promise<Message | undefined> {
@@ -61,7 +61,7 @@ export async function findMessageInFiles (
 
   const group = (
     await client.findMessagesGroups({
-      card,
+      cardId,
       fromDate: { lessOrEqual: created },
       toDate: { greaterOrEqual: created },
       limit: 1,
@@ -76,16 +76,14 @@ export async function findMessageInFiles (
 
   try {
     const parsedFile = await loadGroupFile(workspace, filesUrl, group.blobId, { retries: 3 })
-    const messageFromFile = parsedFile.messages.find((it) => it.id === id)
-    if (messageFromFile === undefined) {
+    const message = parsedFile.messages.find((it) => it.id === id)
+    if (message === undefined) {
       return undefined
     }
 
-    const patches = (group.patches ?? []).filter((it) => it.messageId === id)
-
-    return patches.length > 0 ? applyPatches(messageFromFile, patches) : messageFromFile
+    return message
   } catch (e) {
-    console.error('Failed to find message in files', { card, id, created })
+    console.error('Failed to find message in files', { cardId, id, created })
     console.error('Error:', { error: e })
   }
 }
@@ -122,8 +120,8 @@ export function matchNotification (notification: Notification, params: FindNotif
   if (params.type !== undefined && params.type !== notification.type) return false
   if (params.read !== undefined && params.read !== notification.read) return false
   if (params.id !== undefined && params.id !== notification.id) return false
-  if (params.context !== undefined && params.context !== notification.contextId) return false
-  if (params.card !== undefined && params.card !== notification.cardId) return false
+  if (params.contextId !== undefined && params.contextId !== notification.contextId) return false
+  if (params.cardId !== undefined && params.cardId !== notification.cardId) return false
 
   const created = notification.created.getTime()
 

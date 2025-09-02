@@ -190,7 +190,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
       case MessageEventType.CreateMessage:
         if (event.messageId == null) return false
         return this.matchMessagesQuery(
-          { ids: [event.messageId], card: event.cardId },
+          { ids: [event.messageId], cardId: event.cardId },
           Array.from(info.messageQueries.values()),
           new Set(Array.from(info.contextQueries.values()).flatMap((it) => Array.from(it)))
         )
@@ -201,7 +201,7 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
       case MessageEventType.RemovePatch:
       case MessageEventType.UpdatePatch:
         return this.matchMessagesQuery(
-          { card: event.cardId, ids: [event.messageId] },
+          { cardId: event.cardId, ids: [event.messageId] },
           Array.from(info.messageQueries.values()),
           new Set(Array.from(info.contextQueries.values()).flatMap((it) => Array.from(it)))
         )
@@ -231,16 +231,16 @@ export class BroadcastMiddleware extends BaseMiddleware implements Middleware {
   }
 
   private matchMessagesQuery (
-    params: { ids: MessageID[], card: CardID },
+    params: { ids: MessageID[], cardId: CardID },
     queries: FindMessagesParams[],
     cards: Set<CardID>
   ): boolean {
-    if (cards.has(params.card)) return true
+    if (cards.has(params.cardId)) return true
     if (queries.length === 0) return false
 
     for (const query of queries) {
       if (query.id != null && !params.ids.includes(query.id)) continue
-      if (query.card != null && query.card !== params.card) continue
+      if (query.cardId != null && query.cardId !== params.cardId) continue
       return true
     }
 

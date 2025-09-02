@@ -25,7 +25,6 @@ import {
   BlobID
 } from '@hcengineering/communication-types'
 import { loadGroupFile } from '@hcengineering/communication-yaml'
-import { applyPatches } from '@hcengineering/communication-shared'
 import type { DbAdapter } from '@hcengineering/communication-sdk-types'
 
 import type { TriggerCtx } from '../types'
@@ -36,20 +35,11 @@ export async function findMessage (
   filesUrl: string,
   workspace: WorkspaceID,
   card: CardID,
-  id: MessageID,
-  ops?: {
-    attachments?: boolean
-    replies?: boolean
-    reactions?: boolean
-  }
+  id: MessageID
 ): Promise<{
     message?: Message
     blobId?: BlobID
   }> {
-  const message = (await db.findMessages({ card, id, limit: 1, ...ops }))[0]
-  if (message !== undefined) {
-    return { message }
-  }
   return await findMessageInFiles(db, filesUrl, workspace, card, id)
 }
 
@@ -67,14 +57,14 @@ export async function findMessageInFiles (
     return {}
   }
 
-  const created = await db.getMessageCreated(cardId, messageId)
+  const meta = (await db.findMessageMeta({ cardId, id: messageId, limit: 1 }))[0]
 
-  if (created == null) return {}
+  if (meta == null) return {}
   const group = (
     await db.findMessagesGroups({
-      card: cardId,
-      fromDate: { lessOrEqual: created },
-      toDate: { greaterOrEqual: created },
+      cardId,
+      fromDate: { lessOrEqual: meta.created },
+      toDate: { greaterOrEqual: meta.created },
       limit: 1,
       order: SortingOrder.Ascending,
       orderBy: 'fromDate'
@@ -87,17 +77,14 @@ export async function findMessageInFiles (
 
   try {
     const parsedFile = await loadGroupFile(workspace, filesUrl, group.blobId, { retries: 3 })
-    const messageFromFile = parsedFile.messages.find((it) => it.id === messageId)
-    if (messageFromFile === undefined) {
+    const message = parsedFile.messages.find((it) => it.id === messageId)
+    if (message === undefined) {
       return {}
     }
 
-    const patches = (group.patches ?? []).filter((it) => it.messageId === messageId)
-    const message = patches.length > 0 ? applyPatches(messageFromFile, patches) : messageFromFile
-
     return { message, blobId: group.blobId }
   } catch (e) {
-    console.error('Failed to find message in files', { card: cardId, id: messageId, created })
+    console.error('Failed to find message in files', { card: cardId, id: messageId, created: meta })
     console.error('Error:', { error: e })
   }
 

@@ -45,18 +45,21 @@ interface FindParams {
 
 export interface FindMessagesParams extends FindParams {
   id?: MessageID
-  card?: CardID
-  attachments?: boolean
-  reactions?: boolean
-  replies?: boolean
+  cardId?: CardID
   created?: Partial<Record<ComparisonOperator, Date>> | Date
+}
+
+export interface FindMessageMetaParams extends FindParams {
+  cardId?: CardID
+  id?: MessageID
+  created?: Partial<Record<ComparisonOperator, Date>> | Date
+  creator?: SortingOrder
 }
 
 export interface FindMessagesGroupsParams extends FindParams {
   messageId?: MessageID
-  card?: CardID
+  cardId?: CardID
   blobId?: BlobID
-  patches?: boolean
   fromDate?: Partial<Record<ComparisonOperator, Date>> | Date
   toDate?: Partial<Record<ComparisonOperator, Date>> | Date
   orderBy?: 'fromDate' | 'toDate'
@@ -64,12 +67,12 @@ export interface FindMessagesGroupsParams extends FindParams {
 
 export interface FindNotificationContextParams extends FindParams {
   id?: ContextID
-  card?: CardID | CardID[]
+  cardId?: CardID | CardID[]
   lastNotify?: Partial<Record<ComparisonOperator, Date>> | Date
   account?: AccountID | AccountID[]
   notifications?: {
     type?: NotificationType
-    message?: boolean
+    message?: boolean // TODO: remove ??
     limit: number
     order: SortingOrder
     read?: boolean
@@ -81,23 +84,23 @@ export interface FindNotificationsParams extends FindParams {
   id?: NotificationID
   messageId?: MessageID
   type?: NotificationType
-  context?: ContextID
+  contextId?: ContextID
   read?: boolean
   created?: Partial<Record<ComparisonOperator, Date>> | Date
   account?: AccountID | AccountID[]
-  card?: CardID
-  message?: boolean
+  cardId?: CardID
+  message?: boolean // TODO: remove ??
   total?: boolean
 }
 
 export interface FindCollaboratorsParams extends FindParams {
-  card: CardID
+  cardId: CardID
   account?: AccountID | AccountID[]
 }
 
 export interface FindLabelsParams extends FindParams {
-  label?: LabelID | LabelID[]
-  card?: CardID
+  labelId?: LabelID | LabelID[]
+  cardId?: CardID
   cardType?: CardType | CardType[]
   account?: AccountID
 }

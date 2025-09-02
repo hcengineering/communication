@@ -127,9 +127,7 @@ async function addThreadReply (ctx: TriggerCtx, event: Enriched<CreateMessageEve
 
 async function onThreadAttached (ctx: TriggerCtx, event: Enriched<ThreadPatchEvent>): Promise<Event[]> {
   if (event.operation.opcode !== 'attach') return []
-  const { message } = await findMessage(ctx.db, ctx.metadata.filesUrl, ctx.workspace, event.cardId, event.messageId, {
-    attachments: true
-  })
+  const { message } = await findMessage(ctx.db, ctx.metadata.filesUrl, ctx.workspace, event.cardId, event.messageId)
 
   if (message === undefined) return []
 

@@ -260,10 +260,9 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
 
     if (this.params.message === true) {
       const message = await this.client.findMessages({
-        card: notification.cardId,
+        cardId: notification.cardId,
         id: notification.messageId,
-        limit: 1,
-        attachments: true
+        limit: 1
       })
       notification.message = message[0]
     }
@@ -352,7 +351,7 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
   }
 
   private async onRemoveNotificationsEvent (event: RemoveNotificationsEvent): Promise<void> {
-    if (this.params.context !== undefined && this.params.context !== event.contextId) return
+    if (this.params.contextId !== undefined && this.params.contextId !== event.contextId) return
     if (this.result instanceof Promise) this.result = await this.result
 
     if (this.params.total === true) {
@@ -379,10 +378,10 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
   }
 
   private async onRemoveNotificationContextEvent (event: RemoveNotificationContextEvent): Promise<void> {
-    if (this.params.context != null && this.params.context !== event.contextId) return
+    if (this.params.contextId != null && this.params.contextId !== event.contextId) return
     if (this.result instanceof Promise) this.result = await this.result
 
-    if (event.contextId === this.params.context) {
+    if (event.contextId === this.params.contextId) {
       if (this.result.length === 0) return
       this.result.setTotal(-1)
       this.result.deleteAll()

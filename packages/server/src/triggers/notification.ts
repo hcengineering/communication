@@ -84,7 +84,7 @@ async function onRemovedCollaborators (ctx: TriggerCtx, event: RemoveCollaborato
   const { cardId, collaborators } = event
   if (collaborators.length === 0) return []
   const result: Event[] = []
-  const contexts = await ctx.db.findNotificationContexts({ card: cardId, account: event.collaborators })
+  const contexts = await ctx.db.findNotificationContexts({ cardId, account: event.collaborators })
   for (const collaborator of collaborators) {
     const context = contexts.find((it) => it.account === collaborator)
     result.push({
@@ -183,7 +183,7 @@ async function onNotificationContextRemoved (ctx: TriggerCtx, event: RemoveNotif
 
 async function onMessagesRemoved (ctx: TriggerCtx, event: RemovePatchEvent): Promise<Event[]> {
   const notifications = await ctx.db.findNotifications({
-    card: event.cardId,
+    cardId: event.cardId,
     messageId: event.messageId
   })
 

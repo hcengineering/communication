@@ -69,7 +69,7 @@ export class CollaboratorsQuery implements Query<Collaborator, FindCollaborators
   }
 
   async onCollaboratorsAdded (event: AddCollaboratorsEvent): Promise<void> {
-    if (event.cardId !== this.params.card || event.collaborators.length === 0) return
+    if (event.cardId !== this.params.cardId || event.collaborators.length === 0) return
     if (this.result instanceof Promise) this.result = await this.result
 
     let updated = false
@@ -93,7 +93,7 @@ export class CollaboratorsQuery implements Query<Collaborator, FindCollaborators
   }
 
   async onCollaboratorsRemoved (event: RemoveCollaboratorsEvent): Promise<void> {
-    if (event.cardId !== this.params.card || event.collaborators.length === 0) return
+    if (event.cardId !== this.params.cardId || event.collaborators.length === 0) return
     if (this.result instanceof Promise) this.result = await this.result
 
     const prevLength = this.result.length
@@ -113,7 +113,7 @@ export class CollaboratorsQuery implements Query<Collaborator, FindCollaborators
   }
 
   async onCardRemoved (event: RemoveCardEvent): Promise<void> {
-    if (this.params.card !== event.cardId) return
+    if (this.params.cardId !== event.cardId) return
     if (this.result instanceof Promise) this.result = await this.result
 
     this.isCardRemoved = true

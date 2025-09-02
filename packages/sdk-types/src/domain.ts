@@ -12,14 +12,11 @@
 // limitations under the License.
 
 export enum Domain {
-  Message = 'communication.message',
-  MessageCreated = 'communication.message_created',
   MessagesGroup = 'communication.messages_group',
 
-  Attachment = 'communication.attachment',
-  Patch = 'communication.patch',
-  Reaction = 'communication.reaction',
-  Thread = 'communication.thread',
+  MessageIndex = 'communication.message_index',
+  AttachmentIndex = 'communication.attachment_index',
+  ThreadIndex = 'communication.thread_index',
 
   Notification = 'communication.notification',
   NotificationContext = 'communication.notification_context',

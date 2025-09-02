@@ -20,17 +20,12 @@ import {
   type Collaborator,
   type ContextID,
   type FindMessagesGroupsParams,
-  type FindMessagesParams,
   type FindNotificationContextParams,
   type FindNotificationsParams,
-  type Message,
   type MessageID,
   type MessagesGroup,
-  type MessageType,
   type Notification,
   type NotificationContext,
-  type PatchType,
-  type Markdown,
   type SocialID,
   type Thread,
   type WorkspaceID,
@@ -41,7 +36,6 @@ import {
   type CardType,
   NotificationType,
   type NotificationContent,
-  type MessageExtra,
   type BlobID,
   type AttachmentData,
   type AttachmentID,
@@ -51,17 +45,22 @@ import {
   PeerExtra,
   FindPeersParams,
   Peer,
-  FindThreadParams
+  FindThreadParams,
+  FindMessageMetaParams,
+  MessageMeta
 } from '@hcengineering/communication-types'
 import type {
+  CollaboratorQuery,
+  CollaboratorUpdate,
   DbAdapter,
-  LabelUpdates,
-  NotificationContextUpdates,
-  NotificationUpdates,
-  RemoveLabelQuery,
+  LabelQuery,
+  LabelUpdate,
+  NotificationContextQuery,
+  NotificationContextUpdate,
+  NotificationQuery,
+  NotificationUpdate,
   ThreadQuery,
-  ThreadUpdates,
-  UpdateNotificationQuery
+  ThreadUpdate
 } from '@hcengineering/communication-sdk-types'
 
 import { MessagesDb } from './db/message'
@@ -92,29 +91,21 @@ export class CockroachAdapter implements DbAdapter {
     this.peer = new PeersDb(this.sql, this.workspace, logger, options)
   }
 
-  async createMessage (
+  // MessageMeta
+  async createMessageMeta (
     cardId: CardID,
     id: MessageID,
-    type: MessageType,
-    content: Markdown,
-    extra: MessageExtra | undefined,
     creator: SocialID,
     created: Date
   ): Promise<boolean> {
-    return await this.message.createMessage(cardId, id, type, content, extra, creator, created)
+    return await this.message.createMessageMeta(cardId, id, creator, created)
   }
 
-  async createPatch (
-    cardId: CardID,
-    messageId: MessageID,
-    type: PatchType,
-    data: Record<string, any>,
-    creator: SocialID,
-    created: Date
-  ): Promise<void> {
-    await this.message.createPatch(cardId, messageId, type, data, creator, created)
+  async findMessageMeta (params: FindMessageMetaParams): Promise<MessageMeta[]> {
+    return await this.message.findMessageMeta(params)
   }
 
+  // MessagesGroup
   async createMessagesGroup (
     cardId: CardID,
     blobId: BlobID,
@@ -129,26 +120,11 @@ export class CockroachAdapter implements DbAdapter {
     await this.message.removeMessagesGroup(card, blobId)
   }
 
-  async addReaction (
-    cardId: CardID,
-    message: MessageID,
-    reaction: string,
-    socialId: SocialID,
-    date: Date
-  ): Promise<void> {
-    await this.message.addReaction(cardId, message, reaction, socialId, date)
+  async findMessagesGroups (params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
+    return await this.message.findMessagesGroups(params)
   }
 
-  async removeReaction (
-    cardId: CardID,
-    messageId: MessageID,
-    reaction: string,
-    socialId: SocialID,
-    date: Date
-  ): Promise<void> {
-    await this.message.removeReaction(cardId, messageId, reaction, socialId, date)
-  }
-
+  // AttachmentsIndex
   async addAttachments (
     cardId: CardID,
     messageId: MessageID,
@@ -159,8 +135,8 @@ export class CockroachAdapter implements DbAdapter {
     await this.message.addAttachments(cardId, messageId, data, socialId, date)
   }
 
-  async removeAttachments (cardId: CardID, messageId: MessageID, ids: AttachmentID[], socialId: SocialID, date: Date): Promise<void> {
-    await this.message.removeAttachments(cardId, messageId, ids, socialId, date)
+  async removeAttachments (cardId: CardID, messageId: MessageID, ids: AttachmentID[]): Promise<void> {
+    await this.message.removeAttachments(cardId, messageId, ids)
   }
 
   async setAttachments (
@@ -177,12 +153,12 @@ export class CockroachAdapter implements DbAdapter {
     cardId: CardID,
     messageId: MessageID,
     data: AttachmentUpdateData[],
-    socialId: SocialID,
     date: Date
   ): Promise<void> {
-    await this.message.updateAttachments(cardId, messageId, data, socialId, date)
+    await this.message.updateAttachments(cardId, messageId, data, date)
   }
 
+  // ThreadsIndex
   async attachThread (
     cardId: CardID,
     messageId: MessageID,
@@ -194,26 +170,19 @@ export class CockroachAdapter implements DbAdapter {
     await this.message.attachThread(cardId, messageId, threadId, threadType, socialId, date)
   }
 
-  async updateThread (cardId: CardID, messageId: MessageID, threadId: CardID, update: ThreadUpdates, socialId: SocialID, date: Date): Promise<void> {
-    await this.message.updateThread(cardId, messageId, threadId, update, socialId, date)
+  async updateThread (query: ThreadQuery, update: ThreadUpdate): Promise<void> {
+    await this.message.updateThread(query, update)
   }
 
   async removeThreads (query: ThreadQuery): Promise<void> {
     await this.message.removeThreads(query)
   }
 
-  async findMessages (params: FindMessagesParams): Promise<Message[]> {
-    return await this.message.find(params)
-  }
-
-  async findMessagesGroups (params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
-    return await this.message.findMessagesGroups(params)
-  }
-
   async findThreads (params: FindThreadParams): Promise<Thread[]> {
     return await this.message.findThreads(params)
   }
 
+  // Collaborators
   async addCollaborators (
     card: CardID,
     cardType: CardType,
@@ -223,14 +192,23 @@ export class CockroachAdapter implements DbAdapter {
     return await this.notification.addCollaborators(card, cardType, collaborators, date)
   }
 
-  async removeCollaborators (card: CardID, accounts: AccountID[], unsafe = false): Promise<void> {
-    await this.notification.removeCollaborators(card, accounts, unsafe)
+  async removeCollaborators (query: CollaboratorQuery): Promise<void> {
+    await this.notification.removeCollaborators(query)
   }
 
-  async updateCollaborators (params: FindCollaboratorsParams, data: Partial<Collaborator>): Promise<void> {
-    await this.notification.updateCollaborators(params, data)
+  async updateCollaborators (query: CollaboratorQuery, update: CollaboratorUpdate): Promise<void> {
+    await this.notification.updateCollaborators(query, update)
   }
 
+  getCollaboratorsCursor (card: CardID, date: Date, size?: number): AsyncIterable<Collaborator[]> {
+    return this.notification.getCollaboratorsCursor(card, date, size)
+  }
+
+  async findCollaborators (params: FindCollaboratorsParams): Promise<Collaborator[]> {
+    return await this.notification.findCollaborators(params)
+  }
+
+  // Notifications
   async createNotification (
     contextId: ContextID,
     messageId: MessageID,
@@ -251,16 +229,14 @@ export class CockroachAdapter implements DbAdapter {
     )
   }
 
-  async updateNotification (contextId: ContextID, account: AccountID, query: UpdateNotificationQuery, updates: NotificationUpdates): Promise<number> {
-    return await this.notification.updateNotification(contextId, account, query, updates)
+  async updateNotification (query: NotificationQuery, update: NotificationUpdate): Promise<number> {
+    return await this.notification.updateNotification(query, update)
   }
 
   async removeNotifications (
-    contextId: ContextID,
-    account: AccountID,
-    ids: NotificationID[]
+    query: NotificationQuery
   ): Promise<NotificationID[]> {
-    return await this.notification.removeNotifications(contextId, account, ids)
+    return await this.notification.removeNotifications(query)
   }
 
   async removeNotificationsBlobId (cardId: CardID, blobId: string): Promise<void> {
@@ -271,7 +247,12 @@ export class CockroachAdapter implements DbAdapter {
     await this.notification.updateNotificationsBlobId(cardId, blobId, from, to)
   }
 
-  async createContext (
+  async findNotifications (params: FindNotificationsParams): Promise<WithTotal<Notification>> {
+    return await this.notification.findNotifications(params)
+  }
+
+  // NotificationContext
+  async createNotificationContext (
     account: AccountID,
     card: CardID,
     lastUpdate: Date,
@@ -281,50 +262,36 @@ export class CockroachAdapter implements DbAdapter {
     return await this.notification.createContext(account, card, lastUpdate, lastView, lastNotify)
   }
 
-  async updateContext (context: ContextID, account: AccountID, updates: NotificationContextUpdates): Promise<void> {
-    await this.notification.updateContext(context, account, updates)
+  async updateContext (query: NotificationContextQuery, update: NotificationContextUpdate): Promise<void> {
+    await this.notification.updateContext(query, update)
   }
 
-  async removeContext (contextId: ContextID, account: AccountID): Promise<ContextID | undefined> {
-    return await this.notification.removeContext(contextId, account)
+  async removeContext (query: NotificationContextQuery): Promise<ContextID | undefined> {
+    return await this.notification.removeContext(query)
   }
 
   async findNotificationContexts (params: FindNotificationContextParams): Promise<NotificationContext[]> {
     return await this.notification.findContexts(params)
   }
 
-  async findNotifications (params: FindNotificationsParams): Promise<WithTotal<Notification>> {
-    return await this.notification.findNotifications(params)
+  // Labels
+  createLabel (cardId: CardID, cardType: CardType, labelId: LabelID, account: AccountID, created: Date): Promise<void> {
+    return this.label.createLabel(labelId, cardId, cardType, account, created)
   }
 
-  async findCollaborators (params: FindCollaboratorsParams): Promise<Collaborator[]> {
-    return await this.notification.findCollaborators(params)
-  }
-
-  close (): void {
-    this.sql.close()
-  }
-
-  getCollaboratorsCursor (card: CardID, date: Date, size?: number): AsyncIterable<Collaborator[]> {
-    return this.notification.getCollaboratorsCursor(card, date, size)
-  }
-
-  createLabel (label: LabelID, card: CardID, cardType: CardType, account: AccountID, created: Date): Promise<void> {
-    return this.label.createLabel(label, card, cardType, account, created)
-  }
-
-  removeLabels (query: RemoveLabelQuery): Promise<void> {
+  removeLabels (query: LabelQuery): Promise<void> {
     return this.label.removeLabels(query)
+  }
+
+  updateLabels (query: LabelQuery, updates: LabelUpdate): Promise<void> {
+    return this.label.updateLabels(query, updates)
   }
 
   findLabels (params: FindLabelsParams): Promise<Label[]> {
     return this.label.findLabels(params)
   }
 
-  updateLabels (card: CardID, updates: LabelUpdates): Promise<void> {
-    return this.label.updateLabels(card, updates)
-  }
-
+  // Peers
   async createPeer (
     workspaceId: WorkspaceID,
     cardId: CardID,
@@ -381,7 +348,6 @@ export class CockroachAdapter implements DbAdapter {
     return result[0]?.title
   }
 
-  // TODO: remove later
   async getCardSpaceMembers (cardId: CardID): Promise<AccountID[]> {
     const sql = `SELECT s.members
                  FROM public.space AS s
@@ -393,12 +359,8 @@ export class CockroachAdapter implements DbAdapter {
     return result[0]?.members ?? []
   }
 
-  async getMessageCreated (cardId: CardID, messageId: MessageID): Promise<Date | undefined> {
-    return await this.message.getMessageCreated(cardId, messageId)
-  }
-
-  async isMessageInDb (cardId: CardID, messageId: MessageID): Promise<boolean> {
-    return await this.message.isMessageInDb(cardId, messageId)
+  close (): void {
+    this.sql.close()
   }
 }
 

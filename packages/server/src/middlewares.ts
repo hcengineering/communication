@@ -44,7 +44,7 @@ import type {
   QueryId
 } from './types'
 import { PermissionsMiddleware } from './middleware/permissions'
-import { DatabaseMiddleware } from './middleware/db'
+import { StorageMiddleware } from './middleware/storage'
 import { BroadcastMiddleware } from './middleware/broadcast'
 import { TriggersMiddleware } from './middleware/triggers'
 import { ValidateMiddleware } from './middleware/validate'
@@ -73,7 +73,7 @@ export async function buildMiddlewares (
     // Process events
     async (context, next) => new TriggersMiddleware(callbacks, db, context, next),
     async (context, next) => new BroadcastMiddleware(callbacks, context, next),
-    async (context, next) => new DatabaseMiddleware(db, context, next),
+    async (context, next) => new StorageMiddleware(db, context, next),
     async (context, next) => new PeerMiddleware(context, next)
   ]
 

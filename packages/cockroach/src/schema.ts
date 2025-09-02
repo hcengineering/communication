@@ -19,9 +19,6 @@ import {
   type CardID,
   type ContextID,
   type MessageID,
-  type MessageType,
-  type PatchType,
-  type Markdown,
   type SocialID,
   type WorkspaceID,
   type NotificationID,
@@ -34,22 +31,6 @@ import {
 import { Domain } from '@hcengineering/communication-sdk-types'
 
 export const schemas = {
-  [Domain.Message]: {
-    workspace_id: 'uuid',
-    card_id: 'varchar',
-    id: 'varchar',
-    type: 'varchar',
-    content: 'string',
-    creator: 'varchar',
-    created: 'timestamptz',
-    data: 'jsonb'
-  },
-  [Domain.MessageCreated]: {
-    workspace_id: 'uuid',
-    card_id: 'varchar',
-    created: 'timestamptz',
-    message_id: 'varchar'
-  },
   [Domain.MessagesGroup]: {
     workspace_id: 'uuid',
     card_id: 'varchar',
@@ -58,26 +39,14 @@ export const schemas = {
     to_date: 'timestamptz',
     count: 'int8'
   },
-  [Domain.Patch]: {
-    id: 'int',
+  [Domain.MessageIndex]: {
     workspace_id: 'uuid',
     card_id: 'varchar',
     message_id: 'varchar',
-    type: 'varchar',
-    creator: 'varchar',
     created: 'timestamptz',
-    message_created: 'timestamptz',
-    data: 'jsonb'
+    creator: 'varchar'
   },
-  [Domain.Reaction]: {
-    workspace_id: 'uuid',
-    card_id: 'varchar',
-    message_id: 'varchar',
-    reaction: 'varchar',
-    creator: 'varchar',
-    created: 'timestamptz'
-  },
-  [Domain.Thread]: {
+  [Domain.ThreadIndex]: {
     workspace_id: 'uuid',
     card_id: 'varchar',
     message_id: 'varchar',
@@ -86,7 +55,7 @@ export const schemas = {
     replies_count: 'int',
     last_reply: 'timestamptz'
   },
-  [Domain.Attachment]: {
+  [Domain.AttachmentIndex]: {
     workspace_id: 'uuid',
     card_id: 'varchar',
     message_id: 'varchar',
@@ -143,16 +112,15 @@ export const schemas = {
 } as const
 
 export interface DomainDbModel {
-  [Domain.Message]: MessageDbModel
-  [Domain.MessageCreated]: MessageCreatedDbModel
   [Domain.MessagesGroup]: MessagesGroupDbModel
-  [Domain.Patch]: PatchDbModel
-  [Domain.Reaction]: ReactionDbModel
-  [Domain.Thread]: ThreadDbModel
-  [Domain.Attachment]: AttachmentDbModel
+  [Domain.MessageIndex]: MessageCreatedDbModel
+  [Domain.ThreadIndex]: ThreadDbModel
+  [Domain.AttachmentIndex]: AttachmentDbModel
+
   [Domain.Notification]: NotificationDbModel
   [Domain.NotificationContext]: ContextDbModel
   [Domain.Collaborator]: CollaboratorDbModel
+
   [Domain.Label]: LabelDbModel
   [Domain.Peer]: PeerDbModel
 }
@@ -163,7 +131,8 @@ export type DbModelColumn<D extends Domain> = keyof DomainDbModel[D] & string
 
 export type DbModelColumnType<D extends Domain> = DomainDbModel[D][DbModelColumn<D>]
 
-export type DbModelFilter<D extends Domain> = Array<{ column: DbModelColumn<D>, value: DbModelColumnType<D> | DbModelColumnType<D>[] }>
+export interface DbModelFilterRow<D extends Domain> { column: DbModelColumn<D>, value: DbModelColumnType<D> | DbModelColumnType<D>[] }
+export type DbModelFilter<D extends Domain> = Array<DbModelFilterRow<D>>
 export type DbModelUpdate<D extends Domain> = Array<{
   column: DbModelColumn<D>
   innerKey?: string
@@ -176,22 +145,12 @@ export type DbModelBatchUpdate<D extends Domain> = Array<{
   value: any
 }>
 
-interface MessageDbModel {
-  workspace_id: WorkspaceID
-  card_id: CardID
-  id: MessageID
-  type: MessageType
-  content: Markdown
-  creator: SocialID
-  created: Date
-  data?: Record<string, any>
-}
-
 interface MessageCreatedDbModel {
   workspace_id: WorkspaceID
   card_id: CardID
   message_id: MessageID
   created: Date
+  creator: SocialID
 }
 
 interface MessagesGroupDbModel {
@@ -201,17 +160,6 @@ interface MessagesGroupDbModel {
   from_date: Date
   to_date: Date
   count: number
-}
-
-interface PatchDbModel {
-  workspace_id: WorkspaceID
-  card_id: CardID
-  message_id: MessageID
-  type: PatchType
-  data: Record<string, any>
-  creator: SocialID
-  created: Date
-  message_created: Date
 }
 
 interface AttachmentDbModel {
@@ -224,15 +172,6 @@ interface AttachmentDbModel {
   creator: SocialID
   created: Date
   modified?: Date
-}
-
-interface ReactionDbModel {
-  workspace_id: WorkspaceID
-  card_id: CardID
-  message_id: MessageID
-  reaction: string
-  creator: SocialID
-  created: Date
 }
 
 interface ThreadDbModel {

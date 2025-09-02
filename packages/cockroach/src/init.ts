@@ -151,22 +151,6 @@ function migrationV1_1 (): [string, string] {
 
 function migrationV1_2 (): [string, string] {
   const sql = `
-      CREATE TABLE IF NOT EXISTS communication.messages
-      (
-          workspace_id UUID         NOT NULL,
-          card_id      VARCHAR(255) NOT NULL,
-          id           INT8         NOT NULL DEFAULT unique_rowid(),
-          content      TEXT         NOT NULL,
-          creator      VARCHAR(255) NOT NULL,
-          created      TIMESTAMPTZ  NOT NULL,
-          type         VARCHAR(255) NOT NULL,
-          data         JSONB        NOT NULL DEFAULT '{}',
-          PRIMARY KEY (workspace_id, card_id, id)
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_messages_workspace_card ON communication.messages (workspace_id, card_id);
-      CREATE INDEX IF NOT EXISTS idx_messages_workspace_card_id ON communication.messages (workspace_id, card_id, id);
-
       CREATE TABLE IF NOT EXISTS communication.messages_groups
       (
           workspace_id UUID         NOT NULL,
@@ -179,36 +163,6 @@ function migrationV1_2 (): [string, string] {
       );
 
       CREATE INDEX IF NOT EXISTS idx_messages_groups_workspace_card ON communication.messages_groups (workspace_id, card_id);
-
-      CREATE TABLE IF NOT EXISTS communication.patch
-      (
-          id              INT8         NOT NULL DEFAULT unique_rowid(),
-          workspace_id    UUID         NOT NULL,
-          card_id         VARCHAR(255) NOT NULL,
-          message_id      INT8         NOT NULL,
-          type            VARCHAR(255) NOT NULL,
-          creator         VARCHAR(255) NOT NULL,
-          created         TIMESTAMPTZ  NOT NULL,
-          message_created TIMESTAMPTZ  NOT NULL,
-          data            JSONB        NOT NULL DEFAULT '{}',
-          PRIMARY KEY (id)
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_patch_workspace_card_message ON communication.patch (workspace_id, card_id, message_id);
-
-      CREATE TABLE IF NOT EXISTS communication.reactions
-      (
-          workspace_id UUID         NOT NULL,
-          card_id      VARCHAR(255) NOT NULL,
-          message_id   INT8         NOT NULL,
-          reaction     VARCHAR(100) NOT NULL,
-          creator      VARCHAR(255) NOT NULL,
-          created      TIMESTAMPTZ  NOT NULL DEFAULT now(),
-          PRIMARY KEY (workspace_id, card_id, message_id, creator, reaction),
-          FOREIGN KEY (workspace_id, card_id, message_id) REFERENCES communication.messages (workspace_id, card_id, id) ON DELETE CASCADE
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_reactions_workspace_card_message ON communication.reactions (workspace_id, card_id, message_id);
 
       CREATE TABLE IF NOT EXISTS communication.thread
       (
@@ -342,9 +296,6 @@ function migrationV4_1 (): [string, string] {
 
 function migrationV5_1 (): [string, string] {
   const sql = `
-      DROP INDEX IF EXISTS communication.idx_messages_unique_workspace_card_external_id;
-      ALTER TABLE communication.messages
-          DROP COLUMN IF EXISTS external_id;
       ALTER TABLE communication.thread
           DROP COLUMN IF EXISTS message_created;
   `
@@ -368,12 +319,6 @@ function migrationV5_2 (): [string, string] {
 
 function migrationV6_1 (): [string, string] {
   const sql = `
-      ALTER TABLE communication.messages
-          ADD COLUMN IF NOT EXISTS message_id_str VARCHAR(22);
-      ALTER TABLE communication.patch
-          ADD COLUMN IF NOT EXISTS message_id_str VARCHAR(22);
-      ALTER TABLE communication.reactions
-          ADD COLUMN IF NOT EXISTS message_id_str VARCHAR(22);
       ALTER TABLE communication.thread
           ADD COLUMN IF NOT EXISTS message_id_str VARCHAR(22);
       ALTER TABLE communication.notifications
@@ -386,12 +331,6 @@ function migrationV6_1 (): [string, string] {
 
 function migrationV6_2 (): [string, string] {
   const sql = `
-      UPDATE communication.messages
-      SET message_id_str = id::text;
-      UPDATE communication.patch
-      SET message_id_str = message_id::text;
-      UPDATE communication.reactions
-      SET message_id_str = message_id::text;
       UPDATE communication.thread
       SET message_id_str = message_id::text;
       UPDATE communication.notifications
@@ -404,15 +343,8 @@ function migrationV6_2 (): [string, string] {
 
 function migrationV6_3 (): [string, string] {
   const sql = `
-      ALTER TABLE communication.reactions
-          DROP CONSTRAINT IF EXISTS reactions_workspace_id_card_id_message_id_fkey;
-
       DROP INDEX IF EXISTS communication.thread_unique_constraint CASCADE;
-
-      DROP INDEX IF EXISTS communication.idx_patch_workspace_card_message;
-      DROP INDEX IF EXISTS communication.idx_reactions_workspace_card_message;
       DROP INDEX IF EXISTS communication.idx_thread_workspace_card_message;
-      DROP INDEX IF EXISTS communication.workspace_id_card_id_message_id_idx;
       DROP INDEX IF EXISTS communication.notifications_context_id_read_created_desc_idx;
       DROP INDEX IF EXISTS communication.notifications_type_storing_rec_idx;
   `
@@ -421,21 +353,6 @@ function migrationV6_3 (): [string, string] {
 
 function migrationV6_4 (): [string, string] {
   const sql = `
-      ALTER TABLE communication.messages
-          RENAME COLUMN id TO message_id_old;
-      ALTER TABLE communication.messages
-          RENAME COLUMN message_id_str TO id;
-
-      ALTER TABLE communication.patch
-          RENAME COLUMN message_id TO message_id_old;
-      ALTER TABLE communication.patch
-          RENAME COLUMN message_id_str TO message_id;
-
-      ALTER TABLE communication.reactions
-          RENAME COLUMN message_id TO message_id_old;
-      ALTER TABLE communication.reactions
-          RENAME COLUMN message_id_str TO message_id;
-
       ALTER TABLE communication.thread
           RENAME COLUMN message_id TO message_id_old;
       ALTER TABLE communication.thread
@@ -456,12 +373,7 @@ function migrationV6_4 (): [string, string] {
 
 function migrationV6_5 (): [string, string] {
   const sql = `
-      ALTER TABLE communication.messages
-          ALTER COLUMN id SET NOT NULL;
-
       ALTER TABLE communication.message_created
-          ALTER COLUMN message_id SET NOT NULL;
-      ALTER TABLE communication.reactions
           ALTER COLUMN message_id SET NOT NULL;
       ALTER TABLE communication.thread
           ALTER COLUMN message_id SET NOT NULL;
@@ -474,30 +386,14 @@ function migrationV6_5 (): [string, string] {
 
 function migrationV6_6 (): [string, string] {
   const sql = `
-      ALTER TABLE communication.messages
-          ALTER PRIMARY KEY USING COLUMNS (workspace_id, card_id, id);
       ALTER TABLE communication.message_created
           ALTER PRIMARY KEY USING COLUMNS (workspace_id, card_id, message_id);
-      ALTER TABLE communication.reactions
-          ALTER PRIMARY KEY USING COLUMNS (workspace_id, card_id, message_id, creator, reaction);
   `
   return ['recrate_primary_keys-v6_6', sql]
 }
 
 function migrationV6_7 (): [string, string] {
   const sql = `
-      ALTER TABLE communication.reactions
-          ADD CONSTRAINT fk_reactions_message
-              FOREIGN KEY (workspace_id, card_id, message_id)
-                  REFERENCES communication.messages (workspace_id, card_id, id)
-                  ON DELETE CASCADE;
-
-      CREATE INDEX IF NOT EXISTS idx_patch_workspace_card_message
-          ON communication.patch (workspace_id, card_id, message_id);
-
-      CREATE INDEX IF NOT EXISTS idx_reactions_workspace_card_message
-          ON communication.reactions (workspace_id, card_id, message_id);
-
       ALTER TABLE communication.thread
           ADD CONSTRAINT thread_unique_constraint UNIQUE (workspace_id, card_id, message_id);
 
@@ -512,12 +408,6 @@ function migrationV6_7 (): [string, string] {
 
 function migrationV6_8 (): [string, string] {
   const sql = `
-      ALTER TABLE communication.messages
-          DROP COLUMN IF EXISTS message_id_old;
-      ALTER TABLE communication.patch
-          DROP COLUMN IF EXISTS message_id_old;
-      ALTER TABLE communication.reactions
-          DROP COLUMN IF EXISTS message_id_old;
       ALTER TABLE communication.thread
           DROP COLUMN IF EXISTS message_id_old;
       ALTER TABLE communication.notifications
@@ -565,12 +455,8 @@ function migrationV7_3 (): [string, string] {
 
 function migrationV8_1 (): [string, string] {
   const sql = `
-      ALTER TABLE communication.messages
-          RENAME TO message;
       ALTER TABLE communication.messages_groups
           RENAME TO messages_group;
-      ALTER TABLE communication.reactions
-          RENAME TO reaction;
       ALTER TABLE communication.notifications
           RENAME TO notification;
       ALTER TABLE communication.collaborators
@@ -582,7 +468,7 @@ function migrationV8_1 (): [string, string] {
 
 function migrationV8_2 (): [string, string] {
   const sql = `
-      CREATE TABLE IF NOT EXISTS ${Domain.Attachment}
+      CREATE TABLE IF NOT EXISTS ${Domain.AttachmentIndex}
       (
           workspace_id UUID        NOT NULL,
           card_id      VARCHAR     NOT NULL,
@@ -601,19 +487,10 @@ function migrationV8_2 (): [string, string] {
 
 function migrationV8_3 (): [string, string] {
   const sql = `
-      CREATE INDEX IF NOT EXISTS attachment_workspace_card_message_idx ON ${Domain.Attachment} (workspace_id, card_id, message_id)
+      CREATE INDEX IF NOT EXISTS attachment_workspace_card_message_idx ON ${Domain.AttachmentIndex} (workspace_id, card_id, message_id)
   `
   return ['add_attachment_indexes-v8_3', sql]
 }
-
-// CREATE TABLE ${Domain.CardPeerGroup}
-// (
-//     group_id     UUID         NOT NULL,
-//     workspace_id UUID         NOT NULL,
-//     card_id      VARCHAR(255) NOT NULL,
-//     created   TIMESTAMPTZ  NOT NULL DEFAULT now(),
-//     PRIMARY KEY (group_id,workspace_id, card_id)
-// );
 
 function migrationV9_1 (): [string, string] {
   const sql = `

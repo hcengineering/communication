@@ -406,7 +406,7 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     const totalNotifications = this.getNotificationsTotal(context, event)
     const shouldRefreshTotal = this.params.notifications.total === true && this.params.notifications.type != null
 
-    let matchQuery: FindNotificationsParams = { ...event.query, context: event.contextId, account: event.account }
+    let matchQuery: FindNotificationsParams = { ...event.query, contextId: event.contextId, account: event.account }
     if (event.query.untilDate != null) {
       matchQuery = { ...matchQuery, created: { lessOrEqual: event.query.untilDate } }
     }
@@ -417,7 +417,7 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
       if (shouldRefreshTotal) {
         const nRes = await this.client.findNotifications({
           ...this.params.notifications,
-          context: context.id,
+          contextId: context.id,
           limit: 1,
           total: true
         })
@@ -459,7 +459,7 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
     } else if (shouldRefreshTotal) {
       const nRes = await this.client.findNotifications({
         ...this.params.notifications,
-        context: context.id,
+        contextId: context.id,
         limit: 1,
         total: true
       })
@@ -684,8 +684,8 @@ export class NotificationContextsQuery implements PagedQuery<NotificationContext
   }
 
   private match (context: NotificationContext): boolean {
-    if (this.params.card !== undefined) {
-      const cards = Array.isArray(this.params.card) ? this.params.card : [this.params.card]
+    if (this.params.cardId !== undefined) {
+      const cards = Array.isArray(this.params.cardId) ? this.params.cardId : [this.params.cardId]
       if (!cards.includes(context.cardId)) return false
     }
 

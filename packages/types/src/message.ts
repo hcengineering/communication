@@ -17,7 +17,6 @@ import type { Attribute, BlobMetadata, Class, Mixin, Ref } from '@hcengineering/
 import type { Card, Tag } from '@hcengineering/card'
 
 import type { AccountID, BlobID, CardID, CardType, ID, Markdown, SocialID } from './core'
-import { Patch } from './patch'
 
 // Message
 export type MessageID = ID & { message: true }
@@ -32,11 +31,12 @@ export type MessageExtra = Record<string, any>
 export interface Message {
   id: MessageID
   cardId: CardID
+  created: Date
+  creator: SocialID
+
   type: MessageType
   content: Markdown
   extra?: MessageExtra
-  creator: SocialID
-  created: Date
 
   removed: boolean
   edited?: Date
@@ -45,6 +45,8 @@ export interface Message {
   attachments: Attachment[]
   thread?: Thread
 }
+
+export type MessageMeta = Pick<Message, 'id' | 'cardId' | 'created' | 'creator'>
 
 export interface ActivityMessage extends Message {
   type: MessageType.Activity
@@ -187,5 +189,4 @@ export interface MessagesGroup {
   fromDate: Date
   toDate: Date
   count: number
-  patches?: Patch[]
 }

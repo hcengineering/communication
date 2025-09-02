@@ -17,7 +17,6 @@ import { EventResult, Event } from '@hcengineering/communication-sdk-types'
 import {
   SortingOrder,
   type Window,
-  type ComparisonOperator,
   type CardID,
   type MessageID,
   FindNotificationsParams
@@ -72,24 +71,13 @@ export interface Query<R = any, P = FindParams> extends BaseQuery<R, P> {
 
 export type AnyQuery = Query | PagedQuery
 
-export interface DefaultMessageQueryParams {
-  card: CardID
-
-  limit?: number
-  order?: SortingOrder
-
-  files?: boolean
-  reactions?: boolean
-  replies?: boolean
-  created?: Partial<Record<ComparisonOperator, Date>> | Date
-}
-
 interface BaseMessageQueryParams {
-  card: CardID
+  cardId: CardID
 
   limit?: number
   order?: SortingOrder
 
+  // TODO: move to options
   attachments?: boolean
   reactions?: boolean
   replies?: boolean
