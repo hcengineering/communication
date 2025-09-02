@@ -13,7 +13,12 @@
 // limitations under the License.
 //
 
-import type { AccountUuid, Collaborator, FindCollaboratorsParams, WorkspaceUuid } from '@hcengineering/communication-types'
+import type {
+  AccountUuid,
+  Collaborator,
+  FindCollaboratorsParams,
+  WorkspaceUuid
+} from '@hcengineering/communication-types'
 import {
   AddCollaboratorsEvent,
   CardEventType,
