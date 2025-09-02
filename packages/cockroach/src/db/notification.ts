@@ -14,7 +14,7 @@
 //
 
 import {
-  type AccountID,
+  type AccountUuid,
   type CardID,
   type Collaborator,
   type ContextID,
@@ -51,9 +51,9 @@ export class NotificationsDb extends BaseDb {
   async addCollaborators (
     card: CardID,
     cardType: CardType,
-    collaborators: AccountID[],
+    collaborators: AccountUuid[],
     date: Date
-  ): Promise<AccountID[]> {
+  ): Promise<AccountUuid[]> {
     if (collaborators.length === 0) return []
     const models: DbModel<Domain.Collaborator>[] = collaborators.map((account, index) => ({
       workspace_id: this.workspace,
@@ -228,7 +228,7 @@ export class NotificationsDb extends BaseDb {
   }
 
   async createContext (
-    account: AccountID,
+    account: AccountUuid,
     card: CardID,
     lastUpdate: Date,
     lastView: Date,

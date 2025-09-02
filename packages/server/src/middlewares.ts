@@ -31,7 +31,7 @@ import type {
   Notification,
   NotificationContext, Peer,
   Thread,
-  WorkspaceID
+  WorkspaceUuid
 } from '@hcengineering/communication-types'
 
 import type {
@@ -55,7 +55,7 @@ import { PeerMiddleware } from './middleware/peer'
 
 export async function buildMiddlewares (
   ctx: MeasureContext,
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   metadata: Metadata,
   db: DbAdapter,
   callbacks: CommunicationCallbacks, peers: Peer[]

@@ -14,7 +14,7 @@
 //
 
 import { LiveQueries } from '@hcengineering/communication-query'
-import type { WorkspaceID } from '@hcengineering/communication-types'
+import type { WorkspaceUuid } from '@hcengineering/communication-types'
 import type { FindClient } from '@hcengineering/communication-sdk-types'
 
 export type { MessageQueryParams } from '@hcengineering/communication-query'
@@ -32,7 +32,7 @@ export function getOnDestroy (): (fn: () => void) => void {
 
 export function initLiveQueries (
   client: FindClient,
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   filesUrl: string,
   destroyFn?: (fn: () => void) => void
 ): void {

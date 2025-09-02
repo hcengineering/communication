@@ -14,7 +14,7 @@
 //
 
 import postgres, { type ParameterOrJSON } from 'postgres'
-import { SortingOrder, WorkspaceID } from '@hcengineering/communication-types'
+import { SortingOrder, WorkspaceUuid } from '@hcengineering/communication-types'
 import { Domain } from '@hcengineering/communication-sdk-types'
 
 import { SqlRow, type Logger, type Options, type SqlResult } from '../types'
@@ -32,7 +32,7 @@ import {
 export class BaseDb {
   constructor (
     readonly client: SqlClient,
-    readonly workspace: WorkspaceID,
+    readonly workspace: WorkspaceUuid,
     readonly logger?: Logger,
     readonly options?: Options
   ) {}

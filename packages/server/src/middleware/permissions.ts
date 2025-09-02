@@ -23,7 +23,7 @@ import {
   type SessionData
 } from '@hcengineering/communication-sdk-types'
 import { AccountRole, systemAccountUuid } from '@hcengineering/core'
-import type { AccountID, SocialID } from '@hcengineering/communication-types'
+import type { AccountUuid, SocialID } from '@hcengineering/communication-types'
 
 import { ApiError } from '../error'
 import type { Enriched, Middleware, MiddlewareContext } from '../types'
@@ -88,7 +88,7 @@ export class PermissionsMiddleware extends BaseMiddleware implements Middleware 
     }
   }
 
-  private checkAccount (session: SessionData, creator: AccountID): void {
+  private checkAccount (session: SessionData, creator: AccountUuid): void {
     const account = session.account
     if (account.uuid !== creator && systemAccountUuid !== account.uuid) {
       throw ApiError.forbidden('account is not allowed')

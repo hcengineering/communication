@@ -16,7 +16,7 @@
 import type { Attribute, BlobMetadata, Class, Mixin, Ref } from '@hcengineering/core'
 import type { Card, Tag } from '@hcengineering/card'
 
-import type { AccountID, BlobID, CardID, CardType, ID, Markdown, SocialID } from './core'
+import type { AccountUuid, BlobID, CardID, CardType, ID, Markdown, SocialID } from './core'
 
 // Message
 export type MessageID = ID & { message: true }
@@ -79,8 +79,8 @@ export interface ActivityTagUpdate {
 
 export interface ActivityCollaboratorsUpdate {
   type: ActivityUpdateType.Collaborators
-  added: AccountID[]
-  removed: AccountID[]
+  added: AccountUuid[]
+  removed: AccountUuid[]
 }
 
 export interface ActivityTypeUpdate {

@@ -14,7 +14,7 @@
 //
 
 import {
-  type AccountID,
+  type AccountUuid,
   type CardID,
   type CardType,
   type FindLabelsParams,
@@ -32,7 +32,7 @@ export class LabelsDb extends BaseDb {
     label: LabelID,
     card: CardID,
     cardType: CardType,
-    account: AccountID,
+    account: AccountUuid,
     created: Date
   ): Promise<void> {
     const db: DbModel<Domain.Label> = {

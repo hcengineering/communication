@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { AccountID, Collaborator, FindCollaboratorsParams, WorkspaceID } from '@hcengineering/communication-types'
+import type { AccountUuid, Collaborator, FindCollaboratorsParams, WorkspaceUuid } from '@hcengineering/communication-types'
 import {
   AddCollaboratorsEvent,
   CardEventType,
@@ -35,7 +35,7 @@ export class CollaboratorsQuery implements Query<Collaborator, FindCollaborators
 
   constructor (
     private readonly client: FindClient,
-    private readonly workspace: WorkspaceID,
+    private readonly workspace: WorkspaceUuid,
     private readonly filesUrl: string,
     public readonly id: QueryId,
     public readonly params: FindCollaboratorsParams,
@@ -166,7 +166,7 @@ export class CollaboratorsQuery implements Query<Collaborator, FindCollaborators
     this.callback(result)
   }
 
-  private match (account: AccountID): boolean {
+  private match (account: AccountUuid): boolean {
     if (this.params.account != null) {
       const accounts = Array.isArray(this.params.account) ? this.params.account : [this.params.account]
       if (!accounts.includes(account)) {

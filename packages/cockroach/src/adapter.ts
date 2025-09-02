@@ -15,7 +15,7 @@
 
 import {
   type FindCollaboratorsParams,
-  type AccountID,
+  type AccountUuid,
   type CardID,
   type Collaborator,
   type ContextID,
@@ -28,7 +28,7 @@ import {
   type NotificationContext,
   type SocialID,
   type Thread,
-  type WorkspaceID,
+  type WorkspaceUuid,
   type NotificationID,
   type Label,
   type FindLabelsParams,
@@ -81,7 +81,7 @@ export class CockroachAdapter implements DbAdapter {
 
   constructor (
     private readonly sql: SqlClient,
-    private readonly workspace: WorkspaceID,
+    private readonly workspace: WorkspaceUuid,
     private readonly logger?: Logger,
     private readonly options?: Options
   ) {
@@ -186,9 +186,9 @@ export class CockroachAdapter implements DbAdapter {
   async addCollaborators (
     card: CardID,
     cardType: CardType,
-    collaborators: AccountID[],
+    collaborators: AccountUuid[],
     date: Date
-  ): Promise<AccountID[]> {
+  ): Promise<AccountUuid[]> {
     return await this.notification.addCollaborators(card, cardType, collaborators, date)
   }
 
@@ -253,7 +253,7 @@ export class CockroachAdapter implements DbAdapter {
 
   // NotificationContext
   async createNotificationContext (
-    account: AccountID,
+    account: AccountUuid,
     card: CardID,
     lastUpdate: Date,
     lastView: Date,
@@ -275,7 +275,7 @@ export class CockroachAdapter implements DbAdapter {
   }
 
   // Labels
-  createLabel (cardId: CardID, cardType: CardType, labelId: LabelID, account: AccountID, created: Date): Promise<void> {
+  createLabel (cardId: CardID, cardType: CardType, labelId: LabelID, account: AccountUuid, created: Date): Promise<void> {
     return this.label.createLabel(labelId, cardId, cardType, account, created)
   }
 
@@ -293,7 +293,7 @@ export class CockroachAdapter implements DbAdapter {
 
   // Peers
   async createPeer (
-    workspaceId: WorkspaceID,
+    workspaceId: WorkspaceUuid,
     cardId: CardID,
     kind: PeerKind,
     value: string,
@@ -303,7 +303,7 @@ export class CockroachAdapter implements DbAdapter {
     await this.peer.createPeer(workspaceId, cardId, kind, value, extra, date)
   }
 
-  async removePeer (workspaceId: WorkspaceID,
+  async removePeer (workspaceId: WorkspaceUuid,
     cardId: CardID,
     kind: PeerKind,
     value: string): Promise<void> {
@@ -314,7 +314,7 @@ export class CockroachAdapter implements DbAdapter {
     return this.peer.findPeers(params)
   }
 
-  async getAccountsByPersonIds (ids: string[]): Promise<AccountID[]> {
+  async getAccountsByPersonIds (ids: string[]): Promise<AccountUuid[]> {
     if (ids.length === 0) return []
     const sql = `SELECT data ->> 'personUuid' AS "personUuid"
                  FROM public.contact
@@ -322,10 +322,10 @@ export class CockroachAdapter implements DbAdapter {
                    AND _id = ANY($2::text[])`
     const result = await this.sql.execute(sql, [this.workspace, ids])
 
-    return result?.map((it) => it.personUuid as AccountID).filter((it) => it != null) ?? []
+    return result?.map((it) => it.personUuid as AccountUuid).filter((it) => it != null) ?? []
   }
 
-  async getNameByAccount (id: AccountID): Promise<string | undefined> {
+  async getNameByAccount (id: AccountUuid): Promise<string | undefined> {
     const sql = `SELECT data ->> 'name' AS name
                  FROM public.contact
                  WHERE "workspaceId" = $1::uuid
@@ -348,7 +348,7 @@ export class CockroachAdapter implements DbAdapter {
     return result[0]?.title
   }
 
-  async getCardSpaceMembers (cardId: CardID): Promise<AccountID[]> {
+  async getCardSpaceMembers (cardId: CardID): Promise<AccountUuid[]> {
     const sql = `SELECT s.members
                  FROM public.space AS s
                  JOIN public.card AS c ON c."workspaceId" = s."workspaceId" AND c.space = s._id
@@ -366,7 +366,7 @@ export class CockroachAdapter implements DbAdapter {
 
 export async function createDbAdapter (
   connectionString: string,
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   logger?: Logger,
   options?: Options
 ): Promise<DbAdapter> {

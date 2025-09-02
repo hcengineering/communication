@@ -18,7 +18,7 @@ import {
   type FindNotificationContextParams,
   type FindNotificationsParams,
   type Message,
-  type WorkspaceID,
+  type WorkspaceUuid,
   type Notification,
   type NotificationContext,
   type Label,
@@ -57,7 +57,7 @@ export class LiveQueries {
 
   constructor (
     private readonly client: FindClient,
-    private readonly workspace: WorkspaceID,
+    private readonly workspace: WorkspaceUuid,
     private readonly filesUrl: string
   ) {
     this.client.onEvent = (event) => {

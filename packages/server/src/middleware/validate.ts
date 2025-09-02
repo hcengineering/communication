@@ -163,8 +163,8 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
   }
 }
 
-const WorkspaceIDSchema = z.string().uuid()
-const AccountIDSchema = z.string()
+const WorkspaceUuidSchema = z.string().uuid()
+const AccountUuidSchema = z.string()
 const BlobIDSchema = z.string().uuid()
 const AttachmentIDSchema = z.string().uuid()
 const CardIDSchema = z.string()
@@ -253,7 +253,7 @@ const FindNotificationContextParamsSchema = FindParamsSchema.extend({
   id: ContextIDSchema.optional(),
   cardId: z.union([CardIDSchema, z.array(CardIDSchema)]).optional(),
   lastNotify: DateOrRecordSchema.optional(),
-  account: z.union([AccountIDSchema, z.array(AccountIDSchema)]).optional(),
+  account: z.union([AccountUuidSchema, z.array(AccountUuidSchema)]).optional(),
   notifications: z
     .object({
       type: z.string().optional(),
@@ -271,7 +271,7 @@ const FindNotificationsParamsSchema = FindParamsSchema.extend({
   type: z.string().optional(),
   read: z.boolean().optional(),
   created: DateOrRecordSchema.optional(),
-  account: z.union([AccountIDSchema, z.array(AccountIDSchema)]).optional(),
+  account: z.union([AccountUuidSchema, z.array(AccountUuidSchema)]).optional(),
   message: z.boolean().optional(), // TODO: remove ??
   cardId: CardIDSchema.optional(),
   total: z.boolean().optional()
@@ -281,12 +281,12 @@ const FindLabelsParamsSchema = FindParamsSchema.extend({
   labelId: z.union([LabelIDSchema, z.array(LabelIDSchema)]).optional(),
   cardId: CardIDSchema.optional(),
   cardType: z.union([CardTypeSchema, z.array(CardTypeSchema)]).optional(),
-  account: AccountIDSchema.optional()
+  account: AccountUuidSchema.optional()
 }).strict()
 
 const FindCollaboratorsParamsSchema = FindParamsSchema.extend({
   cardId: CardIDSchema.optional(),
-  account: z.union([AccountIDSchema, z.array(AccountIDSchema)]).optional()
+  account: z.union([AccountUuidSchema, z.array(AccountUuidSchema)]).optional()
 }).strict()
 
 // Events
@@ -429,7 +429,7 @@ const RemoveMessagesGroupEventSchema = BaseEventSchema.extend({
 const UpdateNotificationsEventSchema = BaseEventSchema.extend({
   type: z.literal(NotificationEventType.UpdateNotification),
   contextId: ContextIDSchema,
-  account: AccountIDSchema,
+  account: AccountUuidSchema,
   query: z.object({
     id: z.string().optional(),
     type: z.string().optional(),
@@ -444,14 +444,14 @@ const UpdateNotificationsEventSchema = BaseEventSchema.extend({
 const RemoveNotificationContextEventSchema = BaseEventSchema.extend({
   type: z.literal(NotificationEventType.RemoveNotificationContext),
   contextId: ContextIDSchema,
-  account: AccountIDSchema,
+  account: AccountUuidSchema,
   date: DateSchema
 }).strict()
 
 const UpdateNotificationContextEventSchema = BaseEventSchema.extend({
   type: z.literal(NotificationEventType.UpdateNotificationContext),
   contextId: ContextIDSchema,
-  account: AccountIDSchema,
+  account: AccountUuidSchema,
   updates: z.object({
     lastView: DateSchema.optional()
   }),
@@ -462,7 +462,7 @@ const AddCollaboratorsEventSchema = BaseEventSchema.extend({
   type: z.literal(NotificationEventType.AddCollaborators),
   cardId: CardIDSchema,
   cardType: CardTypeSchema,
-  collaborators: z.array(AccountIDSchema).nonempty(),
+  collaborators: z.array(AccountUuidSchema).nonempty(),
   socialId: SocialIDSchema,
   date: DateSchema
 }).strict()
@@ -471,14 +471,14 @@ const RemoveCollaboratorsEventSchema = BaseEventSchema.extend({
   type: z.literal(NotificationEventType.RemoveCollaborators),
   cardId: CardIDSchema,
   cardType: CardTypeSchema,
-  collaborators: z.array(AccountIDSchema).nonempty(),
+  collaborators: z.array(AccountUuidSchema).nonempty(),
   socialId: SocialIDSchema,
   date: DateSchema
 }).strict()
 
 const CreatePeerEventSchema = BaseEventSchema.extend({
   type: z.literal(PeerEventType.CreatePeer),
-  workspaceId: WorkspaceIDSchema,
+  workspaceId: WorkspaceUuidSchema,
   cardId: CardIDSchema,
   kind: z.string().nonempty(),
   value: z.string().nonempty(),
@@ -488,7 +488,7 @@ const CreatePeerEventSchema = BaseEventSchema.extend({
 
 const RemovePeerEventSchema = BaseEventSchema.extend({
   type: z.literal(PeerEventType.RemovePeer),
-  workspaceId: WorkspaceIDSchema,
+  workspaceId: WorkspaceUuidSchema,
   cardId: CardIDSchema,
   kind: z.string().nonempty(),
   value: z.string().nonempty(),

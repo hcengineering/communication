@@ -20,13 +20,13 @@ import {
   type FileMessage,
   type FileMetadata,
   type ParsedFile,
-  type WorkspaceID,
+  type WorkspaceUuid,
   linkPreviewType
 } from '@hcengineering/communication-types'
 import yaml from 'js-yaml'
 
 export async function loadGroupFile (
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   filesUrl: string,
   blobId: BlobID,
   options: RetryOptions
@@ -51,7 +51,7 @@ async function fetchFile (url: string): Promise<string> {
   return await res.text()
 }
 
-function getFileUrl (workspace: WorkspaceID, urlTemplate: string, file: string): string {
+function getFileUrl (workspace: WorkspaceUuid, urlTemplate: string, file: string): string {
   return urlTemplate
     .replaceAll(':filename', encodeURIComponent(file))
     .replaceAll(':workspace', encodeURIComponent(workspace))

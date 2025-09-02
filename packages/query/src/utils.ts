@@ -24,14 +24,14 @@ import {
   ParsedFile,
   type Patch,
   SortingOrder,
-  type WorkspaceID
+  type WorkspaceUuid
 } from '@hcengineering/communication-types'
 import { loadGroupFile } from '@hcengineering/communication-yaml'
 import type { FindClient } from '@hcengineering/communication-sdk-types'
 
 export async function findMessage (
   client: FindClient,
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   filesUrl: string,
   cardId: CardID,
   id: MessageID,
@@ -49,7 +49,7 @@ export async function findMessage (
 
 export async function findMessageInFiles (
   client: FindClient,
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   filesUrl: string,
   cardId: CardID,
   id: MessageID,
@@ -90,7 +90,7 @@ export async function findMessageInFiles (
 
 export async function loadMessageFromGroup (
   id: MessageID,
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   filesUrl: string,
   blobId: BlobID,
   patches: Patch[] = [],

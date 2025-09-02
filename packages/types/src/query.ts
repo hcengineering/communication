@@ -17,7 +17,7 @@ import { SortingOrder } from '@hcengineering/core'
 
 import type { MessageID } from './message'
 import type { ContextID, NotificationID, NotificationType } from './notification'
-import type { AccountID, BlobID, CardID, CardType, WorkspaceID } from './core'
+import type { AccountUuid, BlobID, CardID, CardType, WorkspaceUuid } from './core'
 import type { LabelID } from './label'
 import { PeerKind } from './peer'
 
@@ -69,7 +69,7 @@ export interface FindNotificationContextParams extends FindParams {
   id?: ContextID
   cardId?: CardID | CardID[]
   lastNotify?: Partial<Record<ComparisonOperator, Date>> | Date
-  account?: AccountID | AccountID[]
+  account?: AccountUuid | AccountUuid[]
   notifications?: {
     type?: NotificationType
     message?: boolean // TODO: remove ??
@@ -87,7 +87,7 @@ export interface FindNotificationsParams extends FindParams {
   contextId?: ContextID
   read?: boolean
   created?: Partial<Record<ComparisonOperator, Date>> | Date
-  account?: AccountID | AccountID[]
+  account?: AccountUuid | AccountUuid[]
   cardId?: CardID
   message?: boolean // TODO: remove ??
   total?: boolean
@@ -95,14 +95,14 @@ export interface FindNotificationsParams extends FindParams {
 
 export interface FindCollaboratorsParams extends FindParams {
   cardId: CardID
-  account?: AccountID | AccountID[]
+  account?: AccountUuid | AccountUuid[]
 }
 
 export interface FindLabelsParams extends FindParams {
   labelId?: LabelID | LabelID[]
   cardId?: CardID
   cardType?: CardType | CardType[]
-  account?: AccountID
+  account?: AccountUuid
 }
 
 export interface FindThreadParams extends FindParams {
@@ -112,7 +112,7 @@ export interface FindThreadParams extends FindParams {
 }
 
 export interface FindPeersParams extends FindParams {
-  workspaceId?: WorkspaceID
+  workspaceId?: WorkspaceUuid
   cardId?: CardID
   kind?: PeerKind
   value?: string

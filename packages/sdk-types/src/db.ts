@@ -26,7 +26,7 @@ import {
   FindMessagesGroupsParams,
   MessagesGroup,
   Thread,
-  AccountID,
+  AccountUuid,
   Collaborator,
   FindCollaboratorsParams,
   NotificationID,
@@ -40,7 +40,7 @@ import {
   AttachmentID,
   AttachmentUpdateData,
   WithTotal,
-  WorkspaceID,
+  WorkspaceUuid,
   PeerKind,
   PeerExtra,
   FindPeersParams,
@@ -79,21 +79,21 @@ export interface DbAdapter {
 
   // Peers
   createPeer: (
-    workspaceId: WorkspaceID,
+    workspaceId: WorkspaceUuid,
     cardId: CardID,
     kind: PeerKind,
     value: string,
     extra: PeerExtra,
     date: Date
   ) => Promise<void>
-  removePeer: (workspaceId: WorkspaceID,
+  removePeer: (workspaceId: WorkspaceUuid,
     cardId: CardID,
     kind: PeerKind,
     value: string) => Promise<void>
   findPeers: (params: FindPeersParams) => Promise<Peer[]>
 
   // Collaborators
-  addCollaborators: (cardId: CardID, cardType: CardType, collaborators: AccountID[], date: Date) => Promise<AccountID[]>
+  addCollaborators: (cardId: CardID, cardType: CardType, collaborators: AccountUuid[], date: Date) => Promise<AccountUuid[]>
   removeCollaborators: (query: CollaboratorQuery) => Promise<void>
   updateCollaborators: (query: CollaboratorQuery, update: CollaboratorUpdate) => Promise<void>
   getCollaboratorsCursor: (cardId: CardID, date: Date, size?: number) => AsyncIterable<Collaborator[]>
@@ -117,7 +117,7 @@ export interface DbAdapter {
 
   // NotificationContext
   createNotificationContext: (
-    account: AccountID,
+    account: AccountUuid,
     cardId: CardID,
     lastUpdate: Date,
     lastView: Date,
@@ -128,16 +128,16 @@ export interface DbAdapter {
   findNotificationContexts: (params: FindNotificationContextParams) => Promise<NotificationContext[]>
 
   // Labels
-  createLabel: (cardId: CardID, cardType: CardType, labelId: LabelID, account: AccountID, created: Date) => Promise<void>
+  createLabel: (cardId: CardID, cardType: CardType, labelId: LabelID, account: AccountUuid, created: Date) => Promise<void>
   removeLabels: (query: LabelQuery) => Promise<void>
   updateLabels: (query: LabelQuery, update: LabelUpdate) => Promise<void>
   findLabels: (params: FindLabelsParams) => Promise<Label[]>
 
   // Other
   getCardTitle: (cardId: CardID) => Promise<string | undefined>
-  getCardSpaceMembers: (cardId: CardID) => Promise<AccountID[]>
-  getAccountsByPersonIds: (ids: string[]) => Promise<AccountID[]>
-  getNameByAccount: (id: AccountID) => Promise<string | undefined>
+  getCardSpaceMembers: (cardId: CardID) => Promise<AccountUuid[]>
+  getAccountsByPersonIds: (ids: string[]) => Promise<AccountUuid[]>
+  getNameByAccount: (id: AccountUuid) => Promise<string | undefined>
 
   close: () => void
 }
@@ -157,5 +157,5 @@ export type NotificationQuery = Partial<Pick<Notification, 'contextId' | 'accoun
 }
 export type NotificationUpdate = Pick<Notification, 'read'>
 
-export type CollaboratorQuery = Pick<Collaborator, 'cardId'> & { account?: AccountID | AccountID[] }
+export type CollaboratorQuery = Pick<Collaborator, 'cardId'> & { account?: AccountUuid | AccountUuid[] }
 export type CollaboratorUpdate = Partial<Collaborator>

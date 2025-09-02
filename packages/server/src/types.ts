@@ -21,7 +21,7 @@ import type {
   SessionData, EventType
 } from '@hcengineering/communication-sdk-types'
 import type {
-  AccountID,
+  AccountUuid,
   CardID,
   Collaborator,
   ContextID,
@@ -40,7 +40,7 @@ import type {
   NotificationContext,
   Peer,
   SocialID, Thread,
-  WorkspaceID
+  WorkspaceUuid
 } from '@hcengineering/communication-types'
 
 export interface Metadata {
@@ -87,10 +87,10 @@ export interface Middleware {
 
 export interface MiddlewareContext {
   ctx: MeasureContext
-  workspace: WorkspaceID
+  workspace: WorkspaceUuid
   metadata: Metadata
   registeredCards: Set<CardID>
-  accountBySocialID: Map<SocialID, AccountID>
+  accountBySocialID: Map<SocialID, AccountUuid>
   removedContexts: Map<ContextID, NotificationContext>
 
   cadsWithPeers: Set<CardID>
@@ -111,10 +111,10 @@ export interface TriggerCtx {
   ctx: MeasureContext
   metadata: Metadata
   db: DbAdapter
-  workspace: WorkspaceID
+  workspace: WorkspaceUuid
   account: Account
   registeredCards: Set<CardID>
-  accountBySocialID: Map<SocialID, AccountID>
+  accountBySocialID: Map<SocialID, AccountUuid>
   removedContexts: Map<ContextID, NotificationContext>
   derived: boolean
   processedPeersEvents: Set<string>

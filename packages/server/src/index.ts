@@ -22,7 +22,7 @@ import type {
   Message,
   MessagesGroup,
   NotificationContext,
-  WorkspaceID,
+  WorkspaceUuid,
   Notification,
   FindLabelsParams,
   Label,
@@ -45,7 +45,7 @@ export class Api implements ServerApi {
 
   static async create (
     ctx: MeasureContext,
-    workspace: WorkspaceID,
+    workspace: WorkspaceUuid,
     dbUrl: string,
     callbacks: CommunicationCallbacks
   ): Promise<Api> {

@@ -24,7 +24,7 @@ import {
   type SessionData
 } from '@hcengineering/communication-sdk-types'
 import type {
-  AccountID,
+  AccountUuid,
   CardID,
   FindLabelsParams,
   FindMessagesGroupsParams,
@@ -43,7 +43,7 @@ import type { CommunicationCallbacks, Enriched, Middleware, MiddlewareContext, Q
 import { BaseMiddleware } from './base'
 
 interface SessionInfo {
-  account: AccountID
+  account: AccountUuid
   messageQueries: Map<QueryId, FindMessagesParams>
   contextQueries: Map<QueryId, Set<CardID>>
 }

@@ -16,7 +16,7 @@
 import { type SessionData } from '@hcengineering/communication-sdk-types'
 import { systemAccountUuid } from '@hcengineering/core'
 import type {
-  AccountID,
+  AccountUuid,
   FindLabelsParams,
   FindNotificationContextParams,
   FindNotificationsParams,
@@ -59,7 +59,7 @@ export class IdentityMiddleware extends BaseMiddleware implements Middleware {
     return await this.provideFindLabels(session, paramsWithAccount, queryId)
   }
 
-  private enrichParamsWithAccount<T extends { account?: AccountID | AccountID[] }>(session: SessionData, params: T): T {
+  private enrichParamsWithAccount<T extends { account?: AccountUuid | AccountUuid[] }>(session: SessionData, params: T): T {
     const account = session.account
     const isSystem = account.uuid === systemAccountUuid
 

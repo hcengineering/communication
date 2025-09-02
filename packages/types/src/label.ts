@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { AccountID, CardID, CardType } from './core'
+import type { AccountUuid, CardID, CardType } from './core'
 
 export type LabelID = string & { __label: true }
 
@@ -24,6 +24,6 @@ export interface Label {
   labelId: LabelID
   cardId: CardID
   cardType: CardType
-  account: AccountID
+  account: AccountUuid
   created: Date
 }

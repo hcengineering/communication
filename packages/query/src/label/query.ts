@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { FindLabelsParams, Label, WorkspaceID } from '@hcengineering/communication-types'
+import type { FindLabelsParams, Label, WorkspaceUuid } from '@hcengineering/communication-types'
 import {
   CardEventType,
   CreateLabelEvent,
@@ -40,7 +40,7 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
 
   constructor (
     private readonly client: FindClient,
-    private readonly workspace: WorkspaceID,
+    private readonly workspace: WorkspaceUuid,
     private readonly filesUrl: string,
     public readonly id: QueryId,
     public readonly params: FindLabelsParams,

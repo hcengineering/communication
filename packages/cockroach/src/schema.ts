@@ -14,13 +14,13 @@
 //
 
 import {
-  type AccountID,
+  type AccountUuid,
   type BlobID,
   type CardID,
   type ContextID,
   type MessageID,
   type SocialID,
-  type WorkspaceID,
+  type WorkspaceUuid,
   type NotificationID,
   type LabelID,
   type CardType,
@@ -146,7 +146,7 @@ export type DbModelBatchUpdate<D extends Domain> = Array<{
 }>
 
 interface MessageCreatedDbModel {
-  workspace_id: WorkspaceID
+  workspace_id: WorkspaceUuid
   card_id: CardID
   message_id: MessageID
   created: Date
@@ -154,7 +154,7 @@ interface MessageCreatedDbModel {
 }
 
 interface MessagesGroupDbModel {
-  workspace_id: WorkspaceID
+  workspace_id: WorkspaceUuid
   card_id: CardID
   blob_id: BlobID
   from_date: Date
@@ -163,7 +163,7 @@ interface MessagesGroupDbModel {
 }
 
 interface AttachmentDbModel {
-  workspace_id: WorkspaceID
+  workspace_id: WorkspaceUuid
   card_id: CardID
   message_id: MessageID
   id: AttachmentID
@@ -175,7 +175,7 @@ interface AttachmentDbModel {
 }
 
 interface ThreadDbModel {
-  workspace_id: WorkspaceID
+  workspace_id: WorkspaceUuid
   card_id: CardID
   message_id: MessageID
   thread_id: CardID
@@ -198,33 +198,33 @@ interface NotificationDbModel {
 
 interface ContextDbModel {
   id: ContextID
-  workspace_id: WorkspaceID
+  workspace_id: WorkspaceUuid
   card_id: CardID
-  account: AccountID
+  account: AccountUuid
   last_update: Date
   last_view: Date
   last_notify: Date
 }
 
 interface CollaboratorDbModel {
-  workspace_id: WorkspaceID
+  workspace_id: WorkspaceUuid
   card_id: CardID
   card_type: CardType
-  account: AccountID
+  account: AccountUuid
   date: Date
 }
 
 interface LabelDbModel {
-  workspace_id: WorkspaceID
+  workspace_id: WorkspaceUuid
   label_id: LabelID
   card_id: CardID
   card_type: CardType
-  account: AccountID
+  account: AccountUuid
   created: Date
 }
 
 interface PeerDbModel {
-  workspace_id: WorkspaceID
+  workspace_id: WorkspaceUuid
   card_id: CardID
   kind: PeerKind
   value: string

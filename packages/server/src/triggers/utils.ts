@@ -14,14 +14,14 @@
 //
 
 import {
-  type AccountID,
+  type AccountUuid,
   type CardID,
   type Message,
   type MessageID,
   type Markdown,
   type SocialID,
   SortingOrder,
-  type WorkspaceID,
+  type WorkspaceUuid,
   BlobID
 } from '@hcengineering/communication-types'
 import { loadGroupFile } from '@hcengineering/communication-yaml'
@@ -33,7 +33,7 @@ import { findAccount } from '../utils'
 export async function findMessage (
   db: DbAdapter,
   filesUrl: string,
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   card: CardID,
   id: MessageID
 ): Promise<{
@@ -46,7 +46,7 @@ export async function findMessage (
 export async function findMessageInFiles (
   db: DbAdapter,
   filesUrl: string,
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   cardId: CardID,
   messageId: MessageID
 ): Promise<{
@@ -98,8 +98,8 @@ export async function getNameBySocialID (ctx: TriggerCtx, id: SocialID): Promise
 
 export async function getAddCollaboratorsMessageContent (
   ctx: TriggerCtx,
-  sender: AccountID | undefined,
-  collaborators: AccountID[]
+  sender: AccountUuid | undefined,
+  collaborators: AccountUuid[]
 ): Promise<Markdown> {
   if (sender != null && collaborators.length === 1 && collaborators.includes(sender)) {
     return 'Joined card'
@@ -114,8 +114,8 @@ export async function getAddCollaboratorsMessageContent (
 
 export async function getRemoveCollaboratorsMessageContent (
   ctx: TriggerCtx,
-  sender: AccountID | undefined,
-  collaborators: AccountID[]
+  sender: AccountUuid | undefined,
+  collaborators: AccountUuid[]
 ): Promise<Markdown> {
   if (sender != null && collaborators.length === 1 && collaborators.includes(sender)) {
     return 'Left card'

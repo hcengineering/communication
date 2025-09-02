@@ -26,11 +26,11 @@ import {
   type Reaction,
   type Thread,
   type Label,
-  type AccountID,
+  type AccountUuid,
   AttachmentID,
   Attachment,
   Peer,
-  WorkspaceID,
+  WorkspaceUuid,
   PeerExtra,
   MessageMeta
 } from '@hcengineering/communication-types'
@@ -39,7 +39,7 @@ import { Domain } from '@hcengineering/communication-sdk-types'
 import { DbModel } from '../schema'
 
 interface RawNotification extends DbModel<Domain.Notification> {
-  account: AccountID
+  account: AccountUuid
 }
 
 type RawContext = DbModel<Domain.NotificationContext> & { id: ContextID, total?: number } & {
@@ -147,7 +147,7 @@ export function toLabel (raw: DbModel<Domain.Label>): Label {
 }
 
 export function toPeer (
-  raw: DbModel<Domain.Peer> & { members?: { workspace_id: WorkspaceID, card_id: CardID, extra?: PeerExtra }[] }
+  raw: DbModel<Domain.Peer> & { members?: { workspace_id: WorkspaceUuid, card_id: CardID, extra?: PeerExtra }[] }
 ): Peer {
   const peer: Peer = {
     workspaceId: raw.workspace_id,

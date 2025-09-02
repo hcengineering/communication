@@ -21,7 +21,7 @@ import {
   MessageEventType
 } from '@hcengineering/communication-sdk-types'
 import {
-  type AccountID,
+  type AccountUuid,
   type CardID,
   type CardType,
   type ContextID,
@@ -232,7 +232,7 @@ async function notifyMessage (
   let isFirstBatch = true
 
   for await (const dbCollaborators of cursor) {
-    const collaborators: AccountID[] = dbCollaborators.map((it) => it.account)
+    const collaborators: AccountUuid[] = dbCollaborators.map((it) => it.account)
     const contexts: NotificationContext[] = await ctx.db.findNotificationContexts({
       cardId,
       account: isFirstBatch && collaborators.length < BATCH_SIZE ? undefined : collaborators
@@ -275,9 +275,9 @@ async function processCollaborator (
   messageId: MessageID,
   markdown: Markdown,
   date: Date,
-  collaborator: AccountID,
+  collaborator: AccountUuid,
   creatorSocialId: SocialID,
-  creatorAccount?: AccountID,
+  creatorAccount?: AccountUuid,
   context?: NotificationContext
 ): Promise<Event[]> {
   const result: Event[] = []
@@ -325,7 +325,7 @@ async function createOrUpdateContext (
   ctx: TriggerCtx,
   cardId: CardID,
   date: Date,
-  collaborator: AccountID,
+  collaborator: AccountUuid,
   isOwn: boolean,
   context?: NotificationContext
 ): Promise<{
@@ -366,7 +366,7 @@ async function createOrUpdateContext (
 
 async function createContext (
   ctx: TriggerCtx,
-  account: AccountID,
+  account: AccountUuid,
   cardId: CardID,
   lastUpdate: Date,
   lastView: Date | undefined,

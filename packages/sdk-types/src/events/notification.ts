@@ -17,7 +17,7 @@ import {
   CardID,
   ContextID,
   MessageID,
-  AccountID,
+  AccountUuid,
   CardType,
   NotificationType,
   NotificationContent,
@@ -62,7 +62,7 @@ export interface CreateNotificationEvent extends BaseEvent {
   messageId: MessageID
   messageCreated: Date
   blobId?: BlobID
-  account: AccountID
+  account: AccountUuid
 
   date?: Date
 }
@@ -70,7 +70,7 @@ export interface CreateNotificationEvent extends BaseEvent {
 export interface UpdateNotificationEvent extends BaseEvent {
   type: NotificationEventType.UpdateNotification
   contextId: ContextID
-  account: AccountID
+  account: AccountUuid
   query: {
     type?: NotificationType
     id?: NotificationID
@@ -87,7 +87,7 @@ export interface UpdateNotificationEvent extends BaseEvent {
 export interface RemoveNotificationsEvent extends BaseEvent {
   type: NotificationEventType.RemoveNotifications
   contextId: ContextID
-  account: AccountID
+  account: AccountUuid
   ids: NotificationID[]
 
   date?: Date
@@ -97,7 +97,7 @@ export interface CreateNotificationContextEvent extends BaseEvent {
   type: NotificationEventType.CreateNotificationContext
   contextId?: ContextID
   cardId: CardID
-  account: AccountID
+  account: AccountUuid
 
   lastView: Date
   lastUpdate: Date
@@ -109,7 +109,7 @@ export interface CreateNotificationContextEvent extends BaseEvent {
 export interface RemoveNotificationContextEvent extends BaseEvent {
   type: NotificationEventType.RemoveNotificationContext
   contextId: ContextID
-  account: AccountID
+  account: AccountUuid
 
   date?: Date
 }
@@ -117,7 +117,7 @@ export interface RemoveNotificationContextEvent extends BaseEvent {
 export interface UpdateNotificationContextEvent extends BaseEvent {
   type: NotificationEventType.UpdateNotificationContext
   contextId: ContextID
-  account: AccountID
+  account: AccountUuid
   updates: {
     lastView?: Date
     lastUpdate?: Date
@@ -131,7 +131,7 @@ export interface AddCollaboratorsEvent extends BaseEvent {
   type: NotificationEventType.AddCollaborators
   cardId: CardID
   cardType: CardType
-  collaborators: AccountID[]
+  collaborators: AccountUuid[]
 
   socialId: SocialID
   date?: Date
@@ -141,7 +141,7 @@ export interface RemoveCollaboratorsEvent extends BaseEvent {
   type: NotificationEventType.RemoveCollaborators
   cardId: CardID
   cardType: CardType
-  collaborators: AccountID[]
+  collaborators: AccountUuid[]
 
   socialId: SocialID
   date?: Date

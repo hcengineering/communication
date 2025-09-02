@@ -20,7 +20,7 @@ import {
   type MessageID,
   type MessagesGroup,
   SortingOrder,
-  type WorkspaceID
+  type WorkspaceUuid
 } from '@hcengineering/communication-types'
 import { loadGroupFile } from './parse'
 
@@ -29,7 +29,7 @@ export async function findMessage (
   cardId: CardID,
   created: Date,
   client: FindClient,
-  workspace: WorkspaceID,
+  workspace: WorkspaceUuid,
   filesUrl: string
 ): Promise<Message | undefined> {
   const message = (

@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-import type { AccountID, SocialID } from '@hcengineering/communication-types'
+import type { AccountUuid, SocialID } from '@hcengineering/communication-types'
 import { generateToken } from '@hcengineering/server-token'
 import { systemAccountUuid } from '@hcengineering/core'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 
 import type { TriggerCtx } from './types'
 
-export async function findAccount (ctx: TriggerCtx, socialString: SocialID): Promise<AccountID | undefined> {
+export async function findAccount (ctx: TriggerCtx, socialString: SocialID): Promise<AccountUuid | undefined> {
   if (ctx.account.socialIds.includes(socialString)) {
     return ctx.account.uuid
   }
@@ -36,7 +36,7 @@ export async function findAccount (ctx: TriggerCtx, socialString: SocialID): Pro
   const accountClient = getAccountClient(ctx.metadata.accountsUrl, token)
 
   try {
-    const account = (await accountClient.findPersonBySocialId(socialString, true)) as AccountID | undefined
+    const account = (await accountClient.findPersonBySocialId(socialString, true)) as AccountUuid | undefined
 
     if (account != null) {
       ctx.accountBySocialID.set(socialString, account)

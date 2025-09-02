@@ -22,7 +22,7 @@ import {
   PatchType,
   SortingOrder,
   WithTotal,
-  type WorkspaceID
+  type WorkspaceUuid
 } from '@hcengineering/communication-types'
 import {
   CardEventType,
@@ -55,7 +55,7 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
 
   constructor (
     private readonly client: FindClient,
-    private readonly workspace: WorkspaceID,
+    private readonly workspace: WorkspaceUuid,
     private readonly filesUrl: string,
     public readonly id: QueryId,
     public readonly params: NotificationQueryParams,
