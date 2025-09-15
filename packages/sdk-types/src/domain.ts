@@ -12,10 +12,7 @@
 // limitations under the License.
 
 export enum Domain {
-  MessagesGroup = 'communication.messages_group',
-
   MessageIndex = 'communication.message_index',
-  AttachmentIndex = 'communication.attachment_index',
   ThreadIndex = 'communication.thread_index',
 
   Notification = 'communication.notification',
@@ -23,7 +20,6 @@ export enum Domain {
 
   Collaborator = 'communication.collaborator',
   Label = 'communication.label',
-
   Peer = 'communication.peer'
 }
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { FindLabelsParams, Label, WorkspaceUuid } from '@hcengineering/communication-types'
+import type { FindLabelsParams, Label } from '@hcengineering/communication-types'
 import {
   CardEventType,
   CreateLabelEvent,
@@ -26,9 +26,10 @@ import {
   RemoveLabelEvent,
   UpdateCardTypeEvent
 } from '@hcengineering/communication-sdk-types'
+import { HulylakeClient } from '@hcengineering/hulylake-client'
 
 import { QueryResult } from '../result'
-import { type Query, type QueryId } from '../types'
+import { type Query, type QueryId, QueryOptions } from '../types'
 
 function getId (label: Label): string {
   return `${label.labelId}:${label.cardId}:${label.account}`
@@ -40,10 +41,10 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
 
   constructor (
     private readonly client: FindClient,
-    private readonly workspace: WorkspaceUuid,
-    private readonly filesUrl: string,
+    private readonly hulylake: HulylakeClient,
     public readonly id: QueryId,
     public readonly params: FindLabelsParams,
+    public readonly options: QueryOptions | undefined,
     private callback?: QueryCallback<Label>,
     initialResult?: QueryResult<Label>
   ) {
@@ -196,9 +197,7 @@ export class LabelsQuery implements Query<Label, FindLabelsParams> {
     }
   }
 
-  async unsubscribe (): Promise<void> {
-    await this.client.unsubscribeQuery(this.id)
-  }
+  async unsubscribe (): Promise<void> {}
 
   removeCallback (): void {
     this.callback = () => {}

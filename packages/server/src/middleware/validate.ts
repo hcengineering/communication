@@ -25,23 +25,19 @@ import {
   type Collaborator,
   type FindCollaboratorsParams,
   type FindLabelsParams,
-  type FindMessagesGroupsParams,
-  type FindMessagesParams,
   type FindNotificationContextParams,
   type FindNotificationsParams,
   type Label,
-  type Message,
-  type MessagesGroup,
   type Notification,
   type NotificationContext,
   SortingOrder
 } from '@hcengineering/communication-types'
 import { z } from 'zod'
+import { isBlobAttachmentType, isLinkPreviewAttachmentType } from '@hcengineering/communication-shared'
 
-import type { Enriched, Middleware, QueryId } from '../types'
+import type { Enriched, Middleware, Subscription } from '../types'
 import { BaseMiddleware } from './base'
 import { ApiError } from '../error'
-import { isBlobAttachmentType, isLinkPreviewAttachmentType } from '@hcengineering/communication-shared'
 
 export class ValidateMiddleware extends BaseMiddleware implements Middleware {
   private validate<T>(data: unknown, schema: z.ZodType<T>): T {
@@ -54,24 +50,10 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
     return validationResult.data
   }
 
-  async findMessages (session: SessionData, params: FindMessagesParams, queryId?: QueryId): Promise<Message[]> {
-    this.validate(params, FindMessagesParamsSchema)
-    return await this.provideFindMessages(session, params, queryId)
-  }
-
-  async findMessagesGroups (
-    session: SessionData,
-    params: FindMessagesGroupsParams,
-    queryId?: QueryId
-  ): Promise<MessagesGroup[]> {
-    this.validate(params, FindMessagesGroupsParamsSchema)
-    return await this.provideFindMessagesGroups(session, params, queryId)
-  }
-
   async findNotificationContexts (
     session: SessionData,
     params: FindNotificationContextParams,
-    queryId?: QueryId
+    queryId?: Subscription
   ): Promise<NotificationContext[]> {
     this.validate(params, FindNotificationContextParamsSchema)
     return await this.provideFindNotificationContexts(session, params, queryId)
@@ -80,13 +62,13 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
   async findNotifications (
     session: SessionData,
     params: FindNotificationsParams,
-    queryId?: QueryId
+    queryId?: Subscription
   ): Promise<Notification[]> {
     this.validate(params, FindNotificationsParamsSchema)
     return await this.provideFindNotifications(session, params, queryId)
   }
 
-  async findLabels (session: SessionData, params: FindLabelsParams, queryId?: QueryId): Promise<Label[]> {
+  async findLabels (session: SessionData, params: FindLabelsParams, queryId?: Subscription): Promise<Label[]> {
     this.validate(params, FindLabelsParamsSchema)
     return await this.provideFindLabels(session, params, queryId)
   }
@@ -119,9 +101,9 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
         event.operations.forEach((op) => {
           if (op.opcode === 'add' || op.opcode === 'set') {
             op.attachments.forEach((att) => {
-              if (isLinkPreviewAttachmentType(att.type)) {
+              if (isLinkPreviewAttachmentType(att.mimeType)) {
                 this.validate(att.params, LinkPreviewParamsSchema)
-              } else if (isBlobAttachmentType(att.type)) {
+              } else if (isBlobAttachmentType(att.mimeType)) {
                 this.validate(att.params, BlobParamsSchema)
               }
             })
@@ -130,12 +112,6 @@ export class ValidateMiddleware extends BaseMiddleware implements Middleware {
         break
       case MessageEventType.ThreadPatch:
         this.validate(event, ThreadPatchEventSchema)
-        break
-      case MessageEventType.CreateMessagesGroup:
-        this.validate(event, CreateMessagesGroupEventSchema)
-        break
-      case MessageEventType.RemoveMessagesGroup:
-        this.validate(event, RemoveMessagesGroupEventSchema)
         break
       case NotificationEventType.AddCollaborators:
         this.validate(event, AddCollaboratorsEventSchema)
@@ -234,21 +210,6 @@ const FindParamsSchema = z
   })
   .strict()
 
-const FindMessagesParamsSchema = FindParamsSchema.extend({
-  id: MessageIDSchema.optional(),
-  cardId: CardIDSchema.optional(),
-  created: DateOrRecordSchema.optional()
-}).strict()
-
-const FindMessagesGroupsParamsSchema = FindParamsSchema.extend({
-  messageId: MessageIDSchema.optional(),
-  cardId: CardIDSchema.optional(),
-  blobId: BlobIDSchema.optional(),
-  fromDate: DateOrRecordSchema.optional(),
-  toDate: DateOrRecordSchema.optional(),
-  orderBy: z.enum(['fromDate', 'toDate']).optional()
-}).strict()
-
 const FindNotificationContextParamsSchema = FindParamsSchema.extend({
   id: ContextIDSchema.optional(),
   cardId: z.union([CardIDSchema, z.array(CardIDSchema)]).optional(),
@@ -257,7 +218,6 @@ const FindNotificationContextParamsSchema = FindParamsSchema.extend({
   notifications: z
     .object({
       type: z.string().optional(),
-      message: z.boolean().optional(), // TODO: remove ??
       limit: z.number(),
       order: SortingOrderSchema,
       read: z.boolean().optional(),
@@ -272,7 +232,6 @@ const FindNotificationsParamsSchema = FindParamsSchema.extend({
   read: z.boolean().optional(),
   created: DateOrRecordSchema.optional(),
   account: z.union([AccountUuidSchema, z.array(AccountUuidSchema)]).optional(),
-  message: z.boolean().optional(), // TODO: remove ??
   cardId: CardIDSchema.optional(),
   total: z.boolean().optional()
 }).strict()
@@ -410,21 +369,6 @@ const ThreadPatchEventSchema = BaseEventSchema.extend({
   date: DateSchema
 }).strict()
 
-const CreateMessagesGroupEventSchema = BaseEventSchema.extend({
-  type: z.literal(MessageEventType.CreateMessagesGroup),
-  group: z.any(), // TODO: MessagesGroupSchema
-  socialId: SocialIDSchema,
-  date: DateSchema
-}).strict()
-
-const RemoveMessagesGroupEventSchema = BaseEventSchema.extend({
-  type: z.literal(MessageEventType.RemoveMessagesGroup),
-  cardId: CardIDSchema,
-  blobId: BlobIDSchema,
-  socialId: SocialIDSchema,
-  date: DateSchema
-}).strict()
-
 // Notification events
 const UpdateNotificationsEventSchema = BaseEventSchema.extend({
   type: z.literal(NotificationEventType.UpdateNotification),
@@ -497,12 +441,6 @@ const RemovePeerEventSchema = BaseEventSchema.extend({
 
 function deserializeEvent (event: Enriched<Event>): Enriched<Event> {
   switch (event.type) {
-    case MessageEventType.CreateMessagesGroup:
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      event.group.fromDate = deserializeDate(event.group.fromDate)!
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      event.group.toDate = deserializeDate(event.group.toDate)!
-      break
     case NotificationEventType.UpdateNotificationContext:
       event.updates.lastView = deserializeDate(event.updates.lastView)
       break

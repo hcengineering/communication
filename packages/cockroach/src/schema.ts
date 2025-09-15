@@ -25,52 +25,32 @@ import {
   type LabelID,
   type CardType,
   NotificationContent,
-  NotificationType, AttachmentID,
+  NotificationType,
   PeerKind, PeerExtra
 } from '@hcengineering/communication-types'
 import { Domain } from '@hcengineering/communication-sdk-types'
 
 export const schemas = {
-  [Domain.MessagesGroup]: {
-    workspace_id: 'uuid',
-    card_id: 'varchar',
-    blob_id: 'uuid',
-    from_date: 'timestamptz',
-    to_date: 'timestamptz',
-    count: 'int8'
-  },
   [Domain.MessageIndex]: {
     workspace_id: 'uuid',
     card_id: 'varchar',
     message_id: 'varchar',
     created: 'timestamptz',
-    creator: 'varchar'
+    creator: 'varchar',
+    blob_id: 'uuid'
   },
   [Domain.ThreadIndex]: {
     workspace_id: 'uuid',
     card_id: 'varchar',
     message_id: 'varchar',
     thread_id: 'varchar',
-    thread_type: 'varchar',
-    replies_count: 'int',
-    last_reply: 'timestamptz'
-  },
-  [Domain.AttachmentIndex]: {
-    workspace_id: 'uuid',
-    card_id: 'varchar',
-    message_id: 'varchar',
-    id: 'uuid',
-    type: 'text',
-    params: 'jsonb',
-    creator: 'varchar',
-    created: 'timestamptz',
-    modified: 'timestamptz'
+    thread_type: 'varchar'
   },
   [Domain.Notification]: {
     id: 'int8',
     context_id: 'int8',
-    message_created: 'timestamptz',
     message_id: 'varchar',
+    creator: 'varchar',
     blob_id: 'uuid',
     created: 'timestamptz',
     content: 'jsonb',
@@ -112,10 +92,8 @@ export const schemas = {
 } as const
 
 export interface DomainDbModel {
-  [Domain.MessagesGroup]: MessagesGroupDbModel
-  [Domain.MessageIndex]: MessageCreatedDbModel
+  [Domain.MessageIndex]: MessageIndexDbModel
   [Domain.ThreadIndex]: ThreadDbModel
-  [Domain.AttachmentIndex]: AttachmentDbModel
 
   [Domain.Notification]: NotificationDbModel
   [Domain.NotificationContext]: ContextDbModel
@@ -145,33 +123,13 @@ export type DbModelBatchUpdate<D extends Domain> = Array<{
   value: any
 }>
 
-interface MessageCreatedDbModel {
+interface MessageIndexDbModel {
   workspace_id: WorkspaceUuid
   card_id: CardID
   message_id: MessageID
   created: Date
   creator: SocialID
-}
-
-interface MessagesGroupDbModel {
-  workspace_id: WorkspaceUuid
-  card_id: CardID
   blob_id: BlobID
-  from_date: Date
-  to_date: Date
-  count: number
-}
-
-interface AttachmentDbModel {
-  workspace_id: WorkspaceUuid
-  card_id: CardID
-  message_id: MessageID
-  id: AttachmentID
-  type: string
-  params: Record<string, any>
-  creator: SocialID
-  created: Date
-  modified?: Date
 }
 
 interface ThreadDbModel {
@@ -180,17 +138,15 @@ interface ThreadDbModel {
   message_id: MessageID
   thread_id: CardID
   thread_type: CardType
-  replies_count: number
-  last_reply: Date
 }
 
 interface NotificationDbModel {
   id: NotificationID
   type: NotificationType
   read: boolean
-  message_id: MessageID | null
-  message_created: Date
-  blob_id?: BlobID
+  message_id: MessageID
+  creator: SocialID
+  blob_id: BlobID
   context_id: ContextID
   created: Date
   content: NotificationContent

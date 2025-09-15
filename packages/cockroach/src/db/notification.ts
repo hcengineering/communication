@@ -29,7 +29,9 @@ import {
   type CardType,
   type NotificationType,
   type NotificationContent,
-  WithTotal
+  WithTotal,
+  BlobID,
+  SocialID
 } from '@hcengineering/communication-types'
 import { withTotal } from '@hcengineering/communication-shared'
 import {
@@ -103,22 +105,24 @@ export class NotificationsDb extends BaseDb {
   }
 
   async createNotification (
-    context: ContextID,
-    message: MessageID,
-    messageCreated: Date,
+    contextId: ContextID,
+    messageId: MessageID,
+    blobId: BlobID,
     type: NotificationType,
     read: boolean,
     content: NotificationContent,
+    creator: SocialID,
     created: Date
   ): Promise<NotificationID> {
     const db: Omit<DbModel<Domain.Notification>, 'id'> = {
-      context_id: context,
+      context_id: contextId,
       type,
-      message_id: message,
-      message_created: messageCreated,
+      message_id: messageId,
+      blob_id: blobId,
       read,
       created,
-      content
+      content,
+      creator
     }
     const { sql, values } = this.getInsertSql(Domain.Notification, db as DbModel<Domain.Notification>, [
       { column: 'id', cast: 'text' }
@@ -409,8 +413,8 @@ export class NotificationsDb extends BaseDb {
             'content',          n.content,
             'created',          n.created,
             'blob_id',          n.blob_id,
-            'message_created',  n.message_created,
-            'message_id',       n.message_id::text
+            'message_id',       n.message_id::text,
+            'creator',          n.creator
           )
           ORDER BY n.created ${notificationOrder}
         ), '[]'::jsonb
@@ -430,7 +434,7 @@ export class NotificationsDb extends BaseDb {
 
   async findNotifications (params: FindNotificationsParams): Promise<WithTotal<Notification>> {
     let select =
-      'SELECT  n.id, n.created, n.read, n.message_id, n.message_created, n.type, n.content, n.context_id, nc.card_id, nc.account, nc.last_view '
+      'SELECT  n.id, n.created, n.read, n.message_id, n.blob_id, n.type, n.content, n.context_id, n.creator, nc.card_id, nc.account, nc.last_view '
 
     select += ` FROM ${Domain.Notification} n
     JOIN ${Domain.NotificationContext} nc  ON n.context_id = nc.id`
@@ -644,34 +648,5 @@ export class NotificationsDb extends BaseDb {
     }
 
     return { where: where.length > 0 ? `WHERE ${where.join(' AND ')}` : '', values }
-  }
-
-  public async updateNotificationsBlobId (cardId: CardID, blobId: string, from: Date, to: Date): Promise<void> {
-    const sql = `
-        UPDATE ${Domain.Notification} AS n
-        SET blob_id = $3::uuid
-        FROM ${Domain.NotificationContext} AS nc
-        WHERE
-            n.context_id = nc.id
-          AND nc.workspace_id = $1::uuid
-          AND nc.card_id      = $2::varchar
-          AND n.message_created BETWEEN $4::timestamptz AND $5::timestamptz
-          AND n.blob_id IS NULL
-    `
-    await this.execute(sql, [this.workspace, cardId, blobId, from, to])
-  }
-
-  public async removeNotificationsBlobId (cardId: CardID, blobId: string): Promise<void> {
-    const sql = `
-        UPDATE ${Domain.Notification} AS n
-        SET blob_id = NULL
-        FROM ${Domain.NotificationContext} AS nc
-        WHERE
-            n.context_id    = nc.id
-          AND nc.workspace_id = $1::uuid
-          AND nc.card_id      = $2::varchar
-          AND n.blob_id       = $3::uuid;
-    `
-    await this.execute(sql, [this.workspace, cardId, blobId])
   }
 }

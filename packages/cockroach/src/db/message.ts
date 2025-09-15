@@ -14,42 +14,38 @@
 //
 
 import {
-  AttachmentData,
-  AttachmentID,
-  AttachmentUpdateData,
-  type BlobID,
+  BlobID,
   type CardID,
   type CardType,
-  FindMessageMetaParams,
-  type FindMessagesGroupsParams,
-  FindThreadParams,
+  FindMessagesMetaParams,
+  FindThreadMetaParams,
   type MessageID,
   MessageMeta,
-  type MessagesGroup,
   type SocialID,
-  type Thread
+  type ThreadMeta
 } from '@hcengineering/communication-types'
-import { Domain, ThreadUpdate, type ThreadQuery } from '@hcengineering/communication-sdk-types'
+import { Domain, ThreadMetaUpdate, ThreadMetaQuery } from '@hcengineering/communication-sdk-types'
 
 import { BaseDb } from './base'
-import { DbModel, DbModelColumn, DbModelFilter, schemas } from '../schema'
-import { getCondition } from './utils'
-import { toMessageMeta, toMessagesGroup, toThread } from './mapping'
+import { DbModel, DbModelFilter, schemas } from '../schema'
+import { toMessageMeta, toThreadMeta } from './mapping'
 
 export class MessagesDb extends BaseDb {
-  // Message
+  // Message Index
   public async createMessageMeta (
     cardId: CardID,
     messageId: MessageID,
     creator: SocialID,
-    created: Date
+    created: Date,
+    blobId: BlobID
   ): Promise<boolean> {
     const model: DbModel<Domain.MessageIndex> = {
       workspace_id: this.workspace,
       card_id: cardId,
       message_id: messageId,
       created,
-      creator
+      creator,
+      blob_id: blobId
     }
     const insertSql = this.getInsertSql(Domain.MessageIndex, model, [], {
       conflictColumns: ['workspace_id', 'card_id', 'message_id'],
@@ -61,7 +57,28 @@ export class MessagesDb extends BaseDb {
     return result.count !== 0
   }
 
-  public async findMessageMeta (params: FindMessageMetaParams): Promise<MessageMeta[]> {
+  async removeMessageMeta (cardId: CardID, messageId: MessageID): Promise<void> {
+    const filter: DbModelFilter<Domain.MessageIndex> = [
+      {
+        column: 'workspace_id',
+        value: this.workspace
+      },
+      {
+        column: 'card_id',
+        value: cardId
+      },
+      {
+        column: 'message_id',
+        value: messageId
+      }
+    ]
+
+    const { sql, values } = this.getDeleteSql(Domain.MessageIndex, filter)
+
+    await this.execute(sql, values, 'remove message meta')
+  }
+
+  public async findMessagesMeta (params: FindMessagesMetaParams): Promise<MessageMeta[]> {
     const select = `SELECT *
                       FROM ${Domain.MessageIndex} mi
                       `
@@ -70,11 +87,11 @@ export class MessagesDb extends BaseDb {
     const { where, values } = this.buildMessageMetaWhere(params)
 
     const sql = [select, where, orderBy, limit].join(' ')
-    const result = await this.execute(sql, values, 'find message index')
+    const result = await this.execute(sql, values, 'find message meta')
     return result.map((it: any) => toMessageMeta(it))
   }
 
-  private buildMessageMetaWhere (params: FindMessageMetaParams): { where: string, values: any[] } {
+  private buildMessageMetaWhere (params: FindMessagesMetaParams): { where: string, values: any[] } {
     const where: string[] = []
     const values: any[] = []
     const schema = schemas[Domain.MessageIndex]
@@ -99,280 +116,17 @@ export class MessagesDb extends BaseDb {
       values.push(params.creator)
     }
 
-    if (params.created != null) {
-      const createdCondition = getCondition('mi', 'created', index, params.created, schema.created)
-      if (createdCondition != null) {
-        where.push(createdCondition.where)
-        values.push(...createdCondition.values)
-        index = createdCondition.index
-      }
-    }
-
     return { where: `WHERE ${where.join(' AND ')}`, values }
   }
 
-  // MessagesGroup
-  async createMessagesGroup (card: CardID, blobId: BlobID, fromDate: Date, toDate: Date, count: number): Promise<void> {
-    const db: DbModel<Domain.MessagesGroup> = {
-      workspace_id: this.workspace,
-      card_id: card,
-      blob_id: blobId,
-      from_date: fromDate,
-      to_date: toDate,
-      count
-    }
-
-    const { sql, values } = this.getInsertSql(Domain.MessagesGroup, db)
-    await this.execute(sql, values, 'insert messages group')
-  }
-
-  async removeMessagesGroup (card: CardID, blobId: BlobID): Promise<void> {
-    const { sql, values } = this.getDeleteSql(Domain.MessagesGroup, [
-      {
-        column: 'workspace_id',
-        value: this.workspace
-      },
-      {
-        column: 'card_id',
-        value: card
-      },
-      {
-        column: 'blob_id',
-        value: blobId
-      }
-    ])
-    await this.execute(sql, values, 'remove messages group')
-  }
-
-  async findMessagesGroups (params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
-    const useMessageMetaCte = params.messageId != null
-    const values: any[] = [this.workspace]
-    if (useMessageMetaCte) values.push(params.messageId)
-
-    const cte = useMessageMetaCte
-      ? `
-      WITH msg_meta AS (
-        SELECT card_id, created
-        FROM ${Domain.MessageIndex}
-        WHERE workspace_id = $1::uuid
-          AND message_id = $2::varchar
-      )
-    `
-      : ''
-
-    const select = `
-    ${cte}
-    SELECT mg.card_id,
-           mg.blob_id,
-           mg.from_date,
-           mg.to_date,
-           mg.count
-    FROM ${Domain.MessagesGroup} mg
-    ${useMessageMetaCte ? 'JOIN msg_meta mc ON mg.card_id = mc.card_id AND mc.created BETWEEN mg.from_date AND mg.to_date' : ''}
-  `
-
-    const { where, values: additionalValues } = this.buildMessagesGroupWhere(params, values.length + 1)
-    values.push(...additionalValues)
-
-    const orderBy =
-      params.orderBy === 'toDate'
-        ? this.buildOrderBy(params.order, 'mg.to_date')
-        : this.buildOrderBy(params.order, 'mg.from_date')
-    const limit = this.buildLimit(params.limit)
-
-    const sql = [select, where, orderBy, limit].join(' ')
-    const result = await this.execute(sql, values, 'find messages groups')
-
-    return result.map((it: any) => toMessagesGroup(it))
-  }
-
-  buildMessagesGroupWhere (
-    params: FindMessagesGroupsParams,
-    startIndex = 1
-  ): {
-      where: string
-      values: any[]
-    } {
-    const where: string[] = ['mg.workspace_id = $1::uuid']
-    const values: any[] = []
-
-    let index = startIndex
-
-    if (params.cardId != null) {
-      where.push(`mg.card_id = $${index++}::varchar`)
-      values.push(params.cardId)
-    }
-
-    if (params.blobId != null) {
-      where.push(`mg.blob_id = $${index++}`)
-      values.push(params.blobId)
-    }
-
-    const fromDateCondition = getCondition('mg', 'from_date', index, params.fromDate, 'timestamptz')
-    if (fromDateCondition != null) {
-      where.push(fromDateCondition.where)
-      values.push(...fromDateCondition.values)
-      index = fromDateCondition.index
-    }
-
-    const toDateCondition = getCondition('mg', 'to_date', index, params.toDate, 'timestamptz')
-    if (toDateCondition != null) {
-      where.push(toDateCondition.where)
-      values.push(...toDateCondition.values)
-      index = toDateCondition.index
-    }
-
-    return {
-      where: where.length > 0 ? `WHERE ${where.join(' AND ')}` : '',
-      values
-    }
-  }
-
-  // Attachment
-  async addAttachments (
-    cardId: CardID,
-    messageId: MessageID,
-    attachments: AttachmentData[],
-    socialId: SocialID,
-    date: Date
-  ): Promise<void> {
-    if (attachments.length === 0) return
-
-    const models: DbModel<Domain.AttachmentIndex>[] = attachments.map((att) => ({
-      workspace_id: this.workspace,
-      card_id: cardId,
-      message_id: messageId,
-      id: att.id,
-      type: att.type,
-      params: att.params,
-      creator: socialId,
-      created: date
-    }))
-
-    const { sql, values } = this.getBatchInsertSql(Domain.AttachmentIndex, models)
-
-    await this.execute(sql, values, 'insert attachments')
-  }
-
-  async removeAttachments (cardId: CardID, messageId: MessageID, ids: AttachmentID[]): Promise<void> {
-    if (ids.length === 0) return
-
-    const { sql, values } = this.getDeleteSql(Domain.AttachmentIndex, [
-      { column: 'workspace_id', value: this.workspace },
-      { column: 'card_id', value: cardId },
-      { column: 'message_id', value: messageId },
-      { column: 'id', value: ids.length === 1 ? ids[0] : ids }
-    ])
-
-    await this.execute(sql, values, 'remove attachments')
-  }
-
-  async setAttachments (
-    cardId: CardID,
-    messageId: MessageID,
-    attachments: AttachmentData[],
-    socialId: SocialID,
-    date: Date
-  ): Promise<void> {
-    if (attachments.length === 0) return
-    const { sql: deleteSql, values: deleteValues } = this.getDeleteSql(Domain.AttachmentIndex, [
-      { column: 'workspace_id', value: this.workspace },
-      { column: 'card_id', value: cardId },
-      { column: 'message_id', value: messageId }
-    ])
-
-    const models: DbModel<Domain.AttachmentIndex>[] = attachments.map((att) => ({
-      workspace_id: this.workspace,
-      card_id: cardId,
-      message_id: messageId,
-      id: att.id,
-      type: att.type,
-      params: att.params,
-      creator: socialId,
-      created: date
-    }))
-
-    const { sql: insertSql, values: insertValues } = this.getBatchInsertSql(Domain.AttachmentIndex, models)
-
-    await this.getRowClient().begin(async (s) => {
-      await this.execute(deleteSql, deleteValues, 'delete attachments', s)
-      await this.execute(insertSql, insertValues, 'insert attachments', s)
-    })
-  }
-
-  async updateAttachments (
-    cardId: CardID,
-    messageId: MessageID,
-    attachments: AttachmentUpdateData[],
-    date: Date
-  ): Promise<void> {
-    if (attachments.length === 0) return
-
-    const filter: DbModelFilter<Domain.AttachmentIndex> = [
-      { column: 'workspace_id', value: this.workspace },
-      { column: 'card_id', value: cardId },
-      { column: 'message_id', value: messageId }
-    ]
-
-    const updates: Array<{
-      key: AttachmentID
-      column: DbModelColumn<Domain.AttachmentIndex>
-      innerKey?: string
-      value: any
-    }> = []
-
-    for (const att of attachments) {
-      if (Object.keys(att.params).length > 0) {
-        const attachmentUpdates: Array<{
-          key: AttachmentID
-          column: DbModelColumn<Domain.AttachmentIndex>
-          innerKey?: string
-          value: any
-        }> = []
-        for (const [innerKey, val] of Object.entries(att.params)) {
-          attachmentUpdates.push({
-            key: att.id,
-            column: 'params',
-            innerKey,
-            value: val
-          })
-        }
-
-        if (attachmentUpdates.length > 0) {
-          attachmentUpdates.push({
-            key: att.id,
-            column: 'modified',
-            value: date
-          })
-          updates.push(...attachmentUpdates)
-        }
-      }
-    }
-
-    if (updates.length === 0) return
-
-    const { sql, values } = this.getBatchUpdateSql(Domain.AttachmentIndex, 'id', filter, updates)
-
-    await this.execute(sql, values, 'update attachments')
-  }
-
-  // Thread
-  async attachThread (
-    cardId: CardID,
-    messageId: MessageID,
-    threadId: CardID,
-    threadType: CardType,
-    socialId: SocialID,
-    date: Date
-  ): Promise<void> {
+  // Thread Index
+  async attachThreadMeta (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType): Promise<void> {
     const db: DbModel<Domain.ThreadIndex> = {
       workspace_id: this.workspace,
       card_id: cardId,
       message_id: messageId,
       thread_id: threadId,
-      thread_type: threadType,
-      replies_count: 0,
-      last_reply: date
+      thread_type: threadType
     }
 
     const { sql, values } = this.getInsertSql(Domain.ThreadIndex, db)
@@ -380,21 +134,11 @@ export class MessagesDb extends BaseDb {
     await this.execute(sql, values, 'insert thread')
   }
 
-  async updateThread (query: ThreadQuery, update: ThreadUpdate): Promise<void> {
+  async updateThreadMeta (query: ThreadMetaQuery, update: ThreadMetaUpdate): Promise<void> {
     const set: string[] = []
     const values: any[] = []
 
     let index = 1
-    if (update.lastReply != null) {
-      set.push(`last_reply = $${index++}::timestamptz`)
-      values.push(update.lastReply)
-    }
-
-    if (update.repliesCountOp === 'increment') {
-      set.push('replies_count = replies_count + 1')
-    } else if (update.repliesCountOp === 'decrement') {
-      set.push('replies_count = GREATEST(replies_count - 1, 0)')
-    }
 
     if (update.threadType != null) {
       set.push(`thread_type = $${index++}::varchar`)
@@ -426,7 +170,7 @@ export class MessagesDb extends BaseDb {
     await this.execute(sql, values, 'update thread')
   }
 
-  async removeThreads (query: ThreadQuery): Promise<void> {
+  async removeThreadMeta (query: ThreadMetaQuery): Promise<void> {
     const filter: DbModelFilter<Domain.ThreadIndex> = [
       {
         column: 'workspace_id',
@@ -443,9 +187,8 @@ export class MessagesDb extends BaseDb {
     await this.execute(sql, values, 'remove threads')
   }
 
-  // Find threads
-  async findThreads (params: FindThreadParams): Promise<Thread[]> {
-    const { where, values } = this.buildThreadWhere(params)
+  async findThreadMeta (params: FindThreadMetaParams): Promise<ThreadMeta[]> {
+    const { where, values } = this.buildThreadMetaWhere(params)
     const select = `
             SELECT *
             FROM ${Domain.ThreadIndex} t
@@ -457,11 +200,11 @@ export class MessagesDb extends BaseDb {
     const sql = [select, where, orderBy, limit].join(' ')
     const result = await this.execute(sql, values, 'find threads')
 
-    return result.map((it: any) => toThread(it))
+    return result.map((it: any) => toThreadMeta(it))
   }
 
-  private buildThreadWhere (
-    params: FindThreadParams,
+  private buildThreadMetaWhere (
+    params: FindThreadMetaParams,
     startIndex: number = 0,
     prefix: string = 't.'
   ): { where: string, values: any[] } {

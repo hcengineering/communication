@@ -13,107 +13,52 @@
 // limitations under the License.
 //
 
-import { applyPatches } from '@hcengineering/communication-shared'
+import { parseMessagesDoc } from '@hcengineering/communication-shared'
 import {
   BlobID,
   type CardID,
+  FindMessagesOptions,
+  FindMessagesParams,
   type FindNotificationsParams,
   type Message,
-  type MessageID,
-  type Notification,
-  ParsedFile,
-  type Patch,
-  SortingOrder,
-  type WorkspaceUuid
+  MessagesDoc,
+  type Notification
 } from '@hcengineering/communication-types'
-import { loadGroupFile } from '@hcengineering/communication-yaml'
-import type { FindClient } from '@hcengineering/communication-sdk-types'
+import { HulylakeClient } from '@hcengineering/hulylake-client'
 
-export async function findMessage (
-  client: FindClient,
-  workspace: WorkspaceUuid,
-  filesUrl: string,
-  cardId: CardID,
-  id: MessageID,
-  created: Date,
-  reactions?: boolean,
-  attachments?: boolean,
-  replies?: boolean
-): Promise<Message | undefined> {
-  const message = (await client.findMessages({ cardId, id, limit: 1 }))[0]
-  if (message !== undefined) {
-    return message
+export async function loadMessages (client: HulylakeClient, cardId: CardID, blobId: BlobID, params: FindMessagesParams, options?: FindMessagesOptions, cache?: Map<BlobID, Promise<MessagesDoc | undefined>>): Promise<Message[]> {
+  const doc = await loadMessagesDoc(client, cardId, blobId, cache)
+
+  if (doc === undefined) {
+    return []
   }
-  return await findMessageInFiles(client, workspace, filesUrl, cardId, id, created)
+
+  return parseMessagesDoc(doc, params, options)
 }
 
-export async function findMessageInFiles (
-  client: FindClient,
-  workspace: WorkspaceUuid,
-  filesUrl: string,
-  cardId: CardID,
-  id: MessageID,
-  created: Date
-): Promise<Message | undefined> {
-  if (filesUrl === '') {
+async function requestMessagesDoc (client: HulylakeClient, cardId: CardID, blobId: BlobID): Promise<MessagesDoc | undefined> {
+  const res = await client.getJson<MessagesDoc>(`${cardId}/messages/${blobId}`, { retries: 3, delay: 500 })
+  if (res?.body === undefined) {
     return undefined
   }
-
-  const group = (
-    await client.findMessagesGroups({
-      cardId,
-      fromDate: { lessOrEqual: created },
-      toDate: { greaterOrEqual: created },
-      limit: 1,
-      order: SortingOrder.Ascending,
-      orderBy: 'fromDate'
-    })
-  )[0]
-
-  if (group === undefined) {
-    return undefined
-  }
-
-  try {
-    const parsedFile = await loadGroupFile(workspace, filesUrl, group.blobId, { retries: 3 })
-    const message = parsedFile.messages.find((it) => it.id === id)
-    if (message === undefined) {
-      return undefined
-    }
-
-    return message
-  } catch (e) {
-    console.error('Failed to find message in files', { cardId, id, created })
-    console.error('Error:', { error: e })
-  }
+  return res.body
 }
 
-export async function loadMessageFromGroup (
-  id: MessageID,
-  workspace: WorkspaceUuid,
-  filesUrl: string,
+async function loadMessagesDoc (
+  client: HulylakeClient,
+  cardId: CardID,
   blobId: BlobID,
-  patches: Patch[] = [],
-  cache?: Map<BlobID, Promise<ParsedFile>>
-): Promise<Message | undefined> {
+  cache?: Map<BlobID, Promise<MessagesDoc | undefined>>
+): Promise<MessagesDoc | undefined> {
   if (cache != null && cache.has(blobId)) {
-    const parsedFile = await cache.get(blobId)
-    if (parsedFile == null) return
-    const message = parsedFile.messages.find((it) => it.id === id)
-    if (message == null) return
-    return applyPatches(message, patches)
+    return await cache.get(blobId)
   }
-
-  const parsedFilePromise = loadGroupFile(workspace, filesUrl, blobId, { retries: 3 })
+  const messagesPromise = requestMessagesDoc(client, cardId, blobId)
   if (cache != null) {
-    cache.set(blobId, parsedFilePromise)
+    cache.set(blobId, messagesPromise)
   }
-  const parsedFile = await parsedFilePromise
 
-  const message = parsedFile.messages.find((it) => it.id === id)
-  if (message == null) return
-
-  return applyPatches(message, patches)
+  return await messagesPromise
 }
 
 export function matchNotification (notification: Notification, params: FindNotificationsParams): boolean {

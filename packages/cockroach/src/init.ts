@@ -130,7 +130,22 @@ function getMigrations (): [string, string][] {
     migrationV8_1(),
     migrationV8_2(),
     migrationV8_3(),
-    migrationV9_1()
+    migrationV9_1(),
+    migrationV10_1(),
+    migrationV10_2(),
+    migrationV10_3(),
+    migrationV10_4(),
+    migrationV10_5(),
+    migrationV10_6(),
+    migrationV10_7(),
+    migrationV10_8(),
+    migrationV10_9(),
+    migrationV10_10(),
+    migrationV10_11(),
+    migrationV10_12(),
+    migrationV10_13(),
+    migrationV10_14(),
+    migrationV10_15()
   ]
 }
 
@@ -468,7 +483,7 @@ function migrationV8_1 (): [string, string] {
 
 function migrationV8_2 (): [string, string] {
   const sql = `
-      CREATE TABLE IF NOT EXISTS ${Domain.AttachmentIndex}
+      CREATE TABLE IF NOT EXISTS communication.attachment
       (
           workspace_id UUID        NOT NULL,
           card_id      VARCHAR     NOT NULL,
@@ -487,7 +502,7 @@ function migrationV8_2 (): [string, string] {
 
 function migrationV8_3 (): [string, string] {
   const sql = `
-      CREATE INDEX IF NOT EXISTS attachment_workspace_card_message_idx ON ${Domain.AttachmentIndex} (workspace_id, card_id, message_id)
+      CREATE INDEX IF NOT EXISTS attachment_workspace_card_message_idx ON communication.attachment (workspace_id, card_id, message_id)
   `
   return ['add_attachment_indexes-v8_3', sql]
 }
@@ -508,4 +523,128 @@ function migrationV9_1 (): [string, string] {
       CREATE INDEX IF NOT EXISTS peer_workspace_card_kind ON ${Domain.Peer} (workspace_id, card_id, kind);
       CREATE INDEX IF NOT EXISTS peer_kind_value ON ${Domain.Peer} (kind, value);`
   return ['init_peer_tables-v9_1', sql]
+}
+
+function migrationV10_1 (): [string, string] {
+  const sql = `
+      ALTER TABLE communication.message_created
+          RENAME TO ${Domain.MessageIndex};
+      ALTER TABLE communication.thread
+          RENAME TO ${Domain.ThreadIndex};
+  `
+
+  return ['rename_tables-v10_1', sql]
+}
+
+function migrationV10_2 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.MessageIndex}
+          ADD COLUMN IF NOT EXISTS creator VARCHAR(255);
+  `
+  return ['add_creator_to_message_index-v10_2', sql]
+}
+
+function migrationV10_3 (): [string, string] {
+  const sql = `
+      UPDATE ${Domain.MessageIndex}
+      SET creator = '';
+  `
+  return ['set_creator_to_empty-string-v10_3', sql]
+}
+
+function migrationV10_4 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.MessageIndex}
+          ALTER COLUMN creator SET NOT NULL;
+  `
+  return ['make_creator_not_null-v10_4', sql]
+}
+
+function migrationV10_5 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.ThreadIndex}
+          DROP COLUMN IF EXISTS replies_count;
+      ALTER TABLE ${Domain.ThreadIndex}
+          DROP COLUMN IF EXISTS last_reply;
+  `
+  return ['drop_thread_index_columns-v10_5', sql]
+}
+
+function migrationV10_6 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.MessageIndex}
+          ADD COLUMN IF NOT EXISTS blob_id UUID;
+  `
+  return ['add_blob_id-v10_6', sql]
+}
+
+function migrationV10_7 (): [string, string] {
+  const sql = `
+      UPDATE ${Domain.MessageIndex}
+      SET blob_id = '00000000-0000-0000-0000-000000000000';
+  `
+  return ['set_blob_id-v10_7', sql]
+}
+
+function migrationV10_8 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.MessageIndex}
+          ALTER COLUMN blob_id SET NOT NULL;
+  `
+  return ['make_column_blob_id_not_null-v10_8', sql]
+}
+
+function migrationV10_9 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.Notification}
+          DROP COLUMN IF EXISTS message_created;
+  `
+  return ['notification_drop_message_created-v10_9', sql]
+}
+
+function migrationV10_10 (): [string, string] {
+  const sql = `
+      UPDATE ${Domain.Notification}
+      SET blob_id = '00000000-0000-0000-0000-000000000000';
+  `
+  return ['set_blob_id-v10_10', sql]
+}
+
+function migrationV10_11 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.Notification}
+          ALTER COLUMN blob_id SET NOT NULL;
+  `
+  return ['make_column_blob_id_not_null-v10_11', sql]
+}
+
+function migrationV10_12 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.Notification}
+    ADD COLUMN IF NOT EXISTS creator VARCHAR(255);
+  `
+  return ['make_column_creator_not_null-v10_12', sql]
+}
+
+function migrationV10_13 (): [string, string] {
+  const sql = `
+      UPDATE ${Domain.Notification}
+      SET creator = '';
+  `
+  return ['set_creator_to_empty-string-v10_13', sql]
+}
+
+function migrationV10_14 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.Notification}
+          ALTER COLUMN creator SET NOT NULL;
+  `
+  return ['make_column_creator_not_null-v10_14', sql]
+}
+
+function migrationV10_15 (): [string, string] {
+  const sql = `
+      DROP INDEX IF EXISTS communication.thread_unique_constraint CASCADE;
+  `
+  return ['drop_thread_unique_constraint-v10_15', sql]
 }

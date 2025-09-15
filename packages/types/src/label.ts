@@ -18,7 +18,6 @@ import type { AccountUuid, CardID, CardType } from './core'
 export type LabelID = string & { __label: true }
 
 export const SubscriptionLabelID = 'card:label:Subscribed' as LabelID
-export const NewMessageLabelID = 'card:label:NewMessages' as LabelID
 
 export interface Label {
   labelId: LabelID

@@ -13,12 +13,7 @@
 // limitations under the License.
 //
 
-import type {
-  AccountUuid,
-  Collaborator,
-  FindCollaboratorsParams,
-  WorkspaceUuid
-} from '@hcengineering/communication-types'
+import type { AccountUuid, Collaborator, FindCollaboratorsParams } from '@hcengineering/communication-types'
 import {
   AddCollaboratorsEvent,
   CardEventType,
@@ -30,9 +25,10 @@ import {
   RemoveCardEvent,
   RemoveCollaboratorsEvent
 } from '@hcengineering/communication-sdk-types'
+import { HulylakeClient } from '@hcengineering/hulylake-client'
 
 import { QueryResult } from '../result'
-import { type Query, type QueryId } from '../types'
+import { QueryOptions, type Query, type QueryId } from '../types'
 
 export class CollaboratorsQuery implements Query<Collaborator, FindCollaboratorsParams> {
   private result: Promise<QueryResult<Collaborator>> | QueryResult<Collaborator>
@@ -40,10 +36,10 @@ export class CollaboratorsQuery implements Query<Collaborator, FindCollaborators
 
   constructor (
     private readonly client: FindClient,
-    private readonly workspace: WorkspaceUuid,
-    private readonly filesUrl: string,
+    private readonly hulylake: HulylakeClient,
     public readonly id: QueryId,
     public readonly params: FindCollaboratorsParams,
+    public readonly options: QueryOptions | undefined,
     private callback?: QueryCallback<Collaborator>,
     initialResult?: QueryResult<Collaborator>
   ) {
@@ -138,9 +134,7 @@ export class CollaboratorsQuery implements Query<Collaborator, FindCollaborators
     }
   }
 
-  async unsubscribe (): Promise<void> {
-    await this.client.unsubscribeQuery(this.id)
-  }
+  async unsubscribe (): Promise<void> {}
 
   removeCallback (): void {
     this.callback = () => {}

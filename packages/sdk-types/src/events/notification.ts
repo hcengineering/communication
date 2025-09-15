@@ -22,8 +22,8 @@ import {
   NotificationType,
   NotificationContent,
   NotificationID,
-  SocialID,
-  BlobID
+  BlobID,
+  SocialID
 } from '@hcengineering/communication-types'
 
 import type { BaseEvent } from './common'
@@ -53,6 +53,7 @@ export type NotificationEvent =
 
 export interface CreateNotificationEvent extends BaseEvent {
   type: NotificationEventType.CreateNotification
+
   notificationId?: NotificationID
   notificationType: NotificationType
   read: boolean
@@ -60,8 +61,8 @@ export interface CreateNotificationEvent extends BaseEvent {
   cardId: CardID
   contextId: ContextID
   messageId: MessageID
-  messageCreated: Date
-  blobId?: BlobID
+  creator: SocialID
+  blobId: BlobID
   account: AccountUuid
 
   date?: Date
@@ -80,8 +81,8 @@ export interface UpdateNotificationEvent extends BaseEvent {
     read: boolean
   }
 
-  updated?: number
   date?: Date
+  updated?: number
 }
 
 export interface RemoveNotificationsEvent extends BaseEvent {

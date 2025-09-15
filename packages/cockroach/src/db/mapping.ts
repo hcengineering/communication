@@ -17,22 +17,18 @@ import {
   type CardID,
   type Collaborator,
   type ContextID,
-  type Message,
   type MessageID,
-  type MessagesGroup,
   type Notification,
   type NotificationContext,
   type NotificationID,
-  type Reaction,
-  type Thread,
   type Label,
   type AccountUuid,
-  AttachmentID,
-  Attachment,
   Peer,
   WorkspaceUuid,
   PeerExtra,
-  MessageMeta
+  MessageMeta,
+  ThreadMeta,
+  BlobID
 } from '@hcengineering/communication-types'
 import { Domain } from '@hcengineering/communication-sdk-types'
 
@@ -46,47 +42,22 @@ type RawContext = DbModel<Domain.NotificationContext> & { id: ContextID, total?:
   notifications?: RawNotification[]
 }
 
-export function toMessage (raw: any): Message {
-  return raw
-}
-
-export function toReaction (raw: any): Reaction {
+export function toMessageMeta (raw: DbModel<Domain.MessageIndex>): MessageMeta {
   return {
-    reaction: raw.reaction,
-    creator: raw.creator,
-    created: new Date(raw.created)
-  }
-}
-
-export function toAttachment (raw: Omit<DbModel<Domain.AttachmentIndex>, 'workspace_id'>): Attachment {
-  return {
-    id: String(raw.id) as AttachmentID,
-    type: raw.type,
-    params: raw.params,
-    creator: raw.creator,
-    created: new Date(raw.created),
-    modified: raw.modified != null ? new Date(raw.modified) : undefined
-  } as any as Attachment
-}
-
-export function toMessagesGroup (raw: DbModel<Domain.MessagesGroup>): MessagesGroup {
-  return {
+    id: String(raw.message_id) as MessageID,
     cardId: raw.card_id,
-    blobId: raw.blob_id,
-    fromDate: raw.from_date,
-    toDate: raw.to_date,
-    count: Number(raw.count)
+    created: new Date(raw.created),
+    creator: raw.creator,
+    blobId: String(raw.blob_id) as BlobID
   }
 }
 
-export function toThread (raw: DbModel<Domain.ThreadIndex>): Thread {
+export function toThreadMeta (raw: DbModel<Domain.ThreadIndex>): ThreadMeta {
   return {
     cardId: raw.card_id,
     messageId: String(raw.message_id) as MessageID,
     threadId: raw.thread_id,
-    threadType: raw.thread_type,
-    repliesCount: Number(raw.replies_count),
-    lastReply: new Date(raw.last_reply)
+    threadType: raw.thread_type
   }
 }
 
@@ -116,7 +87,7 @@ function toNotificationRaw (id: ContextID, card: CardID, raw: RawNotification): 
     type: raw.type,
     read: Boolean(raw.read),
     messageId: String(raw.message_id) as MessageID,
-    messageCreated: new Date(raw.message_created),
+    creator: raw.creator,
     created,
     contextId: String(id) as ContextID,
     content: raw.content,
@@ -172,13 +143,4 @@ export function toPeer (
   }
 
   return peer
-}
-
-export function toMessageMeta (raw: DbModel<Domain.MessageIndex>): MessageMeta {
-  return {
-    id: String(raw.message_id) as MessageID,
-    cardId: raw.card_id,
-    created: new Date(raw.created),
-    creator: raw.creator
-  }
 }

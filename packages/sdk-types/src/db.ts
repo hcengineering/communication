@@ -22,10 +22,6 @@ import {
   NotificationContext,
   SocialID,
   Notification,
-  BlobID,
-  FindMessagesGroupsParams,
-  MessagesGroup,
-  Thread,
   AccountUuid,
   Collaborator,
   FindCollaboratorsParams,
@@ -36,18 +32,17 @@ import {
   CardType,
   NotificationContent,
   NotificationType,
-  AttachmentData,
-  AttachmentID,
-  AttachmentUpdateData,
   WithTotal,
   WorkspaceUuid,
   PeerKind,
   PeerExtra,
   FindPeersParams,
   Peer,
-  FindThreadParams,
-  FindMessageMetaParams,
-  MessageMeta
+  FindThreadMetaParams,
+  MessageMeta,
+  ThreadMeta,
+  FindMessagesMetaParams,
+  BlobID
 } from '@hcengineering/communication-types'
 
 export interface DbAdapter {
@@ -56,26 +51,17 @@ export interface DbAdapter {
     cardId: CardID,
     id: MessageID,
     creator: SocialID,
-    created: Date
+    created: Date,
+    blob: BlobID
   ) => Promise<boolean>
-  findMessageMeta: (params: FindMessageMetaParams) => Promise<MessageMeta[]>
-
-  // MessagesGroup
-  createMessagesGroup: (cardId: CardID, blobId: BlobID, fromDate: Date, toDate: Date, count: number) => Promise<void>
-  removeMessagesGroup: (cardId: CardID, blobId: BlobID) => Promise<void>
-  findMessagesGroups: (params: FindMessagesGroupsParams) => Promise<MessagesGroup[]>
-
-  // AttachmentsIndex
-  addAttachments: (cardId: CardID, messageId: MessageID, data: AttachmentData[], socialId: SocialID, date: Date) => Promise<void>
-  setAttachments: (cardId: CardID, messageId: MessageID, data: AttachmentData[], socialId: SocialID, date: Date) => Promise<void>
-  removeAttachments: (card: CardID, messageId: MessageID, ids: AttachmentID[]) => Promise<void>
-  updateAttachments: (cardId: CardID, messageId: MessageID, data: AttachmentUpdateData[], date: Date) => Promise<void>
+  removeMessageMeta: (cardId: CardID, messageId: MessageID) => Promise<void>
+  findMessagesMeta: (params: FindMessagesMetaParams) => Promise<MessageMeta[]>
 
   // ThreadsIndex
-  attachThread: (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType, socialId: SocialID, date: Date) => Promise<void>
-  removeThreads: (query: ThreadQuery) => Promise<void>
-  updateThread: (query: ThreadQuery, update: ThreadUpdate) => Promise<void>
-  findThreads: (params: FindThreadParams) => Promise<Thread[]>
+  attachThreadMeta: (cardId: CardID, messageId: MessageID, threadId: CardID, threadType: CardType, socialId: SocialID, date: Date) => Promise<void>
+  removeThreadMeta: (query: ThreadMetaQuery) => Promise<void>
+  updateThreadMeta: (query: ThreadMetaQuery, update: ThreadMetaUpdate) => Promise<void>
+  findThreadMeta: (params: FindThreadMetaParams) => Promise<ThreadMeta[]>
 
   // Peers
   createPeer: (
@@ -102,17 +88,16 @@ export interface DbAdapter {
   // Notifications
   createNotification: (
     contextId: ContextID,
-    message: MessageID,
-    messageCreated: Date,
+    messageId: MessageID,
+    blobId: BlobID,
     type: NotificationType,
     read: boolean,
     content: NotificationContent,
+    creator: SocialID,
     created: Date
   ) => Promise<NotificationID>
   updateNotification: (query: NotificationQuery, updates: NotificationUpdate) => Promise<number>
   removeNotifications: (query: NotificationQuery) => Promise<NotificationID[]>
-  removeNotificationsBlobId: (cardId: CardID, blobId: string) => Promise<void>
-  updateNotificationsBlobId: (cardId: CardID, blobId: string, from: Date, to: Date) => Promise<void>
   findNotifications: (params: FindNotificationsParams) => Promise<WithTotal<Notification>>
 
   // NotificationContext
@@ -142,8 +127,8 @@ export interface DbAdapter {
   close: () => void
 }
 
-export type ThreadQuery = Partial<Pick<Thread, 'cardId' | 'threadId' | 'messageId'>>
-export type ThreadUpdate = Partial<Pick<Thread, | 'threadType' | 'lastReply'>> & { repliesCountOp?: 'increment' | 'decrement' }
+export type ThreadMetaQuery = Partial<Pick<ThreadMeta, 'cardId' | 'threadId' | 'messageId'>>
+export type ThreadMetaUpdate = Partial<Pick<ThreadMeta, | 'threadType'>>
 
 export type LabelQuery = Partial<Pick<Label, 'cardId' | 'labelId' | 'account'>>
 export type LabelUpdate = Partial<Pick<Label, 'cardType'>>

@@ -19,15 +19,12 @@ import {
   type CardID,
   type Collaborator,
   type ContextID,
-  type FindMessagesGroupsParams,
   type FindNotificationContextParams,
   type FindNotificationsParams,
   type MessageID,
-  type MessagesGroup,
   type Notification,
   type NotificationContext,
   type SocialID,
-  type Thread,
   type WorkspaceUuid,
   type NotificationID,
   type Label,
@@ -36,18 +33,14 @@ import {
   type CardType,
   NotificationType,
   type NotificationContent,
-  type BlobID,
-  type AttachmentData,
-  type AttachmentID,
-  type AttachmentUpdateData,
   WithTotal,
   PeerKind,
   PeerExtra,
   FindPeersParams,
   Peer,
-  FindThreadParams,
-  FindMessageMetaParams,
-  MessageMeta
+  FindThreadMetaParams,
+  MessageMeta, ThreadMeta, BlobID,
+  FindMessagesMetaParams
 } from '@hcengineering/communication-types'
 import type {
   CollaboratorQuery,
@@ -58,9 +51,7 @@ import type {
   NotificationContextQuery,
   NotificationContextUpdate,
   NotificationQuery,
-  NotificationUpdate,
-  ThreadQuery,
-  ThreadUpdate
+  NotificationUpdate, ThreadMetaQuery, ThreadMetaUpdate
 } from '@hcengineering/communication-sdk-types'
 
 import { MessagesDb } from './db/message'
@@ -96,90 +87,40 @@ export class CockroachAdapter implements DbAdapter {
     cardId: CardID,
     id: MessageID,
     creator: SocialID,
-    created: Date
+    created: Date,
+    blobID: BlobID
   ): Promise<boolean> {
-    return await this.message.createMessageMeta(cardId, id, creator, created)
+    return await this.message.createMessageMeta(cardId, id, creator, created, blobID)
   }
 
-  async findMessageMeta (params: FindMessageMetaParams): Promise<MessageMeta[]> {
-    return await this.message.findMessageMeta(params)
+  async removeMessageMeta (cardId: CardID, messageId: MessageID): Promise<void> {
+    await this.message.removeMessageMeta(cardId, messageId)
   }
 
-  // MessagesGroup
-  async createMessagesGroup (
-    cardId: CardID,
-    blobId: BlobID,
-    fromDate: Date,
-    toDate: Date,
-    count: number
-  ): Promise<void> {
-    await this.message.createMessagesGroup(cardId, blobId, fromDate, toDate, count)
-  }
-
-  async removeMessagesGroup (card: CardID, blobId: BlobID): Promise<void> {
-    await this.message.removeMessagesGroup(card, blobId)
-  }
-
-  async findMessagesGroups (params: FindMessagesGroupsParams): Promise<MessagesGroup[]> {
-    return await this.message.findMessagesGroups(params)
-  }
-
-  // AttachmentsIndex
-  async addAttachments (
-    cardId: CardID,
-    messageId: MessageID,
-    data: AttachmentData[],
-    socialId: SocialID,
-    date: Date
-  ): Promise<void> {
-    await this.message.addAttachments(cardId, messageId, data, socialId, date)
-  }
-
-  async removeAttachments (cardId: CardID, messageId: MessageID, ids: AttachmentID[]): Promise<void> {
-    await this.message.removeAttachments(cardId, messageId, ids)
-  }
-
-  async setAttachments (
-    cardId: CardID,
-    messageId: MessageID,
-    data: AttachmentData[],
-    socialId: SocialID,
-    date: Date
-  ): Promise<void> {
-    await this.message.setAttachments(cardId, messageId, data, socialId, date)
-  }
-
-  async updateAttachments (
-    cardId: CardID,
-    messageId: MessageID,
-    data: AttachmentUpdateData[],
-    date: Date
-  ): Promise<void> {
-    await this.message.updateAttachments(cardId, messageId, data, date)
+  async findMessagesMeta (params: FindMessagesMetaParams): Promise<MessageMeta[]> {
+    return await this.message.findMessagesMeta(params)
   }
 
   // ThreadsIndex
-  async attachThread (
+  async attachThreadMeta (
     cardId: CardID,
     messageId: MessageID,
     threadId: CardID,
-    threadType: CardType,
-    socialId: SocialID,
-    date: Date
+    threadType: CardType
   ): Promise<void> {
-    await this.message.attachThread(cardId, messageId, threadId, threadType, socialId, date)
+    await this.message.attachThreadMeta(cardId, messageId, threadId, threadType)
   }
 
-  async updateThread (query: ThreadQuery, update: ThreadUpdate): Promise<void> {
-    await this.message.updateThread(query, update)
+  async updateThreadMeta (query: ThreadMetaQuery, update: ThreadMetaUpdate): Promise<void> {
+    await this.message.updateThreadMeta(query, update)
   }
 
-  async removeThreads (query: ThreadQuery): Promise<void> {
-    await this.message.removeThreads(query)
+  async removeThreadMeta (query: ThreadMetaQuery): Promise<void> {
+    await this.message.removeThreadMeta(query)
   }
 
-  async findThreads (params: FindThreadParams): Promise<Thread[]> {
-    return await this.message.findThreads(params)
+  async findThreadMeta (params: FindThreadMetaParams): Promise<ThreadMeta[]> {
+    return await this.message.findThreadMeta(params)
   }
 
   // Collaborators
@@ -212,19 +153,21 @@ export class CockroachAdapter implements DbAdapter {
   async createNotification (
     contextId: ContextID,
     messageId: MessageID,
-    messageCreated: Date,
+    blobId: BlobID,
     type: NotificationType,
     read: boolean,
     content: NotificationContent,
+    creator: SocialID,
     created: Date
   ): Promise<NotificationID> {
     return await this.notification.createNotification(
       contextId,
       messageId,
-      messageCreated,
+      blobId,
       type,
       read,
       content,
+      creator,
       created
     )
   }
@@ -237,14 +180,6 @@ export class CockroachAdapter implements DbAdapter {
     query: NotificationQuery
   ): Promise<NotificationID[]> {
     return await this.notification.removeNotifications(query)
-  }
-
-  async removeNotificationsBlobId (cardId: CardID, blobId: string): Promise<void> {
-    await this.notification.removeNotificationsBlobId(cardId, blobId)
-  }
-
-  async updateNotificationsBlobId (cardId: CardID, blobId: string, from: Date, to: Date): Promise<void> {
-    await this.notification.updateNotificationsBlobId(cardId, blobId, from, to)
   }
 
   async findNotifications (params: FindNotificationsParams): Promise<WithTotal<Notification>> {

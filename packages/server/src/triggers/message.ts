@@ -15,7 +15,6 @@
 
 import {
   CreateMessageEvent,
-  CreateMessagesGroupEvent,
   type Event,
   MessageEventType,
   NotificationEventType,
@@ -29,18 +28,11 @@ import { extractReferences } from '@hcengineering/text-core'
 import { markdownToMarkup } from '@hcengineering/text-markdown'
 
 import type { Enriched, TriggerCtx, TriggerFn, Triggers } from '../types'
-import { findAccount } from '../utils'
-import { findMessage } from './utils'
 import { generateMessageId } from '../messageId'
-
-async function onMessagesGroupCreated (ctx: TriggerCtx, event: CreateMessagesGroupEvent): Promise<Event[]> {
-  ctx.registeredCards.delete(event.group.cardId)
-  return []
-}
 
 async function onMessageRemoved (ctx: TriggerCtx, event: Enriched<RemovePatchEvent>): Promise<Event[]> {
   const { cardId } = event
-  const thread = (await ctx.db.findThreads({ threadId: cardId, limit: 1 }))[0]
+  const thread = (await ctx.client.db.findThreadMeta({ threadId: cardId, limit: 1 }))[0]
   if (thread === undefined) return []
 
   return [
@@ -49,11 +41,8 @@ async function onMessageRemoved (ctx: TriggerCtx, event: Enriched<RemovePatchEve
       cardId: thread.cardId,
       messageId: thread.messageId,
       operation: {
-        opcode: 'update',
-        threadId: thread.threadId,
-        updates: {
-          repliesCountOp: 'decrement'
-        }
+        opcode: 'removeReply',
+        threadId: thread.threadId
       },
       date: event.date,
       socialId: event.socialId
@@ -64,7 +53,7 @@ async function onMessageRemoved (ctx: TriggerCtx, event: Enriched<RemovePatchEve
 async function addCollaborators (ctx: TriggerCtx, event: Enriched<CreateMessageEvent>): Promise<Event[]> {
   const { messageType, socialId, content, cardId, cardType, date } = event
   if (messageType === MessageType.Activity) return []
-  const account = await findAccount(ctx, socialId)
+  const account = (await ctx.client.findPersonUuid(ctx, socialId, true)) as AccountUuid | undefined
   const collaborators: AccountUuid[] = []
 
   if (account !== undefined) {
@@ -77,7 +66,7 @@ async function addCollaborators (ctx: TriggerCtx, event: Enriched<CreateMessageE
     .filter((it) => ['contact:class:Person', 'contact:mixin:Employee'].includes(it.objectClass))
     .map((it) => it.objectId)
     .filter((it) => it != null) as string[]
-  const accounts = await ctx.db.getAccountsByPersonIds(personIds)
+  const accounts = await ctx.client.db.getAccountsByPersonIds(personIds)
 
   collaborators.push(...accounts)
 
@@ -98,11 +87,11 @@ async function addCollaborators (ctx: TriggerCtx, event: Enriched<CreateMessageE
 }
 
 async function addThreadReply (ctx: TriggerCtx, event: Enriched<CreateMessageEvent>): Promise<Event[]> {
-  if (event.messageType !== MessageType.Message || event.extra?.threadRoot === true) {
+  if (event.messageType !== MessageType.Text || event.extra?.threadRoot === true) {
     return []
   }
   const { cardId, socialId, date } = event
-  const thread = (await ctx.db.findThreads({ threadId: cardId, limit: 1 }))[0]
+  const thread = (await ctx.client.db.findThreadMeta({ threadId: cardId, limit: 1 }))[0]
 
   if (thread === undefined) return []
 
@@ -112,12 +101,8 @@ async function addThreadReply (ctx: TriggerCtx, event: Enriched<CreateMessageEve
       cardId: thread.cardId,
       messageId: thread.messageId,
       operation: {
-        opcode: 'update',
-        threadId: thread.threadId,
-        updates: {
-          lastReply: date,
-          repliesCountOp: 'increment'
-        }
+        opcode: 'addReply',
+        threadId: thread.threadId
       },
       socialId,
       date
@@ -127,7 +112,7 @@ async function addThreadReply (ctx: TriggerCtx, event: Enriched<CreateMessageEve
 
 async function onThreadAttached (ctx: TriggerCtx, event: Enriched<ThreadPatchEvent>): Promise<Event[]> {
   if (event.operation.opcode !== 'attach') return []
-  const { message } = await findMessage(ctx.db, ctx.metadata.filesUrl, ctx.workspace, event.cardId, event.messageId)
+  const message = await ctx.client.findMessage(event.cardId, event.messageId)
 
   if (message === undefined) return []
 
@@ -163,7 +148,7 @@ async function onThreadAttached (ctx: TriggerCtx, event: Enriched<ThreadPatchEve
         opcode: 'add',
         attachments: message.attachments.map((it) => ({
           id: it.id,
-          type: it.type,
+          mimeType: it.mimeType,
           params: it.params
         }))
       }
@@ -216,7 +201,6 @@ const triggers: Triggers = [
   ['add_collaborators_on_message_created', MessageEventType.CreateMessage, addCollaborators as TriggerFn],
   ['add_thread_reply_on_message_created', MessageEventType.CreateMessage, addThreadReply as TriggerFn],
 
-  ['on_messages_group_created', MessageEventType.CreateMessagesGroup, onMessagesGroupCreated as TriggerFn],
   ['remove_reply_on_messages_removed', MessageEventType.RemovePatch, onMessageRemoved as TriggerFn],
   ['on_thread_created', MessageEventType.ThreadPatch, onThreadAttached as TriggerFn],
 

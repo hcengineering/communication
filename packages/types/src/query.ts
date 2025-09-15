@@ -17,7 +17,7 @@ import { SortingOrder } from '@hcengineering/core'
 
 import type { MessageID } from './message'
 import type { ContextID, NotificationID, NotificationType } from './notification'
-import type { AccountUuid, BlobID, CardID, CardType, WorkspaceUuid } from './core'
+import type { AccountUuid, CardID, CardType, WorkspaceUuid } from './core'
 import type { LabelID } from './label'
 import { PeerKind } from './peer'
 
@@ -44,25 +44,20 @@ interface FindParams {
 }
 
 export interface FindMessagesParams extends FindParams {
+  cardId: CardID
   id?: MessageID
-  cardId?: CardID
-  created?: Partial<Record<ComparisonOperator, Date>> | Date
 }
 
-export interface FindMessageMetaParams extends FindParams {
+export interface FindMessagesMetaParams extends FindParams {
   cardId?: CardID
   id?: MessageID
-  created?: Partial<Record<ComparisonOperator, Date>> | Date
   creator?: SortingOrder
 }
 
-export interface FindMessagesGroupsParams extends FindParams {
-  messageId?: MessageID
-  cardId?: CardID
-  blobId?: BlobID
-  fromDate?: Partial<Record<ComparisonOperator, Date>> | Date
-  toDate?: Partial<Record<ComparisonOperator, Date>> | Date
-  orderBy?: 'fromDate' | 'toDate'
+export interface FindMessagesOptions {
+  attachments?: boolean
+  reactions?: boolean
+  threads?: boolean
 }
 
 export interface FindNotificationContextParams extends FindParams {
@@ -72,7 +67,6 @@ export interface FindNotificationContextParams extends FindParams {
   account?: AccountUuid | AccountUuid[]
   notifications?: {
     type?: NotificationType
-    message?: boolean // TODO: remove ??
     limit: number
     order: SortingOrder
     read?: boolean
@@ -89,7 +83,6 @@ export interface FindNotificationsParams extends FindParams {
   created?: Partial<Record<ComparisonOperator, Date>> | Date
   account?: AccountUuid | AccountUuid[]
   cardId?: CardID
-  message?: boolean // TODO: remove ??
   total?: boolean
 }
 
@@ -105,7 +98,7 @@ export interface FindLabelsParams extends FindParams {
   account?: AccountUuid
 }
 
-export interface FindThreadParams extends FindParams {
+export interface FindThreadMetaParams extends FindParams {
   cardId?: CardID
   messageId?: MessageID
   threadId?: CardID

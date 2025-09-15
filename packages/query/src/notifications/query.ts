@@ -14,38 +14,28 @@
 //
 
 import {
-  type CardID,
   type FindNotificationsParams,
-  type Message,
-  type MessageID,
   type Notification,
-  PatchType,
   SortingOrder,
-  WithTotal,
-  type WorkspaceUuid
+  WithTotal
 } from '@hcengineering/communication-types'
 import {
-  CardEventType,
   CreateNotificationEvent,
   type Event,
   type FindClient,
-  MessageEventType,
   NotificationEventType,
   type PagedQueryCallback,
-  PatchEvent,
-  RemoveCardEvent,
   RemoveNotificationContextEvent,
   RemoveNotificationsEvent,
   UpdateNotificationEvent
 } from '@hcengineering/communication-sdk-types'
-import { applyPatches, MessageProcessor, NotificationProcessor, withTotal } from '@hcengineering/communication-shared'
+import { NotificationProcessor } from '@hcengineering/communication-shared'
+import { HulylakeClient } from '@hcengineering/hulylake-client'
 
-import { defaultQueryParams, NotificationQueryParams, type PagedQuery, type QueryId } from '../types'
+import { defaultQueryParams, NotificationQueryParams, type PagedQuery, type QueryId, QueryOptions } from '../types'
 import { QueryResult } from '../result'
 import { WindowImpl } from '../window'
-import { loadMessageFromGroup, matchNotification } from '../utils'
-
-const allowedPatchTypes = [PatchType.update, PatchType.remove, PatchType.attachment]
+import { matchNotification } from '../utils'
 
 export class NotificationQuery implements PagedQuery<Notification, NotificationQueryParams> {
   private result: QueryResult<Notification> | Promise<QueryResult<Notification>>
@@ -55,10 +45,10 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
 
   constructor (
     private readonly client: FindClient,
-    private readonly workspace: WorkspaceUuid,
-    private readonly filesUrl: string,
+    private readonly hulylake: HulylakeClient,
     public readonly id: QueryId,
     public readonly params: NotificationQueryParams,
+    public readonly options: QueryOptions | undefined,
     private callback?: PagedQueryCallback<Notification>,
     initialResult?: QueryResult<Notification>
   ) {
@@ -121,23 +111,12 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
       case NotificationEventType.RemoveNotificationContext:
         await this.onRemoveNotificationContextEvent(event)
         break
-      case MessageEventType.UpdatePatch:
-      case MessageEventType.RemovePatch:
-      case MessageEventType.AttachmentPatch:
-      case MessageEventType.BlobPatch:
-        await this.onCreatePatchEvent(event)
-        break
-      case CardEventType.RemoveCard:
-        await this.onCardRemoved(event)
-        break
     }
   }
 
   async onRequest (event: Event): Promise<void> {}
 
-  async unsubscribe (): Promise<void> {
-    await this.client.unsubscribeQuery(this.id)
-  }
+  async unsubscribe (): Promise<void> {}
 
   async requestLoadNextPage (notify = true): Promise<{ isDone: boolean }> {
     if (this.params.strict === true) return { isDone: true }
@@ -214,24 +193,7 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
 
   private async find (params: NotificationQueryParams): Promise<WithTotal<Notification>> {
     delete params.strict
-    const notifications = await this.client.findNotifications(params, this.id)
-    if (params.message !== true) return notifications
-
-    const result = await Promise.all(
-      notifications.map(async (notification) => {
-        if (notification.message != null || notification.blobId == null) return notification
-        const message = await loadMessageFromGroup(
-          notification.messageId,
-          this.workspace,
-          this.filesUrl,
-          notification.blobId,
-          notification.patches
-        )
-        return message != null ? { ...notification, message } : notification
-      })
-    )
-
-    return withTotal(result, notifications.total)
+    return await this.client.findNotifications(params, this.id)
   }
 
   private async onCreateNotificationEvent (event: CreateNotificationEvent): Promise<void> {
@@ -239,7 +201,7 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
     if (this.result instanceof Promise) this.result = await this.result
     if (this.result.get(event.notificationId) != null) return
 
-    const notification = NotificationProcessor.createFromEvent(event)
+    const notification = NotificationProcessor.create(event)
 
     const match = matchNotification(notification, { ...this.params, created: undefined })
     if (!match) return
@@ -256,15 +218,6 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
 
     if (!this.result.isTail() && !inRange) {
       return
-    }
-
-    if (this.params.message === true) {
-      const message = await this.client.findMessages({
-        cardId: notification.cardId,
-        id: notification.messageId,
-        limit: 1
-      })
-      notification.message = message[0]
     }
 
     if (this.params.total === true) {
@@ -408,31 +361,6 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
     }
   }
 
-  private async onCreatePatchEvent (event: PatchEvent): Promise<void> {
-    if (this.params.message !== true) return
-    const patches = MessageProcessor.eventToPatches(event).filter((it) => allowedPatchTypes.includes(it.type))
-    if (patches.length === 0) return
-    const isUpdated = await this.updateMessage(
-      (it) => this.matchNotificationByMessage(it, event.cardId, event.messageId),
-      (message) => applyPatches(message, patches, allowedPatchTypes)
-    )
-    if (isUpdated) {
-      void this.notify()
-    }
-  }
-
-  private async onCardRemoved (event: RemoveCardEvent): Promise<void> {
-    if (this.params.message !== true) return
-    if (this.result instanceof Promise) this.result = await this.result
-    const isUpdated = await this.updateMessage(
-      (it) => it.message != null && it.message.thread?.threadId === event.cardId,
-      (message) => ({ ...message, thread: undefined })
-    )
-    if (isUpdated) {
-      void this.notify()
-    }
-  }
-
   private async notify (): Promise<void> {
     if (this.callback == null) return
     if (this.result instanceof Promise) this.result = await this.result
@@ -466,32 +394,6 @@ export class NotificationQuery implements PagedQuery<Notification, NotificationQ
       void this.notify()
       return res
     })
-  }
-
-  private matchNotificationByMessage (notification: Notification, card: CardID, messageId: MessageID): boolean {
-    return notification.messageId === messageId && notification.message != null && notification.message.cardId === card
-  }
-
-  private async updateMessage (
-    matchFn: (notification: Notification) => boolean,
-    updater: (message: Message) => Message
-  ): Promise<boolean> {
-    if (this.params.message !== true) return false
-    if (this.result instanceof Promise) this.result = await this.result
-
-    const result = this.result.getResult()
-    let isUpdated = false
-    for (const notification of result) {
-      const isMatched = matchFn(notification)
-      if (!isMatched) continue
-      isUpdated = true
-      this.result.update({
-        ...notification,
-        message: notification.message != null ? updater(notification.message) : notification.message
-      })
-    }
-
-    return isUpdated
   }
 
   async refresh (): Promise<void> {

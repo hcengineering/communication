@@ -13,87 +13,13 @@
 // limitations under the License.
 //
 
-import {
-  type AccountUuid,
-  type CardID,
-  type Message,
-  type MessageID,
-  type Markdown,
-  type SocialID,
-  SortingOrder,
-  type WorkspaceUuid,
-  BlobID
-} from '@hcengineering/communication-types'
-import { loadGroupFile } from '@hcengineering/communication-yaml'
-import type { DbAdapter } from '@hcengineering/communication-sdk-types'
+import { type AccountUuid, type Markdown, type SocialID } from '@hcengineering/communication-types'
 
-import type { TriggerCtx } from '../types'
-import { findAccount } from '../utils'
-
-export async function findMessage (
-  db: DbAdapter,
-  filesUrl: string,
-  workspace: WorkspaceUuid,
-  card: CardID,
-  id: MessageID
-): Promise<{
-    message?: Message
-    blobId?: BlobID
-  }> {
-  return await findMessageInFiles(db, filesUrl, workspace, card, id)
-}
-
-export async function findMessageInFiles (
-  db: DbAdapter,
-  filesUrl: string,
-  workspace: WorkspaceUuid,
-  cardId: CardID,
-  messageId: MessageID
-): Promise<{
-    message?: Message
-    blobId?: BlobID
-  }> {
-  if (filesUrl === '') {
-    return {}
-  }
-
-  const meta = (await db.findMessageMeta({ cardId, id: messageId, limit: 1 }))[0]
-
-  if (meta == null) return {}
-  const group = (
-    await db.findMessagesGroups({
-      cardId,
-      fromDate: { lessOrEqual: meta.created },
-      toDate: { greaterOrEqual: meta.created },
-      limit: 1,
-      order: SortingOrder.Ascending,
-      orderBy: 'fromDate'
-    })
-  )[0]
-
-  if (group === undefined) {
-    return {}
-  }
-
-  try {
-    const parsedFile = await loadGroupFile(workspace, filesUrl, group.blobId, { retries: 3 })
-    const message = parsedFile.messages.find((it) => it.id === messageId)
-    if (message === undefined) {
-      return {}
-    }
-
-    return { message, blobId: group.blobId }
-  } catch (e) {
-    console.error('Failed to find message in files', { card: cardId, id: messageId, created: meta })
-    console.error('Error:', { error: e })
-  }
-
-  return {}
-}
+import { TriggerCtx } from '../types'
 
 export async function getNameBySocialID (ctx: TriggerCtx, id: SocialID): Promise<string> {
-  const account = await findAccount(ctx, id)
-  return account != null ? (await ctx.db.getNameByAccount(account)) ?? 'System' : 'System'
+  const account = (await ctx.client.findPersonUuid(ctx, id, true)) as AccountUuid | undefined
+  return account != null ? (await ctx.client.db.getNameByAccount(account)) ?? 'System' : 'System'
 }
 
 export async function getAddCollaboratorsMessageContent (
@@ -105,7 +31,7 @@ export async function getAddCollaboratorsMessageContent (
     return 'Joined card'
   }
 
-  const collaboratorsNames = (await Promise.all(collaborators.map((it) => ctx.db.getNameByAccount(it)))).filter(
+  const collaboratorsNames = (await Promise.all(collaborators.map((it) => ctx.client.db.getNameByAccount(it)))).filter(
     (it): it is string => it != null && it !== ''
   )
 
@@ -121,7 +47,7 @@ export async function getRemoveCollaboratorsMessageContent (
     return 'Left card'
   }
 
-  const collaboratorsNames = (await Promise.all(collaborators.map((it) => ctx.db.getNameByAccount(it)))).filter(
+  const collaboratorsNames = (await Promise.all(collaborators.map((it) => ctx.client.db.getNameByAccount(it)))).filter(
     (it): it is string => it != null && it !== ''
   )
 
