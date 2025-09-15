@@ -14,22 +14,26 @@
 //
 
 import {
-  MessageID,
   AppletAttachment,
   Attachment,
   BlobAttachment,
+  BlobID,
+  CardID,
+  type Emoji,
+  FindMessagesOptions,
+  FindMessagesParams,
   LinkPreviewAttachment,
   linkPreviewType,
-  WithTotal,
-  MessagesDoc,
   Message,
   MessageDoc,
-  FindMessagesParams,
-  FindMessagesOptions,
+  MessageID,
+  MessagesDoc,
+  MessagesGroup,
+  MessagesGroupDoc,
+  MessagesGroupsDoc,
   type PersonUuid,
-  type Emoji,
   SortingOrder,
-  BlobID
+  WithTotal
 } from '@hcengineering/communication-types'
 import { type HulylakeClient } from '@hcengineering/hulylake-client'
 
@@ -88,6 +92,24 @@ export function withTotal<T> (objects: T[], total?: number): WithTotal<T> {
   const length = total ?? objects.length
 
   return Object.assign(objects, { total: length })
+}
+
+export async function loadMessagesGroups (client: HulylakeClient, cardId: CardID): Promise<MessagesGroup[]> {
+  const res = await client.getJson<MessagesGroupsDoc>(`${cardId}/messages/groups`, { retries: 3, delay: 500 })
+  if (res?.body === undefined) {
+    return []
+  }
+  return Object.values(res.body).map(it => deserializeMessageGroup(it)).sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
+}
+
+function deserializeMessageGroup (group: MessagesGroupDoc): MessagesGroup {
+  return {
+    cardId: group.cardId,
+    blobId: group.blobId,
+    fromDate: new Date(group.fromDate),
+    toDate: new Date(group.toDate),
+    count: group.count
+  }
 }
 
 export async function loadMessages (
