@@ -30,26 +30,6 @@ import { markdownToMarkup } from '@hcengineering/text-markdown'
 import type { Enriched, TriggerCtx, TriggerFn, Triggers } from '../types'
 import { generateMessageId } from '../messageId'
 
-async function onMessageRemoved (ctx: TriggerCtx, event: Enriched<RemovePatchEvent>): Promise<Event[]> {
-  const { cardId } = event
-  const thread = (await ctx.client.db.findThreadMeta({ threadId: cardId, limit: 1 }))[0]
-  if (thread === undefined) return []
-
-  return [
-    {
-      type: MessageEventType.ThreadPatch,
-      cardId: thread.cardId,
-      messageId: thread.messageId,
-      operation: {
-        opcode: 'removeReply',
-        threadId: thread.threadId
-      },
-      date: event.date,
-      socialId: event.socialId
-    }
-  ]
-}
-
 async function addCollaborators (ctx: TriggerCtx, event: Enriched<CreateMessageEvent>): Promise<Event[]> {
   const { messageType, socialId, content, cardId, cardType, date } = event
   if (messageType === MessageType.Activity) return []
@@ -106,6 +86,26 @@ async function addThreadReply (ctx: TriggerCtx, event: Enriched<CreateMessageEve
       },
       socialId,
       date
+    }
+  ]
+}
+
+async function removeThreadReply (ctx: TriggerCtx, event: Enriched<RemovePatchEvent>): Promise<Event[]> {
+  const { cardId } = event
+  const thread = (await ctx.client.db.findThreadMeta({ threadId: cardId, limit: 1 }))[0]
+  if (thread === undefined) return []
+
+  return [
+    {
+      type: MessageEventType.ThreadPatch,
+      cardId: thread.cardId,
+      messageId: thread.messageId,
+      operation: {
+        opcode: 'removeReply',
+        threadId: thread.threadId
+      },
+      date: event.date,
+      socialId: event.socialId
     }
   ]
 }
@@ -199,9 +199,10 @@ async function checkPeers (ctx: TriggerCtx, event: Enriched<CreateMessageEvent |
 
 const triggers: Triggers = [
   ['add_collaborators_on_message_created', MessageEventType.CreateMessage, addCollaborators as TriggerFn],
-  ['add_thread_reply_on_message_created', MessageEventType.CreateMessage, addThreadReply as TriggerFn],
 
-  ['remove_reply_on_messages_removed', MessageEventType.RemovePatch, onMessageRemoved as TriggerFn],
+  ['add_thread_reply_on_message_created', MessageEventType.CreateMessage, addThreadReply as TriggerFn],
+  ['remove_reply_on_messages_removed', MessageEventType.RemovePatch, removeThreadReply as TriggerFn],
+
   ['on_thread_created', MessageEventType.ThreadPatch, onThreadAttached as TriggerFn],
 
   ['check_peers_on_message_created', MessageEventType.CreateMessage, checkPeers as TriggerFn],

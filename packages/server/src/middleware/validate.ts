@@ -191,7 +191,7 @@ const UpdateBlobDataSchema = z.object({
 
 const AttachmentDataSchema = z.object({
   id: AttachmentIDSchema,
-  type: z.string(),
+  mimeType: z.string(),
   params: z.record(z.string(), z.any())
 })
 
@@ -318,6 +318,7 @@ const ReactionPatchEventSchema = BaseEventSchema.extend({
   cardId: CardIDSchema,
   messageId: MessageIDSchema,
   operation: ReactionOperationSchema,
+  personUuid: z.string(),
   socialId: SocialIDSchema,
   date: DateSchema
 }).strict()
@@ -366,6 +367,7 @@ const ThreadPatchEventSchema = BaseEventSchema.extend({
   messageId: MessageIDSchema,
   operation: z.object({ opcode: z.literal('attach'), threadId: CardIDSchema, threadType: CardTypeSchema }),
   socialId: SocialIDSchema,
+  personUuid: z.string(),
   date: DateSchema
 }).strict()
 

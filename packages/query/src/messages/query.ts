@@ -541,7 +541,7 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
     const groups =
       direction === Direction.Forward
         ? this.getNextGroupsToLoad(result.getLast())
-        : this.getPrevGroupsToLoad(result.getFirst())
+        : this.getPrevGroupsToLoad(result.getFirst()).reverse()
 
     const messages = await Promise.all(groups.map((group) => this.loadMessagesFromBlob(group.blobId)))
     const matched = this.matchMessages(

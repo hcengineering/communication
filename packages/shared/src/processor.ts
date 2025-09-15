@@ -395,7 +395,7 @@ function updateThread (message: Message, threadId: CardID, threadType: CardType)
 }
 
 function addReply (message: Message, threadId: CardID, person: PersonUuid, date: Date): Message {
-  if (message.threads.some((thread) => thread.threadId === threadId)) return message
+  if (!message.threads.some((thread) => thread.threadId === threadId)) return message
   return {
     ...message,
     threads: message.threads.map((it) =>
@@ -415,7 +415,7 @@ function addReply (message: Message, threadId: CardID, person: PersonUuid, date:
 }
 
 function removeReply (message: Message, threadId: CardID, person: PersonUuid): Message {
-  if (message.threads.some((thread) => thread.threadId === threadId)) return message
+  if (!message.threads.some((thread) => thread.threadId === threadId)) return message
   return {
     ...message,
     threads: message.threads.map((it) =>

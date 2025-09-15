@@ -99,7 +99,9 @@ export async function loadMessagesGroups (client: HulylakeClient, cardId: CardID
   if (res?.body === undefined) {
     return []
   }
-  return Object.values(res.body).map(it => deserializeMessageGroup(it)).sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
+  return Object.values(res.body)
+    .map((it) => deserializeMessageGroup(it))
+    .sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime())
 }
 
 function deserializeMessageGroup (group: MessagesGroupDoc): MessagesGroup {

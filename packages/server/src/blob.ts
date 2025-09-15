@@ -178,7 +178,8 @@ export class Blob {
           {
             op: 'add',
             path: `/${groupDoc.blobId}`,
-            value: groupDoc
+            value: groupDoc,
+            safe: true
           }
         ]
 
@@ -221,7 +222,8 @@ export class Blob {
       {
         op: 'add',
         path: `/messages/${message.id}`,
-        value: serializedMessage
+        value: serializedMessage,
+        safe: true
       },
       ...(updateToDate
         ? [
@@ -286,11 +288,18 @@ export class Blob {
     const patches: JsonPatch[] = [
       {
         op: 'add',
+        path: `/messages/${messageId}/reactions/${emoji}`,
+        value: {},
+        safe: true
+      },
+      {
+        op: 'add',
         path: `/messages/${messageId}/reactions/${emoji}/${person}`,
         value: {
           count: 1,
           date
-        }
+        },
+        safe: true
       }
     ]
     await this.patchJson(cardId, blobId, patches)

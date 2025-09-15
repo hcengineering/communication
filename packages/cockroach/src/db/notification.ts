@@ -193,7 +193,7 @@ export class NotificationsDb extends BaseDb {
   }
 
   async removeNotifications (query: NotificationQuery): Promise<NotificationID[]> {
-    const ids = query.id == null && Array.isArray(query.id) ? query.id : [query.id]
+    const ids = query.id == null || Array.isArray(query.id) ? query.id : [query.id]
 
     const where: string[] = ['nc.workspace_id = $1::uuid']
     const values: any[] = [this.workspace]
@@ -211,12 +211,14 @@ export class NotificationsDb extends BaseDb {
       where.push(`n.type = $${index++}::varchar`)
       values.push(query.type)
     }
-    if (ids.length === 1) {
-      where.push(`n.id = $${index++}::int8`)
-      values.push(ids[0])
-    } else {
-      where.push(`n.id = ANY($${index++}::int8[])`)
-      values.push(ids)
+    if (ids != null && ids.length > 0) {
+      if (ids.length === 1) {
+        where.push(`n.id = $${index++}::int8`)
+        values.push(ids[0])
+      } else {
+        where.push(`n.id = ANY($${index++}::int8[])`)
+        values.push(ids)
+      }
     }
 
     if (values.length <= 1) return []

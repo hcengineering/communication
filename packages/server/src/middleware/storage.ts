@@ -424,6 +424,14 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
         lastReplyDate: new Date(),
         repliedPersons: {}
       }
+      await this.db.attachThreadMeta(
+        event.cardId,
+        event.messageId,
+        thread.threadId,
+        thread.threadType,
+        event.socialId,
+        event.date
+      )
       await this.blob.attachThread(event.cardId, meta.blobId, event.messageId, thread)
     } else if (event.operation.opcode === 'update') {
       await this.blob.updateThread(
