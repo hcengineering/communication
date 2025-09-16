@@ -121,7 +121,7 @@ export class Blob {
 
     const patches: JsonPatch[] = [
       {
-        op: 'inc',
+        hop: 'inc',
         path: `/${blobId}/count`,
         value: 1
       },
@@ -148,7 +148,7 @@ export class Blob {
 
     const patches: JsonPatch[] = [
       {
-        op: 'inc',
+        hop: 'inc',
         path: `/${blobId}/count`,
         value: -1
       }
@@ -176,7 +176,7 @@ export class Blob {
         }
         const patches: JsonPatch[] = [
           {
-            op: 'add',
+            hop: 'add',
             path: `/${groupDoc.blobId}`,
             value: groupDoc,
             safe: true
@@ -220,7 +220,7 @@ export class Blob {
     const serializedMessage = this.serializeMessage(message)
     const patches: JsonPatch[] = [
       {
-        op: 'add',
+        hop: 'add',
         path: `/messages/${message.id}`,
         value: serializedMessage,
         safe: true
@@ -287,13 +287,13 @@ export class Blob {
   async addReaction (cardId: CardID, blobId: BlobID, messageId: MessageID, emoji: string, person: PersonUuid, date: Date): Promise<void> {
     const patches: JsonPatch[] = [
       {
-        op: 'add',
+        hop: 'add',
         path: `/messages/${messageId}/reactions/${emoji}`,
         value: {},
         safe: true
       },
       {
-        op: 'add',
+        hop: 'add',
         path: `/messages/${messageId}/reactions/${emoji}/${person}`,
         value: {
           count: 1,
@@ -405,7 +405,7 @@ export class Blob {
     const patches: JsonPatch[] =
       [
         {
-          op: 'inc',
+          hop: 'inc',
           path: `/messages/${messageId}/threads/${threadId}/repliesCount`,
           value: 1
         },
@@ -415,7 +415,7 @@ export class Blob {
           value: date
         },
         {
-          op: 'inc',
+          hop: 'inc',
           path: `/messages/${messageId}/threads/${threadId}/repliedPersons/${person}`,
           value: 1
         }
@@ -428,12 +428,12 @@ export class Blob {
     const patches: JsonPatch[] =
       [
         {
-          op: 'inc',
+          hop: 'inc',
           path: `/messages/${messageId}/threads/${threadId}/repliesCount`,
           value: -1
         },
         {
-          op: 'inc',
+          hop: 'inc',
           path: `/messages/${messageId}/threads/${threadId}/repliedPersons/${person}`,
           value: -1
         }
