@@ -97,9 +97,16 @@ export class Blob {
     if (match != null) return match
 
     for (let i = all.length - 1; i >= 0; i--) {
-      const last = all[i]
-      if (last.fromDate.getTime() <= ts && last.count < this.metadata.messagesPerBlob) {
-        return last
+      const group = all[i]
+      if (group.fromDate.getTime() <= ts && group.count < this.metadata.messagesPerBlob) {
+        return group
+      }
+    }
+
+    for (let i = 0; i < all.length; i++) {
+      const group = all[i]
+      if (group.fromDate.getTime() >= ts && group.count < this.metadata.messagesPerBlob) {
+        return group
       }
     }
     if (create) return await this.createMessageGroup(cardId, date)
@@ -111,13 +118,13 @@ export class Blob {
     await this.client.putJson(`${cardId}/messages/groups`, {}, undefined, this.retryOptions)
   }
 
-  private async incrementMessagesCount (cardId: CardID, blobId: BlobID, toDate?: Date): Promise<void> {
+  private async incrementMessagesCount (cardId: CardID, blobId: BlobID, toDate?: Date, fromDate?: Date): Promise<void> {
     const groups = await this.getAllMessageGroups(cardId)
     const group = groups.find((g) => g.blobId === blobId)
 
     if (group == null) return
 
-    this.messageGroupsByCardId.set(cardId, groups.map((g) => g.blobId === blobId ? ({ ...g, count: g.count + 1, toDate: toDate ?? group.toDate }) : g))
+    this.messageGroupsByCardId.set(cardId, groups.map((g) => g.blobId === blobId ? ({ ...g, count: g.count + 1, toDate: toDate ?? group.toDate, fromDate: fromDate ?? group.fromDate }) : g))
 
     const patches: JsonPatch[] = [
       {
@@ -130,6 +137,13 @@ export class Blob {
             op: 'replace',
             path: `/${blobId}/toDate`,
             value: toDate
+          } as const]
+        : [],
+      ...fromDate != null
+        ? [{
+            hop: 'add',
+            path: `/${blobId}/fromDate`,
+            value: fromDate
           } as const]
         : []
     ]
@@ -216,6 +230,7 @@ export class Blob {
 
   async insertMessage (cardId: CardID, group: MessagesGroup, message: Message): Promise<void> {
     const updateToDate = message.created.getTime() > group.toDate.getTime()
+    const updateFromDate = message.created.getTime() < group.fromDate.getTime()
 
     const serializedMessage = this.serializeMessage(message)
     const patches: JsonPatch[] = [
@@ -233,10 +248,19 @@ export class Blob {
               value: message.created
             } as const
           ]
+        : []),
+      ...(updateFromDate
+        ? [
+            {
+              hop: 'add',
+              path: '/fromDate',
+              value: message.created
+            } as const
+          ]
         : [])
     ]
     await this.patchJson(cardId, group.blobId, patches)
-    void this.incrementMessagesCount(cardId, group.blobId, updateToDate ? message.created : undefined)
+    void this.incrementMessagesCount(cardId, group.blobId, updateToDate ? message.created : undefined, updateFromDate ? message.created : undefined)
   }
 
   async updateMessage (cardId: CardID, blobId: BlobID, messageId: MessageID, update: {
