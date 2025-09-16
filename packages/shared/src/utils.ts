@@ -95,7 +95,14 @@ export function withTotal<T> (objects: T[], total?: number): WithTotal<T> {
 }
 
 export async function loadMessagesGroups (client: HulylakeClient, cardId: CardID): Promise<MessagesGroup[]> {
-  const res = await client.getJson<MessagesGroupsDoc>(`${cardId}/messages/groups`, { retries: 3, delay: 500 })
+  const res = await client.getJson<MessagesGroupsDoc>(`${cardId}/messages/groups`, {
+    maxRetries: 3,
+    isRetryable: () => true,
+    delayStrategy: {
+      getDelay: () => 500
+    }
+  })
+
   if (res?.body === undefined) {
     return []
   }
@@ -121,7 +128,13 @@ export async function loadMessages (
   options?: FindMessagesOptions
 ): Promise<Message[]> {
   const { cardId } = params
-  const res = await client.getJson<MessagesDoc>(`${cardId}/messages/${blobId}`, { retries: 3, delay: 500 })
+  const res = await client.getJson<MessagesDoc>(`${cardId}/messages/${blobId}`, {
+    maxRetries: 3,
+    isRetryable: () => true,
+    delayStrategy: {
+      getDelay: () => 500
+    }
+  })
   if (res?.body === undefined) {
     return []
   }

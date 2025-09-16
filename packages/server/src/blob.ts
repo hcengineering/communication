@@ -48,7 +48,13 @@ export class Blob {
 
   private readonly messageGroupCreationPromises = new Map<CardID, Promise<MessagesGroup>>()
 
-  private readonly retryOptions = { retries: 3, delay: 500 } as const
+  private readonly retryOptions = {
+    maxRetries: 3,
+    isRetryable: () => true,
+    delayStrategy: {
+      getDelay: () => 1000
+    }
+  } as const
 
   constructor (private readonly ctx: MeasureContext, private readonly workspace: WorkspaceUuid, private readonly metadata: Metadata) {
     this.client = getClient(metadata.hulylakeUrl, workspace, generateToken(systemAccountUuid, workspace, undefined, metadata.secret))

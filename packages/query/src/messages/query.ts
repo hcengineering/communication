@@ -148,8 +148,11 @@ export class MessagesQuery implements PagedQuery<Message, MessageQueryParams> {
     const promise = (async (): Promise<MessagesGroup[]> => {
       try {
         const res = await this.hulylake.getJson<MessagesGroupsDoc>(`${this.params.cardId}/messages/groups`, {
-          retries: 3,
-          delay: 500
+          maxRetries: 3,
+          isRetryable: () => true,
+          delayStrategy: {
+            getDelay: () => 500
+          }
         })
         let groups = Object.values(res?.body ?? {})
           .map((it) => ({

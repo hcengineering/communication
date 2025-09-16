@@ -37,7 +37,13 @@ export async function loadMessages (client: HulylakeClient, cardId: CardID, blob
 }
 
 async function requestMessagesDoc (client: HulylakeClient, cardId: CardID, blobId: BlobID): Promise<MessagesDoc | undefined> {
-  const res = await client.getJson<MessagesDoc>(`${cardId}/messages/${blobId}`, { retries: 3, delay: 500 })
+  const res = await client.getJson<MessagesDoc>(`${cardId}/messages/${blobId}`, {
+    maxRetries: 3,
+    isRetryable: () => true,
+    delayStrategy: {
+      getDelay: () => 500
+    }
+  })
   if (res?.body === undefined) {
     return undefined
   }
