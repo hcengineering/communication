@@ -44,7 +44,9 @@ export const schemas = {
     card_id: 'varchar',
     message_id: 'varchar',
     thread_id: 'varchar',
-    thread_type: 'varchar'
+    thread_type: 'varchar',
+    replies_count: 'int',
+    last_reply: 'timestamptz'
   },
   [Domain.Notification]: {
     id: 'int8',
@@ -138,6 +140,8 @@ interface ThreadDbModel {
   message_id: MessageID
   thread_id: CardID
   thread_type: CardType
+  replies_count: number
+  last_reply: Date
 }
 
 interface NotificationDbModel {

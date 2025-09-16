@@ -126,7 +126,9 @@ export class MessagesDb extends BaseDb {
       card_id: cardId,
       message_id: messageId,
       thread_id: threadId,
-      thread_type: threadType
+      thread_type: threadType,
+      replies_count: 0,
+      last_reply: new Date()
     }
 
     const { sql, values } = this.getInsertSql(Domain.ThreadIndex, db)

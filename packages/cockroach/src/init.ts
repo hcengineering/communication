@@ -135,7 +135,7 @@ function getMigrations (): [string, string][] {
     migrationV10_2(),
     migrationV10_3(),
     migrationV10_4(),
-    migrationV10_5(),
+    // migrationV10_5(),
     migrationV10_6(),
     migrationV10_7(),
     migrationV10_8(),
@@ -145,7 +145,8 @@ function getMigrations (): [string, string][] {
     migrationV10_12(),
     migrationV10_13(),
     migrationV10_14(),
-    migrationV10_15()
+    migrationV10_15(),
+    migrationV10_16()
   ]
 }
 
@@ -560,15 +561,15 @@ function migrationV10_4 (): [string, string] {
   return ['make_creator_not_null-v10_4', sql]
 }
 
-function migrationV10_5 (): [string, string] {
-  const sql = `
-      ALTER TABLE ${Domain.ThreadIndex}
-          DROP COLUMN IF EXISTS replies_count;
-      ALTER TABLE ${Domain.ThreadIndex}
-          DROP COLUMN IF EXISTS last_reply;
-  `
-  return ['drop_thread_index_columns-v10_5', sql]
-}
+// function migrationV10_5 (): [string, string] {
+//   const sql = `
+//       ALTER TABLE ${Domain.ThreadIndex}
+//           DROP COLUMN IF EXISTS replies_count;
+//       ALTER TABLE ${Domain.ThreadIndex}
+//           DROP COLUMN IF EXISTS last_reply;
+//   `
+//   return ['drop_thread_index_columns-v10_5', sql]
+// }
 
 function migrationV10_6 (): [string, string] {
   const sql = `
@@ -647,4 +648,14 @@ function migrationV10_15 (): [string, string] {
       DROP INDEX IF EXISTS communication.thread_unique_constraint CASCADE;
   `
   return ['drop_thread_unique_constraint-v10_15', sql]
+}
+
+function migrationV10_16 (): [string, string] {
+  const sql = `
+      ALTER TABLE ${Domain.ThreadIndex}
+          ADD COLUMN IF NOT EXISTS replies_count INT;
+      ALTER TABLE ${Domain.ThreadIndex}
+          ADD COLUMN IF NOT EXISTS last_reply TIMESTAMPTZ;
+  `
+  return ['add_thread_index_columns-v10_16', sql]
 }
