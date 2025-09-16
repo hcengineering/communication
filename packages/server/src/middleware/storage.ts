@@ -384,7 +384,7 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
             ({
               ...it,
               created: event.date,
-              creator: event.date
+              creator: event.socialId
             }) as any
         )
         await this.blob.addAttachments(event.cardId, meta.blobId, event.messageId, attachments)
@@ -396,7 +396,7 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
             ({
               ...it,
               created: event.date,
-              creator: event.date
+              creator: event.socialId
             }) as any
         )
         await this.blob.setAttachments(event.cardId, meta.blobId, event.messageId, attachments)
