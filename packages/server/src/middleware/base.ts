@@ -27,7 +27,9 @@ import type {
   Peer,
   CardID,
   FindMessagesMetaParams,
-  MessageMeta, FindMessagesGroupParams, MessagesGroup
+  MessageMeta,
+  FindMessagesGroupParams,
+  MessagesGroup
 } from '@hcengineering/communication-types'
 
 import type { Enriched, Middleware, MiddlewareContext, Subscription } from '../types'

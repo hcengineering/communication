@@ -37,7 +37,9 @@ import {
   type MessageExtra,
   AttachmentData,
   AttachmentID,
-  FindMessagesMetaParams, FindMessagesGroupParams, MessagesGroup
+  FindMessagesMetaParams,
+  FindMessagesGroupParams,
+  MessagesGroup
 } from '@hcengineering/communication-types'
 import { retry } from '@hcengineering/communication-shared'
 

@@ -30,7 +30,9 @@ import {
   Thread,
   ThreadMeta,
   FindMessagesMetaParams,
-  MessageMeta, FindMessagesGroupParams, MessagesGroup
+  MessageMeta,
+  FindMessagesGroupParams,
+  MessagesGroup
 } from '@hcengineering/communication-types'
 import {
   type AddCollaboratorsEvent,

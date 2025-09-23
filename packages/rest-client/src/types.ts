@@ -36,7 +36,9 @@ import type {
   MessageExtra,
   AttachmentData,
   AttachmentParams,
-  AttachmentID, MessagesGroup, FindMessagesGroupParams
+  AttachmentID,
+  MessagesGroup,
+  FindMessagesGroupParams
 } from '@hcengineering/communication-types'
 
 export interface RestClient {

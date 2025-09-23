@@ -17,7 +17,7 @@ import { SortingOrder } from '@hcengineering/core'
 
 import type { MessageID } from './message'
 import type { ContextID, NotificationID, NotificationType } from './notification'
-import type {AccountUuid, BlobID, CardID, CardType, SocialID, WorkspaceUuid} from './core'
+import type { AccountUuid, BlobID, CardID, CardType, SocialID, WorkspaceUuid } from './core'
 import type { LabelID } from './label'
 import { PeerKind } from './peer'
 
