@@ -472,6 +472,16 @@ export class Blob {
     await this.patchJson(cardId, blobId, patches)
   }
 
+  async removeThread (cardId: CardID, blobId: BlobID, messageId: MessageID, threadId: CardID): Promise<void> {
+    const patches: JsonPatch[] = [
+      {
+        op: 'remove',
+        path: `/messages/${messageId}/threads/${threadId}`
+      }
+    ]
+    await this.patchJson(cardId, blobId, patches)
+  }
+
   private async patchJson (cardId: CardID, blobId: BlobID, patches: JsonPatch[]): Promise<void> {
     await this.client.patchJson(`${cardId}/messages/${blobId}`, patches, undefined, this.retryOptions)
   }
