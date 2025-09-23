@@ -37,7 +37,7 @@ import {
   type MessageExtra,
   AttachmentData,
   AttachmentID,
-  FindMessagesMetaParams
+  FindMessagesMetaParams, FindMessagesGroupParams, MessagesGroup
 } from '@hcengineering/communication-types'
 import { retry } from '@hcengineering/communication-shared'
 
@@ -278,5 +278,9 @@ class RestClientImpl implements RestClient {
 
   async findMessagesMeta (params: FindMessagesMetaParams): Promise<MessageMeta[]> {
     return await this.find<MessageMeta>('findMessagesMeta', params)
+  }
+
+  async findMessagesGroups (params: FindMessagesGroupParams): Promise<MessagesGroup[]> {
+    return await this.find<MessagesGroup>('findMessagesGroups', params)
   }
 }
