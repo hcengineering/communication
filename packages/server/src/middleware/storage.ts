@@ -217,6 +217,7 @@ export class StorageMiddleware extends BaseMiddleware implements Middleware {
     const added = await this.db.addCollaborators(event.cardId, event.cardType, event.collaborators, event.date)
 
     if (added.length === 0) return { skipPropagate: true }
+    event.collaborators = added
     return {}
   }
 
