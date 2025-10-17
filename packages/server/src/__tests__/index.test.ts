@@ -37,11 +37,6 @@ import { buildMiddlewares } from '../middlewares'
 import { Blob } from '../blob'
 import { LowLevelClient } from '../client'
 
-// Mock franc-min before any imports that use it
-jest.mock('franc-min', () => ({
-  franc: jest.fn(() => 'eng')
-}))
-
 // Mock dependencies
 jest.mock('@hcengineering/communication-cockroach')
 jest.mock('../metadata')
